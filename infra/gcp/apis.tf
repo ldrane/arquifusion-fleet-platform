@@ -2,11 +2,11 @@
 # no se bloqueen en H1. serviceusage y cloudresourcemanager se habilitan antes con gcloud (paso 2 del runbook).
 locals {
   apis = [
-    "firestore.googleapis.com",      # C: réplica, chat, mapa en vivo
-    "firebase.googleapis.com",       # C: proyecto Firebase y app web
-    "firebaserules.googleapis.com",  # C: Security Rules
+    "firestore.googleapis.com",       # C: réplica, chat, mapa en vivo
+    "firebase.googleapis.com",        # C: proyecto Firebase y app web
+    "firebaserules.googleapis.com",   # C: Security Rules
     "identitytoolkit.googleapis.com", # C: Firebase Auth (signInWithCustomToken)
-    "iam.googleapis.com",            # service accounts
+    "iam.googleapis.com",             # service accounts
     "iamcredentials.googleapis.com",
     "pubsub.googleapis.com",         # B: topic notificaciones
     "fcm.googleapis.com",            # B: push
@@ -15,7 +15,7 @@ locals {
     "cloudbuild.googleapis.com",     # B: build de la función
     "eventarc.googleapis.com",       # B: trigger Firestore/PubSub -> función
     "artifactregistry.googleapis.com",
-    "secretmanager.googleapis.com",  # B: API key del bridge del lado GCP
+    "secretmanager.googleapis.com", # B: API key del bridge del lado GCP
     "logging.googleapis.com",
     "firebasecloudmessaging.googleapis.com", # B: FCM HTTP v1 (send)
   ]

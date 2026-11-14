@@ -13,7 +13,7 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
 
   lambdas = {
-    lectura  = "${local.prefix}-api-lectura" # C (infra/query)
+    lectura  = "${local.prefix}-api-lectura"  # C (infra/query)
     comandos = "${local.prefix}-api-comandos" # B (infra/incidents)
     gemini   = "${local.prefix}-ia-gemini"    # A (infra/ingest)
   }
@@ -33,31 +33,31 @@ locals {
 
   # "MÉTODO ruta" => Lambda y autenticación (cognito | api_key). Fuente: tabla de contratos.md §2.
   routes = {
-    "GET me"                                = { fn = "lectura", auth = "cognito" }
-    "POST auth/firebase-token"              = { fn = "lectura", auth = "cognito" }
-    "GET machines"                          = { fn = "lectura", auth = "cognito" }
-    "GET machines/{machine_id}"             = { fn = "lectura", auth = "cognito" }
-    "GET machines/{machine_id}/telemetry"   = { fn = "lectura", auth = "cognito" }
-    "GET machines/{machine_id}/timeline"    = { fn = "lectura", auth = "cognito" }
-    "GET incidents"                         = { fn = "lectura", auth = "cognito" }
-    "GET incidents/{incident_id}"           = { fn = "lectura", auth = "cognito" }
-    "POST incidents/{incident_id}/ack"      = { fn = "comandos", auth = "cognito" }
-    "POST incidents/{incident_id}/assign"   = { fn = "comandos", auth = "cognito" }
-    "POST incidents/{incident_id}/resolve"  = { fn = "comandos", auth = "cognito" }
-    "GET technicians"                       = { fn = "lectura", auth = "cognito" }
-    "PUT technicians/me/status"             = { fn = "comandos", auth = "cognito" }
-    "GET inventory"                         = { fn = "lectura", auth = "cognito" }
-    "GET parts/ranking"                     = { fn = "lectura", auth = "cognito" }
-    "GET parts/forecast"                    = { fn = "lectura", auth = "cognito" }
-    "GET maintenance/plan"                  = { fn = "lectura", auth = "cognito" }
-    "GET analytics/fuel"                    = { fn = "lectura", auth = "cognito" }
-    "GET analytics/productivity"            = { fn = "lectura", auth = "cognito" }
-    "GET analytics/kpis"                    = { fn = "lectura", auth = "cognito" }
-    "GET reports/latest"                    = { fn = "lectura", auth = "cognito" }
-    "GET ml/model"                          = { fn = "lectura", auth = "cognito" }
-    "POST ml/retrain"                       = { fn = "comandos", auth = "cognito" }
-    "POST assistant/chat"                   = { fn = "gemini", auth = "cognito" }
-    "POST bridge/events"                    = { fn = "comandos", auth = "api_key" }
+    "GET me"                               = { fn = "lectura", auth = "cognito" }
+    "POST auth/firebase-token"             = { fn = "lectura", auth = "cognito" }
+    "GET machines"                         = { fn = "lectura", auth = "cognito" }
+    "GET machines/{machine_id}"            = { fn = "lectura", auth = "cognito" }
+    "GET machines/{machine_id}/telemetry"  = { fn = "lectura", auth = "cognito" }
+    "GET machines/{machine_id}/timeline"   = { fn = "lectura", auth = "cognito" }
+    "GET incidents"                        = { fn = "lectura", auth = "cognito" }
+    "GET incidents/{incident_id}"          = { fn = "lectura", auth = "cognito" }
+    "POST incidents/{incident_id}/ack"     = { fn = "comandos", auth = "cognito" }
+    "POST incidents/{incident_id}/assign"  = { fn = "comandos", auth = "cognito" }
+    "POST incidents/{incident_id}/resolve" = { fn = "comandos", auth = "cognito" }
+    "GET technicians"                      = { fn = "lectura", auth = "cognito" }
+    "PUT technicians/me/status"            = { fn = "comandos", auth = "cognito" }
+    "GET inventory"                        = { fn = "lectura", auth = "cognito" }
+    "GET parts/ranking"                    = { fn = "lectura", auth = "cognito" }
+    "GET parts/forecast"                   = { fn = "lectura", auth = "cognito" }
+    "GET maintenance/plan"                 = { fn = "lectura", auth = "cognito" }
+    "GET analytics/fuel"                   = { fn = "lectura", auth = "cognito" }
+    "GET analytics/productivity"           = { fn = "lectura", auth = "cognito" }
+    "GET analytics/kpis"                   = { fn = "lectura", auth = "cognito" }
+    "GET reports/latest"                   = { fn = "lectura", auth = "cognito" }
+    "GET ml/model"                         = { fn = "lectura", auth = "cognito" }
+    "POST ml/retrain"                      = { fn = "comandos", auth = "cognito" }
+    "POST assistant/chat"                  = { fn = "gemini", auth = "cognito" }
+    "POST bridge/events"                   = { fn = "comandos", auth = "api_key" }
   }
 
   all_paths = setunion(local.paths_l1, local.paths_l2, local.paths_l3)

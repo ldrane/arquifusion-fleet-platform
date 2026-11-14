@@ -12,8 +12,8 @@ locals {
 }
 
 resource "aws_cognito_user_pool" "users" {
-  name                     = "${local.prefix}-users"
-  deletion_protection      = "INACTIVE"
+  name                = "${local.prefix}-users"
+  deletion_protection = "INACTIVE"
   username_configuration {
     case_sensitive = false
   }

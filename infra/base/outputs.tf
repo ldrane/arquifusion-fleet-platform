@@ -68,17 +68,17 @@ output "gcp_service_account_secret_name" {
 # ---------------------------------------------------------------- SSM (para no depender del state de base)
 locals {
   ssm = {
-    "api/id"                     = aws_api_gateway_rest_api.api.id
-    "api/root_resource_id"       = aws_api_gateway_rest_api.api.root_resource_id
-    "api/execution_arn"          = aws_api_gateway_rest_api.api.execution_arn
-    "api/url"                    = aws_api_gateway_stage.v1.invoke_url
-    "api/authorizer_id"          = aws_api_gateway_authorizer.cognito.id
-    "cognito/user_pool_id"       = aws_cognito_user_pool.users.id
-    "cognito/user_pool_arn"      = aws_cognito_user_pool.users.arn
-    "cognito/client_id"          = aws_cognito_user_pool_client.web.id
-    "sns/platform_alarms_arn"    = aws_sns_topic.platform_alarms.arn
+    "api/id"                      = aws_api_gateway_rest_api.api.id
+    "api/root_resource_id"        = aws_api_gateway_rest_api.api.root_resource_id
+    "api/execution_arn"           = aws_api_gateway_rest_api.api.execution_arn
+    "api/url"                     = aws_api_gateway_stage.v1.invoke_url
+    "api/authorizer_id"           = aws_api_gateway_authorizer.cognito.id
+    "cognito/user_pool_id"        = aws_cognito_user_pool.users.id
+    "cognito/user_pool_arn"       = aws_cognito_user_pool.users.arn
+    "cognito/client_id"           = aws_cognito_user_pool_client.web.id
+    "sns/platform_alarms_arn"     = aws_sns_topic.platform_alarms.arn
     "sns/alerts_topic_arn_prefix" = "arn:aws:sns:${var.aws_region}:${local.account_id}:${local.prefix}-alerts-"
-    "events/bus_arn"             = aws_cloudwatch_event_bus.fleet.arn
+    "events/bus_arn"              = aws_cloudwatch_event_bus.fleet.arn
   }
 }
 

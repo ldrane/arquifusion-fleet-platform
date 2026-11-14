@@ -1,6 +1,8 @@
 # Infraestructura (Terraform)
 
-Orden de despliegue: `base` → `ingest` / `incidents` / `query` (en paralelo) → `gcp`.
+Orden de despliegue: `base` → `ingest` / `incidents` / `query` (en paralelo) → `gcp`. `frontend` es independiente.
+
+Atajo AWS: `STAGE=dev scripts/deploy_infra.sh` (crea el bucket de tfstate y `backend.hcl`, construye layers, aplica en orden y redeploya el stage `v1`). Front: `STAGE=dev scripts/deploy_frontend.sh`.
 
 | Stack | Dueño |
 |---|---|
@@ -9,6 +11,7 @@ Orden de despliegue: `base` → `ingest` / `incidents` / `query` (en paralelo) �
 | `incidents` | B |
 | `query` | C |
 | `gcp` | C base + B función |
+| `frontend` | C |
 
 - **Rol IAM:** siempre `LabRole` (AWS Academy no permite crear roles).
 - **Naming:** `arquifusion-{stage}-{nombre}`. Tags `project`, `stage`, `stack` (automáticos) + `owner`, `rf`.
