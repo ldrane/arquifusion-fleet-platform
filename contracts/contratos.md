@@ -10,7 +10,7 @@
 |---|---|
 | Formato | JSON `snake_case`. Fechas ISO 8601 UTC. Unidades en el nombre del campo (`temperature_c`, `fuel_rate_lph`). |
 | IDs | Máquina `EX-023` (2 letras + número) · Técnico `TEC-07` · Usuario Cognito `u-tec-07` · Incidente `INC-<ULID>` · Almacén `WH-01` · Componente `CMP-014` · Registro de mantenimiento `MR-<ULID>`. |
-| Enums | `severity`: info, low, medium, high, critical · `machine.status`: operational, stopped, maintenance, needs_intervention, silent · `incident.status`: detected, assigned, in_progress, resolved, closed · `specialty`: motor, hidraulica, electrica, neumaticos · `zone`: norte, sur, este, oeste. |
+| Enums | `severity`: info, low, medium, high, critical · `machine.status`: operational, stopped, maintenance, needs_intervention, silent · `incident.status`: detected, assigned, in_progress, resolved, closed, abandoned · `specialty`: motor, hidraulica, electrica, neumaticos · `zone`: norte, sur, este, oeste. |
 | Respuesta OK | `{ "data": ..., "meta": {...} }` |
 | Respuesta error | `{ "error": { "code", "message", "details": [] }, "correlation_id" }` |
 | Paginación | `?limit=` (1-100) y `?cursor=`; siguiente página en `meta.next_cursor`. |
@@ -202,7 +202,7 @@ Se mantiene el puente: la Lambda *notificar* (B) publica por REST al topic **`no
 
 ### 8.1 `ia-gemini` (dueño A; la invocan la SFN `GestionIncidente`, `AnalisisDiario` y API Gateway)
 
-Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-2.5-flash" | "fallback", "degraded": bool, "prompt_version", "latency_ms" }`. Si Gemini falla o tarda más de 8 s, responde con `model: "fallback"`, `degraded: true`, `prompt_version: "<id>+fallback"` y un resultado determinista. **Nunca lanza error a la SFN por culpa de la IA.** Credencial: API key de AI Studio en Secrets Manager (`arquifusion/{stage}/gemini/api-key`, #22).
+Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-2.5-flash" | "fallback", "degraded": bool, "degraded_reason"?, "prompt_version", "latency_ms" }`. Si Gemini falla o tarda más de 8 s, responde con `model: "fallback"`, `degraded: true`, `degraded_reason`, `prompt_version: "<id>+fallback"` y un resultado determinista. **Nunca lanza error a la SFN por culpa de la IA.** `degraded_reason` (solo si `degraded: true`; también en la respuesta de `POST /assistant/chat`) ∈ `secret_missing` (API key no disponible) · `http_4xx` (key inválida, cuota, petición rechazada) · `timeout` · `model_not_found` (HTTP 404, modelo retirado) · `other`; nunca incluye llaves ni texto de excepciones. Modelo: variable `GEMINI_MODEL` (default `gemini-2.5-flash` en `gemini_client.py`). Credencial: API key de AI Studio en Secrets Manager (`arquifusion/{stage}/gemini/api-key`, #22).
 
 | `task` | `payload` | `result` |
 |---|---|---|
@@ -249,7 +249,7 @@ Response (**un único shape**, el mismo que `Candidate` en `frontend/src/lib/sco
                     "breakdown": { "specialty": 1, "eta": 0.93, "availability": 1, "load": 1 } } ] }
 ```
 
-- Candidatos = técnicos de la `zone` del incidente que no estén en `exclude_technician_ids`, ordenados por `score` desc y luego `eta_min` asc. `selected` = `null` si no hay candidatos (la SFN escala).
+- Candidatos = técnicos de la `zone` del incidente que no estén en `exclude_technician_ids`, ordenados por `score` desc y luego `eta_min` asc. `selected` = `null` si no hay candidatos **o si ninguno está `available`** (la SFN escala); `candidates` puede incluir técnicos no disponibles (`breakdown.availability = 0`).
 - `breakdown` en [0, 1]: `specialty` = 1 si tiene la especialidad (0.5 si no hay `required_specialty`), `eta` = max(0, 1 − eta_min/45), `availability` = 1/0, `load` = max(0, 1 − current_load/3). `eta_min` = haversine a 25 km/h + 2 min (`frontend/src/lib/geo.ts`).
 - `weights` por severidad: critical 0.30/0.45/0.15/0.10 · high 0.35/0.35/0.15/0.15 · medium 0.40/0.25/0.15/0.20 · low e info 0.40/0.20/0.15/0.25 (specialty/eta/availability/load). `score` = Σ peso × breakdown, redondeado a 2 decimales.
 - TRZ-03: la SFN guarda `candidates` completo en el ítem META (`scoring_candidates`) y `technician_score` = score del elegido.
