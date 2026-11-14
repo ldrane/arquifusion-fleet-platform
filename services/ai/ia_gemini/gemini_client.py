@@ -10,7 +10,7 @@ import urllib.request
 from collections.abc import Callable
 
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.8-flash"
 DEFAULT_TIMEOUT_S = 8.0
 
 Transport = Callable[[str, dict, dict, float], dict]

@@ -365,7 +365,7 @@ export class DemoWorld {
       common_cause: common ?? null,
       top_factors: this.factors(sc),
       confidence: Math.round(confidence * 100) / 100,
-      model_version: "gemini-2.5-flash",
+      model_version: "gemini-3.8-flash",
       prompt_version: "diagnose@1.3",
       degraded: false,
     };

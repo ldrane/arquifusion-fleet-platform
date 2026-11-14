@@ -202,7 +202,7 @@ Se mantiene el puente: la Lambda *notificar* (B) publica por REST al topic **`no
 
 ### 8.1 `ia-gemini` (dueño A; la invocan la SFN `GestionIncidente`, `AnalisisDiario` y API Gateway)
 
-Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-2.5-flash" | "fallback", "degraded": bool, "prompt_version", "latency_ms" }`. Si Gemini falla o tarda más de 8 s, responde con `model: "fallback"`, `degraded: true`, `prompt_version: "<id>+fallback"` y un resultado determinista. **Nunca lanza error a la SFN por culpa de la IA.** Credencial: API key de AI Studio en Secrets Manager (`arquifusion/{stage}/gemini/api-key`, #22).
+Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-3.8-flash" | "fallback", "degraded": bool, "prompt_version", "latency_ms" }`. Si Gemini falla o tarda más de 8 s, responde con `model: "fallback"`, `degraded: true`, `prompt_version: "<id>+fallback"` y un resultado determinista. **Nunca lanza error a la SFN por culpa de la IA.** Credencial: API key de AI Studio en Secrets Manager (`arquifusion/{stage}/gemini/api-key`, #22).
 
 | `task` | `payload` | `result` |
 |---|---|---|

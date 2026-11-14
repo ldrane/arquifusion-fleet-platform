@@ -58,7 +58,7 @@ resource "aws_lambda_function" "ia_gemini" {
     variables = merge(local.common_env, {
       POWERTOOLS_SERVICE_NAME = "ia-gemini"
       GEMINI_SECRET_NAME      = aws_secretsmanager_secret.gemini_api_key.name
-      GEMINI_MODEL            = "gemini-2.5-flash"
+      GEMINI_MODEL            = "gemini-3.8-flash" # 2.5-flash: 404 "no longer available to new users"
       GEMINI_TIMEOUT_S        = "8"
       TABLE_MACHINES          = local.tables.machines
       TABLE_INCIDENTS         = local.tables.incidents

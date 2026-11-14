@@ -27,7 +27,7 @@ def _api_key() -> str:
 
 _gemini = GeminiClient(
     api_key_provider=_api_key,
-    model=os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
+    model=os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
     timeout_s=float(os.environ.get("GEMINI_TIMEOUT_S", "8")),
 )
 _dynamodb = boto3.resource("dynamodb")
