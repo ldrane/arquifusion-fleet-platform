@@ -61,4 +61,11 @@ if [[ " ${STACKS[*]} " == *" ingest "* ]]; then
   log "Redeploy del stage v1 (POST /telemetry)"
   terraform -chdir="$ROOT/infra/base" apply -input=false -var "stage=$STAGE" -var "api_redeploy=$(date +%s)" "${APPROVE[@]}"
 fi
-log "OK. Siguientes: secreto de Gemini, seed.py, cognito_users.py, infra/gcp, smoke_golden_path.sh"
+# 5) API key de Gemini (RF-02.6): desde $GEMINI_API_KEY o .env.deploy (ignorado por git). Idempotente.
+[[ -z "${GEMINI_API_KEY:-}" && -f "$ROOT/.env.deploy" ]] && GEMINI_API_KEY="$(sed -n 's/^GEMINI_API_KEY=//p' "$ROOT/.env.deploy")"
+if [[ " ${STACKS[*]} " == *" ingest "* && -n "${GEMINI_API_KEY:-}" ]]; then
+  log "Cargando API key de Gemini en arquifusion/$STAGE/gemini/api-key"
+  aws secretsmanager put-secret-value --region "$REGION" --secret-id "arquifusion/$STAGE/gemini/api-key" \
+    --secret-string "$GEMINI_API_KEY" >/dev/null
+fi
+log "OK. Siguientes: seed.py, cognito_users.py, infra/gcp, smoke_golden_path.sh"
