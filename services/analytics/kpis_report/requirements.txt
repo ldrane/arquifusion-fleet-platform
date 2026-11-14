@@ -1,0 +1,1 @@
+# Sin dependencias propias: arquifusion_shared y Powertools vienen en la capa común; boto3 en el runtime.

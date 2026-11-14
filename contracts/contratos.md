@@ -122,3 +122,72 @@ El diagrama es coherente con el contrato. Faltan estos 4 detalles para que coinc
 2. **`api-ack` pasa a ser la Lambda de comandos**: ack, assign, resolve, `technicians/me/status`, `ml/retrain` y `firebase-token`. Debe estar **fuera de la VPC** (lee Secrets Manager y llama a Step Functions). Conviene renombrarla `api-comandos`. Si no, el nombre del diagrama y el de este contrato deben coincidir.
 3. **Dos task tokens por incidente**: `ack_token` y `resolve_token`, guardados en el ítem de DynamoDB. El flujo espera dos callbacks, no uno.
 4. **Quitar `WS /live`** de `requerimientos.md §5.5`. El diagrama ya usa Firestore para el tiempo real.
+
+## 8. Invocaciones Lambda internas (propuesta de la Persona A, pendiente de aprobación de B)
+
+**`ia-gemini`** (dueño A; la invocan la SFN `GestionIncidente`, `AnalisisDiario` y API Gateway).
+
+Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-2.5-flash" | "fallback", "degraded": bool, "prompt_version", "latency_ms" }`. Si Gemini falla o tarda más de 8 s, responde con `model: "fallback"`, `degraded: true` y un resultado determinista. **Nunca lanza error a la SFN por culpa de la IA.**
+
+| `task` | `payload` | `result` |
+|---|---|---|
+| `diagnose` | `machine_id`, `machine_type`, `model`, `severity`, `health_score`, `top_factors[]`, `latest_reading`, `recent_incidents[]` | `probable_cause`, `suggested_action`, `confidence` (0-1), `parts_suggested[]` (`component_id`) |
+| `summarize_by_role` | `incident` (schema `Incident`), `roles[]` | `{ "<rol>": { "title", "body" } }` |
+| `common_cause` | `zone`, `incidents[]` (máquinas, factores, ventana) | `probable_common_cause`, `evidence[]`, `confidence` |
+| `summarize_chat` | `incident_id`, `messages[]` (`contratos.md` §5) | `summary`, `root_cause`, `actions_taken[]`, `parts_replaced[]` |
+| `executive_report` | `figures` (KPIs de `AnalisisDiario`) | `summary_text`, `prompt_version` |
+| `assistant_chat` | (vía API Gateway, body de `POST /v1/assistant/chat`) | respuesta de `POST /v1/assistant/chat` |
+
+Fixtures: `contracts/fixtures/ia/`.
+
+## 9. Recursos compartidos AWS: convención de nombres (propuesta de la Persona A)
+
+La Persona A referencia los recursos de `infra/base` **por nombre** (no por `terraform_remote_state`). B debe crearlos con estos nombres; `{p}` = `arquifusion-{stage}`.
+
+| Recurso | Nombre | Lo usa A para |
+|---|---|---|
+| Tablas DynamoDB | `{p}-machines`, `{p}-machine-state`, `{p}-idempotency`, `{p}-anomalies`, `{p}-incidents`, `{p}-technicians`, `{p}-inventory`, `{p}-catalog`, `{p}-maintenance-records`, `{p}-insights` | Estado, agregados, anomalías, analítica |
+| Bus EventBridge | `{p}-fleet-events` | Emitir `AnomalyDetected`, `MachineSilent` |
+| API REST | `{p}-api` | A agrega `POST /telemetry` (API key) y B cablea `POST /v1/assistant/chat` a `ia-gemini` |
+| Rol | `LabRole` | Todo |
+
+**Lo que A publica en SSM** (para que B y C no dependan del state de A):
+
+| Parámetro | Valor |
+|---|---|
+| `/arquifusion/{stage}/lambda/ia-gemini/arn` | ARN de `ia-gemini` (B lo usa en la SFN y en la ruta del asistente) |
+| `/arquifusion/{stage}/sfn/reentrenamiento/arn` | ARN de la SFN (B lo usa en `POST /v1/ml/retrain`) |
+| `/arquifusion/{stage}/model/active_version` | Versión activa del modelo |
+| `/arquifusion/{stage}/thresholds/{machine_type}` | Umbrales de la capa 1 (JSON) |
+
+**Tabla `{p}-insights`** (PK `pk` string, SK `sk` string, sin GSI). A escribe y C lee: `pk` = tipo (`maintenance_plan`, `parts_forecast#30`, `fuel#7d`, `kpis#7d`, `report#daily`, `ml_model`, …; lista en `services/ml/arquifusion_ml/insights.py`), `sk` = `YYYY-MM-DD` o `LATEST`. El atributo `data` es **exactamente** el `data` de la respuesta del endpoint en `openapi.yaml`; C filtra por `zone` sobre ese arreglo.
+
+**Dedup de `AnomalyDetected` sobre `{p}-machines`** (regla de costo §3). `procesar` emite solo si se cumple de forma condicional `attribute_not_exists(open_incident_id) AND (attribute_not_exists(anomaly_lock_until) OR anomaly_lock_until < :now)`, y en la misma escritura fija `anomaly_lock_until = now + 10 min`. La SFN de B fija `open_incident_id` al crear el incidente y lo elimina al cerrarlo.
+
+**`operation_id`**: `TelemetryReading` no lo trae. `procesar` lo toma de la variable `DEFAULT_OPERATION_ID` (`OP-01`) mientras haya una sola operación.
+
+**Tras `terraform apply` de `infra/ingest`**, B (o quien despliegue) debe crear un nuevo deployment del stage de `{p}-api` para publicar `POST /telemetry`.
+
+**Key schema que asume la Persona A** (todas las claves `pk`/`sk` de tipo string; detalle en `services/ingest/procesar/ingest_procesar/repository.py`):
+
+| Tabla | `pk` | `sk` | Extras |
+|---|---|---|---|
+| `{p}-machines` | `operation_id#machine_id` (`OP-01#EX-023`) | `META` | — |
+| `{p}-machine-state` | `machine_id` o `COHORT#type#zone` | `LAST`, `BASELINE`, `AGG#1h#YYYY-MM-DDTHH` | — |
+| `{p}-idempotency` | `machine_id#timestamp` | — | TTL en `expires_at` |
+| `{p}-anomalies` | `machine_id` | `ts#anomaly_id` | GSI1: `gsi1pk` = `zone#date` |
+
+**Otros recursos que A espera de B:** topic SNS `{p}-platform-alarms` (alarmas de DLQ y errores) y stage `v1` en `{p}-api`.
+
+**Propiedad de `machines.status`.** Lo escribe solo `procesar`, derivado de la telemetría (`state`) y de la severidad. La SFN de B **no** escribe `status`: el estado del incidente se refleja en `open_incident_id` y en el ítem del incidente. El front muestra ambos.
+
+**Atributos que lee la analítica de A** (`AnalisisDiario`; si B o C usan otros nombres, avisar):
+
+| Tabla | Atributos |
+|---|---|
+| `{p}-incidents` | `incident_id`, `machine_id`, `status`, `severity`, `detected_at`, `resolved_at`, `downtime_minutes` |
+| `{p}-maintenance-records` | `machine_id`, `performed_at`, `type` (`preventive`/`corrective`), `components[]`, `cost_usd` |
+| `{p}-inventory` | `location_id` (`pk`, ej. `WH-01`), `component_id` (`sk`), `stock`, `stock_min`, `stock_max`, `zone?` |
+| `{p}-catalog` | `component_id`, `name`, `compatible_models[]`, `cost_usd`, `lead_time_days` |
+
+`preventivo` escribe `next_maintenance_at` en `{p}-machines`, y las filas de `maintenance_plan`, `fuel#*` y `productivity#*` llevan `zone` para que `api-lectura` filtre.

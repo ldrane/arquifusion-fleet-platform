@@ -1,0 +1,37 @@
+{
+  "excavator": {
+    "temperature_c": { "warn_high": 100, "crit_high": 110 },
+    "vibration_mm_s": { "warn_high": 8, "crit_high": 12 },
+    "pressure_bar": { "warn_high": 320, "crit_high": 360, "warn_low": 150, "crit_low": 100 },
+    "fuel_rate_lph": { "warn_high": 55, "crit_high": 70 },
+    "rpm": { "warn_high": 2200, "crit_high": 2400 }
+  },
+  "mining_truck": {
+    "temperature_c": { "warn_high": 102, "crit_high": 112 },
+    "vibration_mm_s": { "warn_high": 9, "crit_high": 13 },
+    "pressure_bar": { "warn_high": 260, "crit_high": 300, "warn_low": 120, "crit_low": 80 },
+    "fuel_rate_lph": { "warn_high": 110, "crit_high": 140 },
+    "rpm": { "warn_high": 2100, "crit_high": 2300 }
+  },
+  "loader": {
+    "temperature_c": { "warn_high": 100, "crit_high": 110 },
+    "vibration_mm_s": { "warn_high": 8, "crit_high": 12 },
+    "pressure_bar": { "warn_high": 300, "crit_high": 340, "warn_low": 140, "crit_low": 90 },
+    "fuel_rate_lph": { "warn_high": 45, "crit_high": 60 },
+    "rpm": { "warn_high": 2200, "crit_high": 2400 }
+  },
+  "bulldozer": {
+    "temperature_c": { "warn_high": 102, "crit_high": 112 },
+    "vibration_mm_s": { "warn_high": 10, "crit_high": 14 },
+    "pressure_bar": { "warn_high": 320, "crit_high": 360, "warn_low": 150, "crit_low": 100 },
+    "fuel_rate_lph": { "warn_high": 60, "crit_high": 80 },
+    "rpm": { "warn_high": 2100, "crit_high": 2300 }
+  },
+  "drill": {
+    "temperature_c": { "warn_high": 98, "crit_high": 108 },
+    "vibration_mm_s": { "warn_high": 12, "crit_high": 16 },
+    "pressure_bar": { "warn_high": 350, "crit_high": 400, "warn_low": 160, "crit_low": 110 },
+    "fuel_rate_lph": { "warn_high": 50, "crit_high": 65 },
+    "rpm": { "warn_high": 2300, "crit_high": 2500 }
+  }
+}
