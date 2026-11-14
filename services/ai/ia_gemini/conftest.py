@@ -10,6 +10,8 @@ for mod in (
     "service",
     "handler",
     "gemini_client",
+    "bedrock_client",
+    "llm_client",
     "prompts",
     "ia_tasks",
     "ia_fallbacks",

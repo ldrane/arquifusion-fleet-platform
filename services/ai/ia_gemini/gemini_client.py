@@ -1,7 +1,8 @@
-"""Cliente REST mínimo de la Gemini API de Google AI Studio (RF-02.6, RF-14).
+"""Proveedor LLM: Gemini API de Google AI Studio por REST (RF-02.6, RF-14). Implementa `llm_client.LLMClient`.
 
 Sin SDK: usa urllib de la librería estándar para mantener el zip pequeño. Cualquier falla (red, timeout,
-HTTP, respuesta bloqueada o JSON inválido) se convierte en GeminiError para que el llamador use el fallback.
+HTTP, respuesta bloqueada o JSON inválido) se convierte en GeminiError (subclase de LLMError) para que el
+llamador use el fallback.
 """
 
 import json
@@ -9,14 +10,17 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable
 
+from llm_client import DEFAULT_TIMEOUT_S, LLMError, LLMTurn, ToolCall
+
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-DEFAULT_MODEL = "gemini-3.8-flash"
-DEFAULT_TIMEOUT_S = 8.0
+# Alias estable de la familia flash-lite (baja latencia, sin pensamiento por defecto): sobrevive a las
+# retiradas de versiones fijas (p. ej. 2.5-flash: "no longer available to new users"). Se cambia con GEMINI_MODEL.
+DEFAULT_MODEL = "gemini-flash-lite-latest"
 
 Transport = Callable[[str, dict, dict, float], dict]
 
 
-class GeminiError(Exception):
+class GeminiError(LLMError):
     """Falla al obtener una respuesta útil de Gemini."""
 
 
@@ -27,13 +31,30 @@ def urllib_transport(url: str, headers: dict, body: dict, timeout_s: float) -> d
         with urllib.request.urlopen(request, timeout=timeout_s) as resp:  # noqa: S310 (URL fija https)
             return json.loads(resp.read())
     except urllib.error.HTTPError as exc:
-        raise GeminiError(f"HTTP {exc.code} de Gemini") from exc
+        detail = ""
+        try:
+            detail = exc.read().decode(errors="replace")[:300]
+        except Exception:  # noqa: BLE001 (el detalle es opcional)
+            pass
+        raise GeminiError(f"HTTP {exc.code} de Gemini {detail}".strip()) from exc
     except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
         raise GeminiError(f"Gemini no respondió: {exc}") from exc
 
 
+def thinking_config(model: str) -> dict | None:
+    """`thinkingConfig` solo donde se sabe que aplica: la familia 2.5 flash acepta `thinkingBudget: 0` (latencia
+    mínima). 2.5 pro no permite desactivarlo, y los alias `*-latest` / Gemini 3 usan sus propios valores por
+    defecto: a esos no se les envía nada para no provocar un 400."""
+    name = model.lower()
+    if name.startswith("gemini-2.5") and "pro" not in name:
+        return {"thinkingBudget": 0}
+    return None
+
+
 class GeminiClient:
     """Cliente de `generateContent` con salida JSON estructurada y function calling."""
+
+    provider = "gemini"
 
     def __init__(
         self,
@@ -57,7 +78,10 @@ class GeminiClient:
         timeout_s: float | None = None,
     ) -> dict:
         """Llama a Gemini y devuelve el `content` del primer candidato (`{"role": "model", "parts": [...]}`)."""
-        generation_config: dict = {"temperature": 0.2, "thinkingConfig": {"thinkingBudget": 0}}
+        generation_config: dict = {"temperature": 0.2}
+        thinking = thinking_config(self.model)
+        if thinking:
+            generation_config["thinkingConfig"] = thinking
         if response_schema:
             generation_config["responseMimeType"] = "application/json"
             generation_config["responseSchema"] = response_schema
@@ -73,8 +97,13 @@ class GeminiClient:
             raise GeminiError("API key de Gemini no disponible") from exc
 
         timeout = min(timeout_s or self.timeout_s, self.timeout_s)
-        raw = self._transport(API_URL.format(model=self.model), headers, body, timeout)
-        candidates = raw.get("candidates") or []
+        try:
+            raw = self._transport(API_URL.format(model=self.model), headers, body, timeout)
+        except LLMError:
+            raise
+        except Exception as exc:  # transporte inesperado: igual cae al fallback
+            raise GeminiError(f"Gemini no respondió: {exc}") from exc
+        candidates = raw.get("candidates") or [] if isinstance(raw, dict) else []
         content = candidates[0].get("content") if candidates else None
         if not content or not content.get("parts"):
             raise GeminiError("Gemini no devolvió contenido (posible bloqueo de seguridad)")
@@ -88,7 +117,7 @@ class GeminiClient:
             response_schema=schema,
             timeout_s=timeout_s,
         )
-        text = "".join(part.get("text", "") for part in content["parts"])
+        text = "".join(part.get("text", "") for part in content["parts"] if not part.get("thought"))
         try:
             data = json.loads(text)
         except ValueError as exc:
@@ -96,3 +125,35 @@ class GeminiClient:
         if not isinstance(data, dict):
             raise GeminiError("Gemini devolvió un JSON que no es objeto")
         return data
+
+    def chat(self, *, history: list[dict], system: str, tools: list[dict], timeout_s: float | None = None) -> LLMTurn:
+        """Una ronda del asistente con function calling sobre el historial neutral (ver llm_client)."""
+        content = self.generate(contents=_to_contents(history), system=system, tools=tools, timeout_s=timeout_s)
+        parts = content["parts"]
+        calls = [
+            ToolCall(
+                name=p["functionCall"]["name"], args=p["functionCall"].get("args") or {}, id=p["functionCall"].get("id")
+            )
+            for p in parts
+            if "functionCall" in p
+        ]
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+        return LLMTurn(text=text, tool_calls=calls, raw=parts)
+
+
+def _to_contents(history: list[dict]) -> list[dict]:
+    contents: list[dict] = []
+    for item in history:
+        if item["role"] == "user":
+            contents.append({"role": "user", "parts": [{"text": item["text"]}]})
+        elif item["role"] == "assistant":
+            contents.append({"role": "model", "parts": item["turn"].raw})  # incluye thoughtSignature si viene
+        elif item["role"] == "tool":
+            parts = []
+            for call, result in item["results"]:
+                response = {"name": call.name, "response": {"result": result}}
+                if call.id:
+                    response["id"] = call.id
+                parts.append({"functionResponse": response})
+            contents.append({"role": "user", "parts": parts})
+    return contents

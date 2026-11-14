@@ -159,7 +159,8 @@ class FleetSimulator:
         hours = self.scenario_hours(ts)
         readings = []
         for spec in self.fleet:
-            state = base_state(ts, self._rng, self.shifts)
+            state = base_state(ts, self._rng, self.shifts)  # se sortea siempre: misma secuencia del rng
+            state = spec.parked_state or state  # seed v4: en taller o en reserva no opera
             effect = self.effect(spec, hours) if spec.machine_id in self.targets else NO_EFFECT
             if state == "operating":
                 self._hours[spec.machine_id] += elapsed_h

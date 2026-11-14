@@ -1,6 +1,10 @@
 # Lambda ia-gemini: diagnóstico, resúmenes por rol, causa común, resumen del chat, reporte ejecutivo y asistente.
 # Cubre: RF-02.6, RF-10.3, RF-12.3, RF-14, RF-16.8, MH-MC-03. Dueño: Persona A (worker 3).
-# Fuera de la VPC (sale a generativelanguage.googleapis.com). Zip = services/ai/ia_gemini + capa común.
+# Fuera de la VPC (sale a generativelanguage.googleapis.com o al endpoint de Bedrock). Zip = services/ai/ia_gemini + capa común.
+#
+# Proveedor LLM configurable (llm_client.py): var.llm_provider = "gemini" (activo en el Learner Lab, donde LabRole
+# recibe AccessDenied en Bedrock) o "bedrock" (Converse, pago por token; requiere acceso al modelo habilitado y
+# bedrock:InvokeModel en el rol). El nombre `ia-gemini` se mantiene para no romper el ARN publicado en SSM.
 #
 # La API key de Google AI Studio NO va en Terraform. Tras el apply:
 #   aws secretsmanager put-secret-value --secret-id arquifusion/<stage>/gemini/api-key --secret-string '<API_KEY>'
@@ -12,6 +16,34 @@ locals {
     setsubtract(fileset(local.ia_gemini_dir, "*.py"), ["conftest.py"]),
     fileset(local.ia_gemini_dir, "prompts/*.md"),
   )
+}
+
+variable "llm_provider" {
+  description = "Proveedor LLM de ia-gemini: gemini | bedrock (RF-02.6, RF-14)"
+  type        = string
+  default     = "gemini"
+  validation {
+    condition     = contains(["gemini", "bedrock"], var.llm_provider)
+    error_message = "llm_provider debe ser gemini o bedrock."
+  }
+}
+
+variable "gemini_model" {
+  description = "Modelo de la Gemini API (baja latencia). El alias *-latest sobrevive a retiradas de versiones fijas."
+  type        = string
+  default     = "gemini-flash-lite-latest"
+}
+
+variable "bedrock_model_id" {
+  description = "Modelo de Bedrock Converse cuando llm_provider = bedrock"
+  type        = string
+  default     = "amazon.nova-micro-v1:0"
+}
+
+variable "llm_timeout_s" {
+  description = "Timeout por llamada al LLM. El asistente además usa un deadline global de 20 s (API Gateway corta a 29 s)"
+  type        = number
+  default     = 12
 }
 
 resource "aws_secretsmanager_secret" "gemini_api_key" {
@@ -40,7 +72,7 @@ resource "aws_cloudwatch_log_group" "ia_gemini" {
 
 resource "aws_lambda_function" "ia_gemini" {
   function_name    = local.ia_gemini_name
-  description      = "Cliente Gemini con fallback determinista (RF-02.6, RF-14)"
+  description      = "Cliente LLM (Gemini o Bedrock) con fallback determinista (RF-02.6, RF-14)"
   role             = local.lab_role
   runtime          = "python3.12"
   handler          = "handler.handler"
@@ -48,7 +80,7 @@ resource "aws_lambda_function" "ia_gemini" {
   source_code_hash = data.archive_file.ia_gemini.output_base64sha256
   layers           = [aws_lambda_layer_version.common.arn]
   memory_size      = 512
-  timeout          = 30 # API Gateway corta a los 29 s; Gemini tiene 8 s por llamada
+  timeout          = 30 # API Gateway corta a los 29 s; LLM_TIMEOUT_S por llamada y deadline de 20 s en el asistente
 
   tracing_config {
     mode = "Active"
@@ -58,8 +90,10 @@ resource "aws_lambda_function" "ia_gemini" {
     variables = merge(local.common_env, {
       POWERTOOLS_SERVICE_NAME = "ia-gemini"
       GEMINI_SECRET_NAME      = aws_secretsmanager_secret.gemini_api_key.name
-      GEMINI_MODEL            = "gemini-3.8-flash" # 2.5-flash: 404 "no longer available to new users"
-      GEMINI_TIMEOUT_S        = "8"
+      LLM_PROVIDER            = var.llm_provider
+      LLM_TIMEOUT_S           = tostring(var.llm_timeout_s)
+      GEMINI_MODEL            = var.gemini_model
+      BEDROCK_MODEL_ID        = var.bedrock_model_id
       TABLE_MACHINES          = local.tables.machines
       TABLE_INCIDENTS         = local.tables.incidents
       TABLE_INSIGHTS          = local.tables.insights
@@ -88,7 +122,7 @@ resource "aws_ssm_parameter" "ia_gemini_arn" {
 
 resource "aws_cloudwatch_metric_alarm" "ia_gemini_errors" {
   alarm_name          = "${local.ia_gemini_name}-errors"
-  alarm_description   = "ia-gemini con errores no controlados (los fallos de Gemini usan fallback y no cuentan)"
+  alarm_description   = "ia-gemini con errores no controlados (los fallos del LLM usan fallback y no cuentan)"
   namespace           = "AWS/Lambda"
   metric_name         = "Errors"
   dimensions          = { FunctionName = aws_lambda_function.ia_gemini.function_name }

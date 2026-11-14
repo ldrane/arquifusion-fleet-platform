@@ -47,7 +47,7 @@ resource "aws_lambda_event_source_mapping" "procesar_sqs" {
   event_source_arn                   = aws_sqs_queue.ingest.arn
   function_name                      = aws_lambda_function.procesar.arn
   batch_size                         = 100
-  maximum_batching_window_in_seconds = 5
+  maximum_batching_window_in_seconds = 2 # antes 5: menos latencia lectura -> estado/alerta; mismo costo por lectura
   function_response_types            = ["ReportBatchItemFailures"]
 
   scaling_config {

@@ -4,23 +4,23 @@
     "operation_id": "OP-01",
     "model": "CAT-336",
     "type": "excavator",
-    "zone": "oeste",
+    "zone": "sur",
     "location": {
-      "lat": -11.951418,
-      "lon": -76.429874,
-      "zone": "oeste"
+      "lat": -11.981418,
+      "lon": -76.394874,
+      "zone": "sur"
     },
     "home_location": {
-      "lat": -11.951418,
-      "lon": -76.429874,
-      "zone": "oeste"
+      "lat": -11.981418,
+      "lon": -76.394874,
+      "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 86,
+    "health_score": 95,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 5697.7,
+    "operating_hours": 4472.4,
     "last_maintenance_at": "2026-11-06",
     "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
@@ -28,92 +28,30 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "EX-002",
     "operation_id": "OP-01",
     "model": "KOM-PC2000",
     "type": "excavator",
-    "zone": "este",
+    "zone": "norte",
     "location": {
-      "lat": -11.942215,
-      "lon": -76.372532,
-      "zone": "este"
+      "lat": -11.909544,
+      "lon": -76.395345,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.942215,
-      "lon": -76.372532,
-      "zone": "este"
+      "lat": -11.909544,
+      "lon": -76.395345,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 89,
+    "health_score": 81,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 5589.3,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-11-23",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-003",
-    "operation_id": "OP-01",
-    "model": "CAT-336",
-    "type": "excavator",
-    "zone": "sur",
-    "location": {
-      "lat": -11.989238,
-      "lon": -76.395557,
-      "zone": "sur"
-    },
-    "home_location": {
-      "lat": -11.989238,
-      "lon": -76.395557,
-      "zone": "sur"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 86,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 11578.1,
-    "last_maintenance_at": "2026-11-01",
-    "next_maintenance_at": "2026-11-17",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-004",
-    "operation_id": "OP-01",
-    "model": "KOM-PC2000",
-    "type": "excavator",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.959712,
-      "lon": -76.435601,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.959712,
-      "lon": -76.435601,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 95,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 1699.7,
+    "operating_hours": 16477.7,
     "last_maintenance_at": "2026-11-03",
     "next_maintenance_at": "2026-11-19",
     "failure_probability": null,
@@ -121,61 +59,30 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "EX-005",
+    "machine_id": "EX-003",
     "operation_id": "OP-01",
-    "model": "CAT-336",
-    "type": "excavator",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.941151,
-      "lon": -76.427445,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.941151,
-      "lon": -76.427445,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 91,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 13120.1,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-11-23",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-006",
-    "operation_id": "OP-01",
-    "model": "KOM-PC2000",
+    "model": "HIT-EX1200",
     "type": "excavator",
     "zone": "sur",
     "location": {
-      "lat": -11.981582,
-      "lon": -76.389715,
+      "lat": -11.985018,
+      "lon": -76.406004,
       "zone": "sur"
     },
     "home_location": {
-      "lat": -11.981582,
-      "lon": -76.389715,
+      "lat": -11.985018,
+      "lon": -76.406004,
       "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 85,
+    "health_score": 89,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 14298.3,
+    "operating_hours": 2121.4,
     "last_maintenance_at": "2026-11-11",
     "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
@@ -183,301 +90,115 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "EX-007",
+    "machine_id": "EX-004",
     "operation_id": "OP-01",
     "model": "CAT-336",
     "type": "excavator",
     "zone": "norte",
     "location": {
-      "lat": -11.918826,
-      "lon": -76.404523,
+      "lat": -11.910611,
+      "lon": -76.400173,
       "zone": "norte"
     },
     "home_location": {
-      "lat": -11.918826,
-      "lon": -76.404523,
+      "lat": -11.910611,
+      "lon": -76.400173,
       "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 85,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 4353.0,
-    "last_maintenance_at": "2026-11-09",
-    "next_maintenance_at": "2026-11-25",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-008",
-    "operation_id": "OP-01",
-    "model": "KOM-PC2000",
-    "type": "excavator",
-    "zone": "norte",
-    "location": {
-      "lat": -11.92694,
-      "lon": -76.398689,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.92694,
-      "lon": -76.398689,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 97,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 2572.2,
-    "last_maintenance_at": "2026-11-02",
-    "next_maintenance_at": "2026-11-18",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-009",
-    "operation_id": "OP-01",
-    "model": "CAT-336",
-    "type": "excavator",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.94424,
-      "lon": -76.439336,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.94424,
-      "lon": -76.439336,
-      "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
     "health_score": 92,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 4432.2,
-    "last_maintenance_at": "2026-11-02",
-    "next_maintenance_at": "2026-11-18",
+    "operating_hours": 6983.9,
+    "last_maintenance_at": "2026-11-01",
+    "next_maintenance_at": "2026-11-17",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "EX-010",
+    "machine_id": "EX-005",
     "operation_id": "OP-01",
     "model": "KOM-PC2000",
     "type": "excavator",
-    "zone": "este",
+    "zone": "sur",
     "location": {
-      "lat": -11.947743,
-      "lon": -76.359451,
-      "zone": "este"
+      "lat": -11.981582,
+      "lon": -76.389715,
+      "zone": "sur"
     },
     "home_location": {
-      "lat": -11.947743,
-      "lon": -76.359451,
-      "zone": "este"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 90,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 14113.1,
-    "last_maintenance_at": "2026-10-31",
-    "next_maintenance_at": "2026-11-16",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-011",
-    "operation_id": "OP-01",
-    "model": "CAT-336",
-    "type": "excavator",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.946206,
-      "lon": -76.429141,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.946206,
-      "lon": -76.429141,
-      "zone": "oeste"
+      "lat": -11.981582,
+      "lon": -76.389715,
+      "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
     "health_score": 85,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 7985.8,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-12",
+    "operating_hours": 22026.3,
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "EX-012",
+    "machine_id": "EX-006",
     "operation_id": "OP-01",
-    "model": "KOM-PC2000",
+    "model": "LIE-R9400",
     "type": "excavator",
-    "zone": "norte",
+    "zone": "sur",
     "location": {
-      "lat": -11.911056,
-      "lon": -76.400245,
-      "zone": "norte"
+      "lat": -11.971149,
+      "lon": -76.395147,
+      "zone": "sur"
     },
     "home_location": {
-      "lat": -11.911056,
-      "lon": -76.400245,
-      "zone": "norte"
+      "lat": -11.971149,
+      "lon": -76.395147,
+      "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 86,
+    "health_score": 97,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 6447.0,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-11-22",
+    "operating_hours": 3893.8,
+    "last_maintenance_at": "2026-11-09",
+    "next_maintenance_at": "2026-12-10",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "EX-013",
+    "machine_id": "EX-007",
     "operation_id": "OP-01",
     "model": "CAT-336",
     "type": "excavator",
     "zone": "oeste",
     "location": {
-      "lat": -11.950762,
-      "lon": -76.444153,
+      "lat": -11.948616,
+      "lon": -76.439456,
       "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.950762,
-      "lon": -76.444153,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 93,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 5073.9,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-11-22",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-014",
-    "operation_id": "OP-01",
-    "model": "KOM-PC2000",
-    "type": "excavator",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.953125,
-      "lon": -76.446389,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.953125,
-      "lon": -76.446389,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 87,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 1564.2,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-12",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-015",
-    "operation_id": "OP-01",
-    "model": "CAT-336",
-    "type": "excavator",
-    "zone": "norte",
-    "location": {
-      "lat": -11.926246,
-      "lon": -76.398094,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.926246,
-      "lon": -76.398094,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 87,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 2029.9,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-11-20",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-016",
-    "operation_id": "OP-01",
-    "model": "KOM-PC2000",
-    "type": "excavator",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.960296,
-      "lon": -76.435259,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.960296,
-      "lon": -76.435259,
+      "lat": -11.948616,
+      "lon": -76.439456,
       "zone": "oeste"
     },
     "status": "operational",
@@ -485,7 +206,100 @@
     "health_score": 89,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 16279.6,
+    "operating_hours": 11167.2,
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-008",
+    "operation_id": "OP-01",
+    "model": "HIT-EX1200",
+    "type": "excavator",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.94424,
+      "lon": -76.439336,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.94424,
+      "lon": -76.439336,
+      "zone": "oeste"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 90,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 3043.8,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-009",
+    "operation_id": "OP-01",
+    "model": "KOM-PC2000",
+    "type": "excavator",
+    "zone": "sur",
+    "location": {
+      "lat": -11.974528,
+      "lon": -76.399974,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.974528,
+      "lon": -76.399974,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 84,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 19129.5,
+    "last_maintenance_at": "2026-10-31",
+    "next_maintenance_at": "2026-11-16",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-010",
+    "operation_id": "OP-01",
+    "model": "CAT-336",
+    "type": "excavator",
+    "zone": "este",
+    "location": {
+      "lat": -11.946626,
+      "lon": -76.367254,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.946626,
+      "lon": -76.367254,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 91,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 6390.6,
     "last_maintenance_at": "2026-11-03",
     "next_maintenance_at": "2026-11-19",
     "failure_probability": null,
@@ -493,7 +307,193 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-011",
+    "operation_id": "OP-01",
+    "model": "CAT-336",
+    "type": "excavator",
+    "zone": "norte",
+    "location": {
+      "lat": -11.915987,
+      "lon": -76.400891,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.915987,
+      "lon": -76.400891,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 91,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 3656.9,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-012",
+    "operation_id": "OP-01",
+    "model": "KOM-PC2000",
+    "type": "excavator",
+    "zone": "sur",
+    "location": {
+      "lat": -11.986111,
+      "lon": -76.39217,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.986111,
+      "lon": -76.39217,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 86,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 8753.0,
+    "last_maintenance_at": "2026-10-30",
+    "next_maintenance_at": "2026-11-15",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-013",
+    "operation_id": "OP-01",
+    "model": "HIT-EX1200",
+    "type": "excavator",
+    "zone": "norte",
+    "location": {
+      "lat": -11.918436,
+      "lon": -76.392355,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.918436,
+      "lon": -76.392355,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 95,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 2930.2,
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-014",
+    "operation_id": "OP-01",
+    "model": "CAT-336",
+    "type": "excavator",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.959445,
+      "lon": -76.435467,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.959445,
+      "lon": -76.435467,
+      "zone": "oeste"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 88,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 6174.4,
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-015",
+    "operation_id": "OP-01",
+    "model": "KOM-PC2000",
+    "type": "excavator",
+    "zone": "norte",
+    "location": {
+      "lat": -11.922668,
+      "lon": -76.398613,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.922668,
+      "lon": -76.398613,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 77,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 24372.0,
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-016",
+    "operation_id": "OP-01",
+    "model": "LIE-R9400",
+    "type": "excavator",
+    "zone": "norte",
+    "location": {
+      "lat": -11.913804,
+      "lon": -76.39469,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.913804,
+      "lon": -76.39469,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 87,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 6576.3,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-12-03",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
   },
   {
     "machine_id": "EX-017",
@@ -502,21 +502,21 @@
     "type": "excavator",
     "zone": "este",
     "location": {
-      "lat": -11.953938,
-      "lon": -76.369142,
+      "lat": -11.954053,
+      "lon": -76.367608,
       "zone": "este"
     },
     "home_location": {
-      "lat": -11.953938,
-      "lon": -76.369142,
+      "lat": -11.954053,
+      "lon": -76.367608,
       "zone": "este"
     },
-    "status": "operational",
+    "status": "stopped",
     "severity": "info",
-    "health_score": 90,
+    "health_score": 87,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 17837.3,
+    "operating_hours": 8184.0,
     "last_maintenance_at": "2026-11-13",
     "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
@@ -524,84 +524,115 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "EX-018",
     "operation_id": "OP-01",
-    "model": "KOM-PC2000",
+    "model": "HIT-EX1200",
     "type": "excavator",
     "zone": "este",
     "location": {
-      "lat": -11.952668,
-      "lon": -76.363613,
+      "lat": -11.950637,
+      "lon": -76.375783,
       "zone": "este"
     },
     "home_location": {
-      "lat": -11.952668,
-      "lon": -76.363613,
+      "lat": -11.950637,
+      "lon": -76.375783,
       "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 85,
+    "health_score": 91,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 4527.1,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-11-20",
+    "operating_hours": 2847.9,
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-11-24",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "EX-019",
+    "operation_id": "OP-01",
+    "model": "KOM-PC2000",
+    "type": "excavator",
+    "zone": "norte",
+    "location": {
+      "lat": -11.913383,
+      "lon": -76.393383,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.913383,
+      "lon": -76.393383,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 81,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 17642.5,
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-11-24",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "EX-020",
     "operation_id": "OP-01",
     "model": "CAT-336",
     "type": "excavator",
     "zone": "norte",
     "location": {
-      "lat": -11.908373,
-      "lon": -76.398734,
+      "lat": -11.91315,
+      "lon": -76.390992,
       "zone": "norte"
     },
     "home_location": {
-      "lat": -11.908373,
-      "lon": -76.398734,
+      "lat": -11.91315,
+      "lon": -76.390992,
       "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 99,
+    "health_score": 88,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 3190.9,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-11-22",
+    "operating_hours": 7220.4,
+    "last_maintenance_at": "2026-11-10",
+    "next_maintenance_at": "2026-11-26",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "EX-020",
+    "machine_id": "EX-021",
     "operation_id": "OP-01",
-    "model": "KOM-PC2000",
+    "model": "CAT-336",
     "type": "excavator",
     "zone": "este",
     "location": {
-      "lat": -11.948405,
-      "lon": -76.356745,
+      "lat": -11.942614,
+      "lon": -76.361935,
       "zone": "este"
     },
     "home_location": {
-      "lat": -11.948405,
-      "lon": -76.356745,
+      "lat": -11.942614,
+      "lon": -76.361935,
       "zone": "este"
     },
     "status": "operational",
@@ -609,77 +640,46 @@
     "health_score": 93,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 10326.8,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-11-22",
+    "operating_hours": 4234.2,
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "EX-021",
-    "operation_id": "OP-01",
-    "model": "CAT-336",
-    "type": "excavator",
-    "zone": "sur",
-    "location": {
-      "lat": -11.989252,
-      "lon": -76.396694,
-      "zone": "sur"
-    },
-    "home_location": {
-      "lat": -11.989252,
-      "lon": -76.396694,
-      "zone": "sur"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 88,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 13358.3,
-    "last_maintenance_at": "2026-11-02",
-    "next_maintenance_at": "2026-11-18",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "EX-022",
     "operation_id": "OP-01",
     "model": "KOM-PC2000",
     "type": "excavator",
-    "zone": "este",
+    "zone": "sur",
     "location": {
-      "lat": -11.960637,
-      "lon": -76.369076,
-      "zone": "este"
+      "lat": -11.968608,
+      "lon": -76.397966,
+      "zone": "sur"
     },
     "home_location": {
-      "lat": -11.960637,
-      "lon": -76.369076,
-      "zone": "este"
+      "lat": -11.968608,
+      "lon": -76.397966,
+      "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
     "health_score": 87,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 9244.4,
-    "last_maintenance_at": "2026-10-25",
-    "next_maintenance_at": "2026-11-10",
+    "operating_hours": 13435.9,
+    "last_maintenance_at": "2026-11-12",
+    "next_maintenance_at": "2026-11-28",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "EX-023",
@@ -703,68 +703,68 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 3582.1,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "EX-024",
     "operation_id": "OP-01",
-    "model": "KOM-PC2000",
+    "model": "CAT-336",
     "type": "excavator",
-    "zone": "oeste",
+    "zone": "norte",
     "location": {
-      "lat": -11.946152,
-      "lon": -76.438819,
-      "zone": "oeste"
+      "lat": -11.91352,
+      "lon": -76.397914,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.946152,
-      "lon": -76.438819,
-      "zone": "oeste"
+      "lat": -11.91352,
+      "lon": -76.397914,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 84,
+    "health_score": 86,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 4592.1,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
+    "operating_hours": 13352.5,
+    "last_maintenance_at": "2026-10-31",
+    "next_maintenance_at": "2026-11-16",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "EX-025",
     "operation_id": "OP-01",
-    "model": "CAT-336",
+    "model": "KOM-PC2000",
     "type": "excavator",
-    "zone": "oeste",
+    "zone": "norte",
     "location": {
-      "lat": -11.954185,
-      "lon": -76.442584,
-      "zone": "oeste"
+      "lat": -11.92507,
+      "lon": -76.408937,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.954185,
-      "lon": -76.442584,
-      "zone": "oeste"
+      "lat": -11.92507,
+      "lon": -76.408937,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 98,
+    "health_score": 91,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 11431.0,
+    "operating_hours": 10644.5,
     "last_maintenance_at": "2026-11-12",
     "next_maintenance_at": "2026-11-28",
     "failure_probability": null,
@@ -772,92 +772,61 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-001",
     "operation_id": "OP-01",
     "model": "CAT-793F",
     "type": "mining_truck",
-    "zone": "sur",
+    "zone": "oeste",
     "location": {
-      "lat": -11.982299,
-      "lon": -76.395111,
-      "zone": "sur"
+      "lat": -11.952216,
+      "lon": -76.442718,
+      "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.982299,
-      "lon": -76.395111,
-      "zone": "sur"
+      "lat": -11.952216,
+      "lon": -76.442718,
+      "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 98,
+    "health_score": 79,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 7533.2,
-    "last_maintenance_at": "2026-10-30",
-    "next_maintenance_at": "2026-11-30",
+    "operating_hours": 22035.1,
+    "last_maintenance_at": "2026-10-18",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-002",
     "operation_id": "OP-01",
     "model": "KOM-930E",
     "type": "mining_truck",
-    "zone": "sur",
+    "zone": "oeste",
     "location": {
-      "lat": -11.98455,
-      "lon": -76.40161,
-      "zone": "sur"
+      "lat": -11.961546,
+      "lon": -76.43734,
+      "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.98455,
-      "lon": -76.40161,
-      "zone": "sur"
+      "lat": -11.961546,
+      "lon": -76.43734,
+      "zone": "oeste"
     },
-    "status": "operational",
+    "status": "stopped",
     "severity": "info",
-    "health_score": 95,
+    "health_score": 85,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 5470.9,
-    "last_maintenance_at": "2026-10-23",
-    "next_maintenance_at": "2026-11-23",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-003",
-    "operation_id": "OP-01",
-    "model": "CAT-793F",
-    "type": "mining_truck",
-    "zone": "sur",
-    "location": {
-      "lat": -11.986408,
-      "lon": -76.39012,
-      "zone": "sur"
-    },
-    "home_location": {
-      "lat": -11.986408,
-      "lon": -76.39012,
-      "zone": "sur"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 99,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 7078.0,
+    "operating_hours": 13466.4,
     "last_maintenance_at": "2026-10-27",
     "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
@@ -865,100 +834,131 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "CM-004",
+    "machine_id": "CM-003",
     "operation_id": "OP-01",
-    "model": "KOM-930E",
+    "model": "LIE-T284",
     "type": "mining_truck",
-    "zone": "sur",
+    "zone": "norte",
     "location": {
-      "lat": -11.98507,
-      "lon": -76.408937,
-      "zone": "sur"
+      "lat": -11.913634,
+      "lon": -76.405377,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.98507,
-      "lon": -76.408937,
-      "zone": "sur"
+      "lat": -11.913634,
+      "lon": -76.405377,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 85,
+    "health_score": 93,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 13001.3,
-    "last_maintenance_at": "2026-11-10",
-    "next_maintenance_at": "2026-12-11",
+    "operating_hours": 2093.0,
+    "last_maintenance_at": "2026-10-26",
+    "next_maintenance_at": "2026-11-26",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-004",
+    "operation_id": "OP-01",
+    "model": "BEL-75131",
+    "type": "mining_truck",
+    "zone": "sur",
+    "location": {
+      "lat": -11.981483,
+      "lon": -76.389827,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.981483,
+      "lon": -76.389827,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 80,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 21106.1,
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-29",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
   },
   {
     "machine_id": "CM-005",
     "operation_id": "OP-01",
     "model": "CAT-793F",
     "type": "mining_truck",
-    "zone": "sur",
+    "zone": "norte",
     "location": {
-      "lat": -11.990343,
-      "lon": -76.39415,
-      "zone": "sur"
+      "lat": -11.928189,
+      "lon": -76.406558,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.990343,
-      "lon": -76.39415,
-      "zone": "sur"
+      "lat": -11.928189,
+      "lon": -76.406558,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 86,
+    "health_score": 83,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 8888.1,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-12-12",
+    "operating_hours": 19802.1,
+    "last_maintenance_at": "2026-10-29",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-006",
     "operation_id": "OP-01",
     "model": "KOM-930E",
     "type": "mining_truck",
-    "zone": "sur",
+    "zone": "norte",
     "location": {
-      "lat": -11.989268,
-      "lon": -76.406038,
-      "zone": "sur"
+      "lat": -11.919418,
+      "lon": -76.402364,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.989268,
-      "lon": -76.406038,
-      "zone": "sur"
+      "lat": -11.919418,
+      "lon": -76.402364,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 94,
+    "health_score": 93,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 13349.8,
-    "last_maintenance_at": "2026-10-28",
-    "next_maintenance_at": "2026-11-28",
+    "operating_hours": 8876.8,
+    "last_maintenance_at": "2026-10-16",
+    "next_maintenance_at": "2026-11-16",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-007",
@@ -967,176 +967,21 @@
     "type": "mining_truck",
     "zone": "oeste",
     "location": {
-      "lat": -11.958,
-      "lon": -76.443254,
+      "lat": -11.945151,
+      "lon": -76.431587,
       "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.958,
-      "lon": -76.443254,
+      "lat": -11.945151,
+      "lon": -76.431587,
       "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 99,
+    "health_score": 85,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 7202.1,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-27",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-008",
-    "operation_id": "OP-01",
-    "model": "KOM-930E",
-    "type": "mining_truck",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.954968,
-      "lon": -76.433449,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.954968,
-      "lon": -76.433449,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 91,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 17619.8,
-    "last_maintenance_at": "2026-10-28",
-    "next_maintenance_at": "2026-11-28",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-009",
-    "operation_id": "OP-01",
-    "model": "CAT-793F",
-    "type": "mining_truck",
-    "zone": "sur",
-    "location": {
-      "lat": -11.983911,
-      "lon": -76.400513,
-      "zone": "sur"
-    },
-    "home_location": {
-      "lat": -11.983911,
-      "lon": -76.400513,
-      "zone": "sur"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 93,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 12101.8,
-    "last_maintenance_at": "2026-11-02",
-    "next_maintenance_at": "2026-12-03",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-010",
-    "operation_id": "OP-01",
-    "model": "KOM-930E",
-    "type": "mining_truck",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.943892,
-      "lon": -76.435632,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.943892,
-      "lon": -76.435632,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 89,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 3306.9,
-    "last_maintenance_at": "2026-10-18",
-    "next_maintenance_at": "2026-11-18",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-011",
-    "operation_id": "OP-01",
-    "model": "CAT-793F",
-    "type": "mining_truck",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.949269,
-      "lon": -76.432236,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.949269,
-      "lon": -76.432236,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 91,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 14438.6,
-    "last_maintenance_at": "2026-10-15",
-    "next_maintenance_at": "2026-11-15",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-012",
-    "operation_id": "OP-01",
-    "model": "KOM-930E",
-    "type": "mining_truck",
-    "zone": "norte",
-    "location": {
-      "lat": -11.915151,
-      "lon": -76.396587,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.915151,
-      "lon": -76.396587,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 97,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 17922.1,
+    "operating_hours": 20574.0,
     "last_maintenance_at": "2026-11-08",
     "next_maintenance_at": "2026-12-09",
     "failure_probability": null,
@@ -1144,61 +989,123 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "CM-013",
+    "machine_id": "CM-008",
     "operation_id": "OP-01",
-    "model": "CAT-793F",
+    "model": "LIE-T284",
     "type": "mining_truck",
-    "zone": "este",
+    "zone": "oeste",
     "location": {
-      "lat": -11.952398,
-      "lon": -76.375746,
-      "zone": "este"
+      "lat": -11.947604,
+      "lon": -76.435369,
+      "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.952398,
-      "lon": -76.375746,
-      "zone": "este"
+      "lat": -11.947604,
+      "lon": -76.435369,
+      "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 85,
+    "health_score": 90,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 13952.7,
-    "last_maintenance_at": "2026-10-30",
-    "next_maintenance_at": "2026-11-30",
+    "operating_hours": 1687.0,
+    "last_maintenance_at": "2026-10-31",
+    "next_maintenance_at": "2026-12-01",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "CM-014",
+    "machine_id": "CM-009",
+    "operation_id": "OP-01",
+    "model": "BEL-75131",
+    "type": "mining_truck",
+    "zone": "este",
+    "location": {
+      "lat": -11.961622,
+      "lon": -76.363228,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.961622,
+      "lon": -76.363228,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 81,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 20944.4,
+    "last_maintenance_at": "2026-11-10",
+    "next_maintenance_at": "2026-12-05",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-010",
     "operation_id": "OP-01",
     "model": "KOM-930E",
     "type": "mining_truck",
     "zone": "norte",
     "location": {
-      "lat": -11.931622,
-      "lon": -76.398228,
+      "lat": -11.921876,
+      "lon": -76.400092,
       "zone": "norte"
     },
     "home_location": {
-      "lat": -11.931622,
-      "lon": -76.398228,
+      "lat": -11.921876,
+      "lon": -76.400092,
       "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 94,
+    "health_score": 86,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 12805.4,
+    "operating_hours": 14873.6,
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-12-14",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-011",
+    "operation_id": "OP-01",
+    "model": "CAT-793F",
+    "type": "mining_truck",
+    "zone": "sur",
+    "location": {
+      "lat": -11.981555,
+      "lon": -76.407167,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.981555,
+      "lon": -76.407167,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 79,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 22234.8,
     "last_maintenance_at": "2026-11-09",
     "next_maintenance_at": "2026-12-10",
     "failure_probability": null,
@@ -1206,115 +1113,22 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "CM-015",
-    "operation_id": "OP-01",
-    "model": "CAT-793F",
-    "type": "mining_truck",
-    "zone": "sur",
-    "location": {
-      "lat": -11.981801,
-      "lon": -76.400325,
-      "zone": "sur"
-    },
-    "home_location": {
-      "lat": -11.981801,
-      "lon": -76.400325,
-      "zone": "sur"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 91,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 1904.3,
-    "last_maintenance_at": "2026-11-08",
-    "next_maintenance_at": "2026-12-09",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-016",
-    "operation_id": "OP-01",
-    "model": "KOM-930E",
-    "type": "mining_truck",
-    "zone": "este",
-    "location": {
-      "lat": -11.94945,
-      "lon": -76.365346,
-      "zone": "este"
-    },
-    "home_location": {
-      "lat": -11.94945,
-      "lon": -76.365346,
-      "zone": "este"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 86,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 10311.0,
-    "last_maintenance_at": "2026-10-18",
-    "next_maintenance_at": "2026-11-18",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-017",
+    "machine_id": "CM-012",
     "operation_id": "OP-01",
     "model": "CAT-793F",
     "type": "mining_truck",
     "zone": "este",
     "location": {
-      "lat": -11.953733,
-      "lon": -76.366984,
+      "lat": -11.941961,
+      "lon": -76.360995,
       "zone": "este"
     },
     "home_location": {
-      "lat": -11.953733,
-      "lon": -76.366984,
-      "zone": "este"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 88,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 4411.1,
-    "last_maintenance_at": "2026-10-29",
-    "next_maintenance_at": "2026-11-29",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-018",
-    "operation_id": "OP-01",
-    "model": "KOM-930E",
-    "type": "mining_truck",
-    "zone": "este",
-    "location": {
-      "lat": -11.959063,
-      "lon": -76.360009,
-      "zone": "este"
-    },
-    "home_location": {
-      "lat": -11.959063,
-      "lon": -76.360009,
+      "lat": -11.941961,
+      "lon": -76.360995,
       "zone": "este"
     },
     "status": "operational",
@@ -1322,69 +1136,38 @@
     "health_score": 85,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 7643.8,
-    "last_maintenance_at": "2026-10-18",
-    "next_maintenance_at": "2026-11-18",
+    "operating_hours": 19777.5,
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-12-07",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "CM-019",
-    "operation_id": "OP-01",
-    "model": "CAT-793F",
-    "type": "mining_truck",
-    "zone": "norte",
-    "location": {
-      "lat": -11.925462,
-      "lon": -76.40418,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.925462,
-      "lon": -76.40418,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 94,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 17484.3,
-    "last_maintenance_at": "2026-10-18",
-    "next_maintenance_at": "2026-11-18",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-020",
+    "machine_id": "CM-013",
     "operation_id": "OP-01",
     "model": "KOM-930E",
     "type": "mining_truck",
     "zone": "sur",
     "location": {
-      "lat": -11.975439,
-      "lon": -76.402637,
+      "lat": -11.973247,
+      "lon": -76.393113,
       "zone": "sur"
     },
     "home_location": {
-      "lat": -11.975439,
-      "lon": -76.402637,
+      "lat": -11.973247,
+      "lon": -76.393113,
       "zone": "sur"
     },
-    "status": "operational",
+    "status": "maintenance",
     "severity": "info",
-    "health_score": 97,
+    "health_score": 80,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 9782.5,
+    "operating_hours": 12921.3,
     "last_maintenance_at": "2026-10-08",
     "next_maintenance_at": "2026-11-08",
     "failure_probability": null,
@@ -1392,61 +1175,247 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "CM-021",
+    "machine_id": "CM-014",
     "operation_id": "OP-01",
-    "model": "CAT-793F",
+    "model": "LIE-T284",
     "type": "mining_truck",
-    "zone": "sur",
+    "zone": "este",
     "location": {
-      "lat": -11.974995,
-      "lon": -76.410805,
-      "zone": "sur"
+      "lat": -11.945439,
+      "lon": -76.367637,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.974995,
-      "lon": -76.410805,
-      "zone": "sur"
+      "lat": -11.945439,
+      "lon": -76.367637,
+      "zone": "este"
     },
-    "status": "operational",
+    "status": "maintenance",
     "severity": "info",
-    "health_score": 96,
+    "health_score": 87,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 15532.9,
-    "last_maintenance_at": "2026-11-10",
-    "next_maintenance_at": "2026-12-11",
+    "operating_hours": 2376.7,
+    "last_maintenance_at": "2026-10-08",
+    "next_maintenance_at": "2026-11-08",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "CM-022",
+    "machine_id": "CM-015",
     "operation_id": "OP-01",
-    "model": "KOM-930E",
+    "model": "BEL-75131",
     "type": "mining_truck",
-    "zone": "oeste",
+    "zone": "sur",
     "location": {
-      "lat": -11.945561,
-      "lon": -76.445241,
-      "zone": "oeste"
+      "lat": -11.973991,
+      "lon": -76.407477,
+      "zone": "sur"
     },
     "home_location": {
-      "lat": -11.945561,
-      "lon": -76.445241,
-      "zone": "oeste"
+      "lat": -11.973991,
+      "lon": -76.407477,
+      "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 86,
+    "health_score": 78,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 3532.7,
+    "operating_hours": 27954.1,
+    "last_maintenance_at": "2026-10-26",
+    "next_maintenance_at": "2026-11-20",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-016",
+    "operation_id": "OP-01",
+    "model": "CAT-793F",
+    "type": "mining_truck",
+    "zone": "sur",
+    "location": {
+      "lat": -11.982415,
+      "lon": -76.396549,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.982415,
+      "lon": -76.396549,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 79,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 26975.7,
+    "last_maintenance_at": "2026-11-05",
+    "next_maintenance_at": "2026-12-06",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-017",
+    "operation_id": "OP-01",
+    "model": "KOM-930E",
+    "type": "mining_truck",
+    "zone": "este",
+    "location": {
+      "lat": -11.949515,
+      "lon": -76.373549,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.949515,
+      "lon": -76.373549,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 81,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 20612.2,
+    "last_maintenance_at": "2026-10-29",
+    "next_maintenance_at": "2026-11-29",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-018",
+    "operation_id": "OP-01",
+    "model": "CAT-793F",
+    "type": "mining_truck",
+    "zone": "sur",
+    "location": {
+      "lat": -11.986133,
+      "lon": -76.390695,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.986133,
+      "lon": -76.390695,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 83,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 19868.5,
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-12-09",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-019",
+    "operation_id": "OP-01",
+    "model": "LIE-T284",
+    "type": "mining_truck",
+    "zone": "sur",
+    "location": {
+      "lat": -11.984061,
+      "lon": -76.403162,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.984061,
+      "lon": -76.403162,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 93,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 2601.0,
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-12-14",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-020",
+    "operation_id": "OP-01",
+    "model": "BEL-75131",
+    "type": "mining_truck",
+    "zone": "sur",
+    "location": {
+      "lat": -11.987459,
+      "lon": -76.391736,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.987459,
+      "lon": -76.391736,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 82,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 21028.0,
+    "last_maintenance_at": "2026-10-24",
+    "next_maintenance_at": "2026-11-18",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-021",
+    "operation_id": "OP-01",
+    "model": "KOM-930E",
+    "type": "mining_truck",
+    "zone": "sur",
+    "location": {
+      "lat": -11.980165,
+      "lon": -76.400459,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.980165,
+      "lon": -76.400459,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 89,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 12061.5,
     "last_maintenance_at": "2026-10-27",
     "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
@@ -1454,7 +1423,38 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-022",
+    "operation_id": "OP-01",
+    "model": "CAT-793F",
+    "type": "mining_truck",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.94503,
+      "lon": -76.444346,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.94503,
+      "lon": -76.444346,
+      "zone": "oeste"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 79,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 19971.4,
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-12-14",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
   },
   {
     "machine_id": "CM-023",
@@ -1463,21 +1463,83 @@
     "type": "mining_truck",
     "zone": "oeste",
     "location": {
-      "lat": -11.954479,
-      "lon": -76.434368,
+      "lat": -11.951914,
+      "lon": -76.433395,
       "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.954479,
-      "lon": -76.434368,
+      "lat": -11.951914,
+      "lon": -76.433395,
       "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 93,
+    "health_score": 80,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 9601.1,
+    "operating_hours": 20710.5,
+    "last_maintenance_at": "2026-10-22",
+    "next_maintenance_at": "2026-11-22",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-024",
+    "operation_id": "OP-01",
+    "model": "KOM-930E",
+    "type": "mining_truck",
+    "zone": "norte",
+    "location": {
+      "lat": -11.92808,
+      "lon": -76.402232,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.92808,
+      "lon": -76.402232,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 90,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 7185.5,
+    "last_maintenance_at": "2026-10-17",
+    "next_maintenance_at": "2026-11-17",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CM-025",
+    "operation_id": "OP-01",
+    "model": "LIE-T284",
+    "type": "mining_truck",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.944384,
+      "lon": -76.424996,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.944384,
+      "lon": -76.424996,
+      "zone": "oeste"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 96,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 1633.0,
     "last_maintenance_at": "2026-11-03",
     "next_maintenance_at": "2026-12-04",
     "failure_probability": null,
@@ -1485,131 +1547,69 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-024",
-    "operation_id": "OP-01",
-    "model": "KOM-930E",
-    "type": "mining_truck",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.95621,
-      "lon": -76.435172,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.95621,
-      "lon": -76.435172,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 86,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 3170.7,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-27",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CM-025",
-    "operation_id": "OP-01",
-    "model": "CAT-793F",
-    "type": "mining_truck",
-    "zone": "norte",
-    "location": {
-      "lat": -11.918261,
-      "lon": -76.398977,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.918261,
-      "lon": -76.398977,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 84,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 17486.8,
-    "last_maintenance_at": "2026-10-18",
-    "next_maintenance_at": "2026-11-18",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-026",
     "operation_id": "OP-01",
-    "model": "KOM-930E",
+    "model": "BEL-75131",
     "type": "mining_truck",
     "zone": "norte",
     "location": {
-      "lat": -11.909865,
-      "lon": -76.40028,
+      "lat": -11.924188,
+      "lon": -76.391492,
       "zone": "norte"
     },
     "home_location": {
-      "lat": -11.909865,
-      "lon": -76.40028,
+      "lat": -11.924188,
+      "lon": -76.391492,
       "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 84,
+    "health_score": 83,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 6564.6,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-12-05",
+    "operating_hours": 19803.8,
+    "last_maintenance_at": "2026-11-01",
+    "next_maintenance_at": "2026-11-26",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-027",
     "operation_id": "OP-01",
     "model": "CAT-793F",
     "type": "mining_truck",
-    "zone": "oeste",
+    "zone": "este",
     "location": {
-      "lat": -11.956828,
-      "lon": -76.429314,
-      "zone": "oeste"
+      "lat": -11.946405,
+      "lon": -76.359754,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.956828,
-      "lon": -76.429314,
-      "zone": "oeste"
+      "lat": -11.946405,
+      "lon": -76.359754,
+      "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 97,
+    "health_score": 84,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 10375.9,
-    "last_maintenance_at": "2026-11-08",
-    "next_maintenance_at": "2026-12-09",
+    "operating_hours": 20321.5,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-12-03",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-028",
@@ -1618,29 +1618,29 @@
     "type": "mining_truck",
     "zone": "oeste",
     "location": {
-      "lat": -11.956533,
-      "lon": -76.428899,
+      "lat": -11.94428,
+      "lon": -76.440121,
       "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.956533,
-      "lon": -76.428899,
+      "lat": -11.94428,
+      "lon": -76.440121,
       "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 84,
+    "health_score": 90,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 13513.2,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-27",
+    "operating_hours": 15166.1,
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-12-09",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-029",
@@ -1649,122 +1649,122 @@
     "type": "mining_truck",
     "zone": "norte",
     "location": {
-      "lat": -11.919345,
-      "lon": -76.39517,
+      "lat": -11.91662,
+      "lon": -76.392571,
       "zone": "norte"
     },
     "home_location": {
-      "lat": -11.919345,
-      "lon": -76.39517,
+      "lat": -11.91662,
+      "lon": -76.392571,
       "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 96,
+    "health_score": 88,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 2446.4,
-    "last_maintenance_at": "2026-10-21",
-    "next_maintenance_at": "2026-11-21",
+    "operating_hours": 16855.8,
+    "last_maintenance_at": "2026-10-28",
+    "next_maintenance_at": "2026-11-28",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-030",
     "operation_id": "OP-01",
-    "model": "KOM-930E",
+    "model": "LIE-T284",
     "type": "mining_truck",
-    "zone": "oeste",
+    "zone": "este",
     "location": {
-      "lat": -11.947582,
-      "lon": -76.426336,
-      "zone": "oeste"
+      "lat": -11.959433,
+      "lon": -76.357671,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.947582,
-      "lon": -76.426336,
-      "zone": "oeste"
+      "lat": -11.959433,
+      "lon": -76.357671,
+      "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 90,
+    "health_score": 95,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 11758.3,
-    "last_maintenance_at": "2026-10-12",
-    "next_maintenance_at": "2026-11-12",
+    "operating_hours": 2721.2,
+    "last_maintenance_at": "2026-11-12",
+    "next_maintenance_at": "2026-12-13",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-031",
     "operation_id": "OP-01",
-    "model": "CAT-793F",
+    "model": "BEL-75131",
     "type": "mining_truck",
-    "zone": "sur",
+    "zone": "este",
     "location": {
-      "lat": -11.980085,
-      "lon": -76.411348,
-      "zone": "sur"
+      "lat": -11.949125,
+      "lon": -76.375501,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.980085,
-      "lon": -76.411348,
-      "zone": "sur"
+      "lat": -11.949125,
+      "lon": -76.375501,
+      "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 90,
+    "health_score": 81,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 1659.0,
-    "last_maintenance_at": "2026-11-07",
+    "operating_hours": 18071.9,
+    "last_maintenance_at": "2026-11-13",
     "next_maintenance_at": "2026-12-08",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-032",
     "operation_id": "OP-01",
     "model": "KOM-930E",
     "type": "mining_truck",
-    "zone": "oeste",
+    "zone": "sur",
     "location": {
-      "lat": -11.946811,
-      "lon": -76.442778,
-      "zone": "oeste"
+      "lat": -11.987832,
+      "lon": -76.39498,
+      "zone": "sur"
     },
     "home_location": {
-      "lat": -11.946811,
-      "lon": -76.442778,
-      "zone": "oeste"
+      "lat": -11.987832,
+      "lon": -76.39498,
+      "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 86,
+    "health_score": 87,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 11754.0,
-    "last_maintenance_at": "2026-10-12",
-    "next_maintenance_at": "2026-11-12",
+    "operating_hours": 14097.1,
+    "last_maintenance_at": "2026-10-15",
+    "next_maintenance_at": "2026-11-15",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-033",
@@ -1773,122 +1773,122 @@
     "type": "mining_truck",
     "zone": "oeste",
     "location": {
-      "lat": -11.94193,
-      "lon": -76.432848,
+      "lat": -11.956745,
+      "lon": -76.427933,
       "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.94193,
-      "lon": -76.432848,
+      "lat": -11.956745,
+      "lon": -76.427933,
       "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 92,
+    "health_score": 81,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 5369.3,
-    "last_maintenance_at": "2026-11-05",
-    "next_maintenance_at": "2026-12-06",
+    "operating_hours": 19424.6,
+    "last_maintenance_at": "2026-10-15",
+    "next_maintenance_at": "2026-11-15",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-034",
     "operation_id": "OP-01",
-    "model": "KOM-930E",
+    "model": "CAT-793F",
     "type": "mining_truck",
-    "zone": "este",
+    "zone": "oeste",
     "location": {
-      "lat": -11.955465,
-      "lon": -76.370503,
-      "zone": "este"
+      "lat": -11.947516,
+      "lon": -76.434464,
+      "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.955465,
-      "lon": -76.370503,
-      "zone": "este"
+      "lat": -11.947516,
+      "lon": -76.434464,
+      "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 99,
+    "health_score": 79,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 7770.5,
-    "last_maintenance_at": "2026-10-20",
-    "next_maintenance_at": "2026-11-20",
+    "operating_hours": 25037.7,
+    "last_maintenance_at": "2026-10-22",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CM-035",
     "operation_id": "OP-01",
-    "model": "CAT-793F",
+    "model": "KOM-930E",
     "type": "mining_truck",
-    "zone": "sur",
+    "zone": "norte",
     "location": {
-      "lat": -11.970177,
-      "lon": -76.40311,
-      "zone": "sur"
+      "lat": -11.909901,
+      "lon": -76.40076,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.970177,
-      "lon": -76.40311,
-      "zone": "sur"
+      "lat": -11.909901,
+      "lon": -76.40076,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 88,
+    "health_score": 85,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 12964.5,
-    "last_maintenance_at": "2026-11-08",
-    "next_maintenance_at": "2026-12-09",
+    "operating_hours": 17756.3,
+    "last_maintenance_at": "2026-10-17",
+    "next_maintenance_at": "2026-11-17",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-001",
     "operation_id": "OP-01",
     "model": "CAT-994K",
     "type": "loader",
-    "zone": "norte",
+    "zone": "oeste",
     "location": {
-      "lat": -11.91428,
-      "lon": -76.405121,
-      "zone": "norte"
+      "lat": -11.958267,
+      "lon": -76.428783,
+      "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.91428,
-      "lon": -76.405121,
-      "zone": "norte"
+      "lat": -11.958267,
+      "lon": -76.428783,
+      "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 99,
+    "health_score": 89,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 16844.1,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
+    "operating_hours": 8153.7,
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-002",
@@ -1897,83 +1897,207 @@
     "type": "loader",
     "zone": "sur",
     "location": {
-      "lat": -11.974725,
-      "lon": -76.395923,
+      "lat": -11.980186,
+      "lon": -76.397279,
       "zone": "sur"
     },
     "home_location": {
-      "lat": -11.974725,
-      "lon": -76.395923,
+      "lat": -11.980186,
+      "lon": -76.397279,
       "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 98,
+    "health_score": 86,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 11988.3,
-    "last_maintenance_at": "2026-11-03",
-    "next_maintenance_at": "2026-11-19",
+    "operating_hours": 19830.9,
+    "last_maintenance_at": "2026-11-12",
+    "next_maintenance_at": "2026-11-28",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-003",
     "operation_id": "OP-01",
-    "model": "CAT-994K",
+    "model": "VOL-L350H",
     "type": "loader",
-    "zone": "oeste",
+    "zone": "norte",
     "location": {
-      "lat": -11.959747,
-      "lon": -76.437444,
-      "zone": "oeste"
+      "lat": -11.922206,
+      "lon": -76.396008,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.959747,
-      "lon": -76.437444,
-      "zone": "oeste"
+      "lat": -11.922206,
+      "lon": -76.396008,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 85,
+    "health_score": 89,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 15609.6,
-    "last_maintenance_at": "2026-11-01",
-    "next_maintenance_at": "2026-11-17",
+    "operating_hours": 3089.8,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-004",
     "operation_id": "OP-01",
+    "model": "CAT-994K",
+    "type": "loader",
+    "zone": "sur",
+    "location": {
+      "lat": -11.980889,
+      "lon": -76.407954,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.980889,
+      "lon": -76.407954,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 91,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 13460.9,
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CF-005",
+    "operation_id": "OP-01",
+    "model": "LIE-L586",
+    "type": "loader",
+    "zone": "este",
+    "location": {
+      "lat": -11.955907,
+      "lon": -76.362204,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.955907,
+      "lon": -76.362204,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 92,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 6263.3,
+    "last_maintenance_at": "2026-10-28",
+    "next_maintenance_at": "2026-11-22",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CF-006",
+    "operation_id": "OP-01",
     "model": "KOM-WA900",
+    "type": "loader",
+    "zone": "sur",
+    "location": {
+      "lat": -11.969841,
+      "lon": -76.402421,
+      "zone": "sur"
+    },
+    "home_location": {
+      "lat": -11.969841,
+      "lon": -76.402421,
+      "zone": "sur"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 88,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 13754.6,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CF-007",
+    "operation_id": "OP-01",
+    "model": "VOL-L350H",
+    "type": "loader",
+    "zone": "este",
+    "location": {
+      "lat": -11.946435,
+      "lon": -76.367057,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.946435,
+      "lon": -76.367057,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 91,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 5229.2,
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CF-008",
+    "operation_id": "OP-01",
+    "model": "CAT-994K",
     "type": "loader",
     "zone": "norte",
     "location": {
-      "lat": -11.928374,
-      "lon": -76.399043,
+      "lat": -11.924055,
+      "lon": -76.409235,
       "zone": "norte"
     },
     "home_location": {
-      "lat": -11.928374,
-      "lon": -76.399043,
+      "lat": -11.924055,
+      "lon": -76.409235,
       "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 84,
+    "health_score": 74,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 9531.8,
+    "operating_hours": 17757.6,
     "last_maintenance_at": "2026-10-27",
     "next_maintenance_at": "2026-11-12",
     "failure_probability": null,
@@ -1981,131 +2105,7 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CF-005",
-    "operation_id": "OP-01",
-    "model": "CAT-994K",
-    "type": "loader",
-    "zone": "este",
-    "location": {
-      "lat": -11.94194,
-      "lon": -76.360537,
-      "zone": "este"
-    },
-    "home_location": {
-      "lat": -11.94194,
-      "lon": -76.360537,
-      "zone": "este"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 99,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 17378.6,
-    "last_maintenance_at": "2026-11-09",
-    "next_maintenance_at": "2026-11-25",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CF-006",
-    "operation_id": "OP-01",
-    "model": "KOM-WA900",
-    "type": "loader",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.957146,
-      "lon": -76.438169,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.957146,
-      "lon": -76.438169,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 87,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 9031.7,
-    "last_maintenance_at": "2026-11-01",
-    "next_maintenance_at": "2026-11-17",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CF-007",
-    "operation_id": "OP-01",
-    "model": "CAT-994K",
-    "type": "loader",
-    "zone": "sur",
-    "location": {
-      "lat": -11.989227,
-      "lon": -76.392777,
-      "zone": "sur"
-    },
-    "home_location": {
-      "lat": -11.989227,
-      "lon": -76.392777,
-      "zone": "sur"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 97,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 5066.7,
-    "last_maintenance_at": "2026-11-01",
-    "next_maintenance_at": "2026-11-17",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CF-008",
-    "operation_id": "OP-01",
-    "model": "KOM-WA900",
-    "type": "loader",
-    "zone": "norte",
-    "location": {
-      "lat": -11.926372,
-      "lon": -76.396318,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.926372,
-      "lon": -76.396318,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 94,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 13089.3,
-    "last_maintenance_at": "2026-10-23",
-    "next_maintenance_at": "2026-11-08",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-009",
@@ -2114,52 +2114,52 @@
     "type": "loader",
     "zone": "este",
     "location": {
-      "lat": -11.960311,
-      "lon": -76.367488,
+      "lat": -11.956857,
+      "lon": -76.371809,
       "zone": "este"
     },
     "home_location": {
-      "lat": -11.960311,
-      "lon": -76.367488,
+      "lat": -11.956857,
+      "lon": -76.371809,
       "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 99,
+    "health_score": 83,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 17032.7,
-    "last_maintenance_at": "2026-10-25",
-    "next_maintenance_at": "2026-11-10",
+    "operating_hours": 14743.1,
+    "last_maintenance_at": "2026-10-31",
+    "next_maintenance_at": "2026-11-16",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-010",
     "operation_id": "OP-01",
     "model": "KOM-WA900",
     "type": "loader",
-    "zone": "este",
+    "zone": "norte",
     "location": {
-      "lat": -11.958267,
-      "lon": -76.358783,
-      "zone": "este"
+      "lat": -11.917108,
+      "lon": -76.397705,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.958267,
-      "lon": -76.358783,
-      "zone": "este"
+      "lat": -11.917108,
+      "lon": -76.397705,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 87,
+    "health_score": 88,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 15613.8,
+    "operating_hours": 18887.4,
     "last_maintenance_at": "2026-11-07",
     "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
@@ -2167,30 +2167,61 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-011",
     "operation_id": "OP-01",
-    "model": "CAT-994K",
+    "model": "VOL-L350H",
     "type": "loader",
-    "zone": "sur",
+    "zone": "norte",
     "location": {
-      "lat": -11.977879,
-      "lon": -76.402209,
-      "zone": "sur"
+      "lat": -11.915926,
+      "lon": -76.402584,
+      "zone": "norte"
     },
     "home_location": {
-      "lat": -11.977879,
-      "lon": -76.402209,
-      "zone": "sur"
+      "lat": -11.915926,
+      "lon": -76.402584,
+      "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 99,
+    "health_score": 97,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 2352.1,
+    "operating_hours": 1692.4,
+    "last_maintenance_at": "2026-11-12",
+    "next_maintenance_at": "2026-11-28",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CF-012",
+    "operation_id": "OP-01",
+    "model": "CAT-994K",
+    "type": "loader",
+    "zone": "norte",
+    "location": {
+      "lat": -11.919524,
+      "lon": -76.398012,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.919524,
+      "lon": -76.398012,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 86,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 8331.3,
     "last_maintenance_at": "2026-11-08",
     "next_maintenance_at": "2026-11-24",
     "failure_probability": null,
@@ -2198,69 +2229,38 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CF-012",
-    "operation_id": "OP-01",
-    "model": "KOM-WA900",
-    "type": "loader",
-    "zone": "norte",
-    "location": {
-      "lat": -11.919828,
-      "lon": -76.402938,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.919828,
-      "lon": -76.402938,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 98,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 16674.2,
-    "last_maintenance_at": "2026-11-05",
-    "next_maintenance_at": "2026-11-21",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-013",
     "operation_id": "OP-01",
-    "model": "CAT-994K",
+    "model": "LIE-L586",
     "type": "loader",
-    "zone": "sur",
+    "zone": "oeste",
     "location": {
-      "lat": -11.979876,
-      "lon": -76.40218,
-      "zone": "sur"
+      "lat": -11.944438,
+      "lon": -76.441154,
+      "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.979876,
-      "lon": -76.40218,
-      "zone": "sur"
+      "lat": -11.944438,
+      "lon": -76.441154,
+      "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 87,
+    "health_score": 91,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 5534.4,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
+    "operating_hours": 4134.5,
+    "last_maintenance_at": "2026-10-28",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "CF-014",
@@ -2269,75 +2269,13 @@
     "type": "loader",
     "zone": "este",
     "location": {
-      "lat": -11.950889,
-      "lon": -76.372954,
+      "lat": -11.943363,
+      "lon": -76.374929,
       "zone": "este"
     },
     "home_location": {
-      "lat": -11.950889,
-      "lon": -76.372954,
-      "zone": "este"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 84,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 14239.4,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-11-20",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "CF-015",
-    "operation_id": "OP-01",
-    "model": "CAT-994K",
-    "type": "loader",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.939282,
-      "lon": -76.438232,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.939282,
-      "lon": -76.438232,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 96,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 1755.1,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "BD-001",
-    "operation_id": "OP-01",
-    "model": "CAT-D10T",
-    "type": "bulldozer",
-    "zone": "este",
-    "location": {
-      "lat": -11.955374,
-      "lon": -76.362885,
-      "zone": "este"
-    },
-    "home_location": {
-      "lat": -11.955374,
-      "lon": -76.362885,
+      "lat": -11.943363,
+      "lon": -76.374929,
       "zone": "este"
     },
     "status": "operational",
@@ -2345,15 +2283,77 @@
     "health_score": 87,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 10686.7,
-    "last_maintenance_at": "2026-11-09",
-    "next_maintenance_at": "2026-11-25",
+    "operating_hours": 18631.2,
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "machine_id": "CF-015",
+    "operation_id": "OP-01",
+    "model": "VOL-L350H",
+    "type": "loader",
+    "zone": "norte",
+    "location": {
+      "lat": -11.916267,
+      "lon": -76.398357,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.916267,
+      "lon": -76.398357,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 94,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 3758.8,
+    "last_maintenance_at": "2026-11-10",
+    "next_maintenance_at": "2026-11-26",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "BD-001",
+    "operation_id": "OP-01",
+    "model": "CAT-D10T",
+    "type": "bulldozer",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.956868,
+      "lon": -76.434405,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.956868,
+      "lon": -76.434405,
+      "zone": "oeste"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 89,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 8008.3,
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
   },
   {
     "machine_id": "BD-002",
@@ -2362,29 +2362,29 @@
     "type": "bulldozer",
     "zone": "norte",
     "location": {
-      "lat": -11.916655,
-      "lon": -76.392974,
+      "lat": -11.911774,
+      "lon": -76.397802,
       "zone": "norte"
     },
     "home_location": {
-      "lat": -11.916655,
-      "lon": -76.392974,
+      "lat": -11.911774,
+      "lon": -76.397802,
       "zone": "norte"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 98,
+    "health_score": 89,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 8991.4,
-    "last_maintenance_at": "2026-11-05",
-    "next_maintenance_at": "2026-11-21",
+    "operating_hours": 15914.2,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "BD-003",
@@ -2393,339 +2393,339 @@
     "type": "bulldozer",
     "zone": "sur",
     "location": {
-      "lat": -11.975891,
-      "lon": -76.390576,
+      "lat": -11.968482,
+      "lon": -76.399916,
       "zone": "sur"
     },
     "home_location": {
-      "lat": -11.975891,
-      "lon": -76.390576,
+      "lat": -11.968482,
+      "lon": -76.399916,
       "zone": "sur"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 91,
+    "health_score": 89,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 1561.3,
-    "last_maintenance_at": "2026-11-10",
-    "next_maintenance_at": "2026-11-26",
+    "operating_hours": 14877.0,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "BD-004",
     "operation_id": "OP-01",
-    "model": "KOM-D375A",
+    "model": "LIE-PR776",
     "type": "bulldozer",
-    "zone": "sur",
+    "zone": "este",
     "location": {
-      "lat": -11.987042,
-      "lon": -76.393637,
-      "zone": "sur"
+      "lat": -11.95564,
+      "lon": -76.365932,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.987042,
-      "lon": -76.393637,
-      "zone": "sur"
+      "lat": -11.95564,
+      "lon": -76.365932,
+      "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 88,
+    "health_score": 93,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 4687.4,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-11-22",
+    "operating_hours": 2839.3,
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-12-03",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "BD-005",
     "operation_id": "OP-01",
-    "model": "CAT-D10T",
-    "type": "bulldozer",
-    "zone": "norte",
-    "location": {
-      "lat": -11.918172,
-      "lon": -76.395843,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.918172,
-      "lon": -76.395843,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 87,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 4582.0,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "BD-006",
-    "operation_id": "OP-01",
     "model": "KOM-D375A",
     "type": "bulldozer",
-    "zone": "sur",
+    "zone": "oeste",
     "location": {
-      "lat": -11.971329,
-      "lon": -76.397548,
-      "zone": "sur"
+      "lat": -11.952448,
+      "lon": -76.430892,
+      "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.971329,
-      "lon": -76.397548,
-      "zone": "sur"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 94,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 2765.0,
-    "last_maintenance_at": "2026-10-31",
-    "next_maintenance_at": "2026-11-16",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "BD-007",
-    "operation_id": "OP-01",
-    "model": "CAT-D10T",
-    "type": "bulldozer",
-    "zone": "norte",
-    "location": {
-      "lat": -11.925432,
-      "lon": -76.393059,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.925432,
-      "lon": -76.393059,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 89,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 17659.4,
-    "last_maintenance_at": "2026-11-13",
-    "next_maintenance_at": "2026-11-29",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "BD-008",
-    "operation_id": "OP-01",
-    "model": "KOM-D375A",
-    "type": "bulldozer",
-    "zone": "norte",
-    "location": {
-      "lat": -11.91928,
-      "lon": -76.396093,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.91928,
-      "lon": -76.396093,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 85,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 6811.3,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-11-22",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "BD-009",
-    "operation_id": "OP-01",
-    "model": "CAT-D10T",
-    "type": "bulldozer",
-    "zone": "este",
-    "location": {
-      "lat": -11.944438,
-      "lon": -76.371154,
-      "zone": "este"
-    },
-    "home_location": {
-      "lat": -11.944438,
-      "lon": -76.371154,
-      "zone": "este"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 95,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 8413.2,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-11-20",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "BD-010",
-    "operation_id": "OP-01",
-    "model": "KOM-D375A",
-    "type": "bulldozer",
-    "zone": "este",
-    "location": {
-      "lat": -11.958366,
-      "lon": -76.373255,
-      "zone": "este"
-    },
-    "home_location": {
-      "lat": -11.958366,
-      "lon": -76.373255,
-      "zone": "este"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 96,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 11598.0,
-    "last_maintenance_at": "2026-11-03",
-    "next_maintenance_at": "2026-11-19",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "BD-011",
-    "operation_id": "OP-01",
-    "model": "CAT-D10T",
-    "type": "bulldozer",
-    "zone": "norte",
-    "location": {
-      "lat": -11.91787,
-      "lon": -76.405482,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.91787,
-      "lon": -76.405482,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 88,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 4536.0,
-    "last_maintenance_at": "2026-11-13",
-    "next_maintenance_at": "2026-11-29",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "BD-012",
-    "operation_id": "OP-01",
-    "model": "KOM-D375A",
-    "type": "bulldozer",
-    "zone": "norte",
-    "location": {
-      "lat": -11.929222,
-      "lon": -76.403119,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.929222,
-      "lon": -76.403119,
-      "zone": "norte"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 89,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 13823.1,
-    "last_maintenance_at": "2026-11-01",
-    "next_maintenance_at": "2026-11-17",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "PF-001",
-    "operation_id": "OP-01",
-    "model": "EPI-PV271",
-    "type": "drill",
-    "zone": "norte",
-    "location": {
-      "lat": -11.926868,
-      "lon": -76.399405,
-      "zone": "norte"
-    },
-    "home_location": {
-      "lat": -11.926868,
-      "lon": -76.399405,
-      "zone": "norte"
+      "lat": -11.952448,
+      "lon": -76.430892,
+      "zone": "oeste"
     },
     "status": "operational",
     "severity": "info",
     "health_score": 84,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 14403.8,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-11-20",
+    "operating_hours": 18461.7,
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "machine_id": "BD-006",
+    "operation_id": "OP-01",
+    "model": "CAT-D10T",
+    "type": "bulldozer",
+    "zone": "norte",
+    "location": {
+      "lat": -11.92112,
+      "lon": -76.403101,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.92112,
+      "lon": -76.403101,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 89,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 14029.4,
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "BD-007",
+    "operation_id": "OP-01",
+    "model": "CAT-D10T",
+    "type": "bulldozer",
+    "zone": "este",
+    "location": {
+      "lat": -11.9541,
+      "lon": -76.359819,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.9541,
+      "lon": -76.359819,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 87,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 10350.2,
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "BD-008",
+    "operation_id": "OP-01",
+    "model": "KOM-D375A",
+    "type": "bulldozer",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.954303,
+      "lon": -76.431706,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.954303,
+      "lon": -76.431706,
+      "zone": "oeste"
+    },
+    "status": "maintenance",
+    "severity": "info",
+    "health_score": 78,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 18207.5,
+    "last_maintenance_at": "2026-10-25",
+    "next_maintenance_at": "2026-11-10",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "BD-009",
+    "operation_id": "OP-01",
+    "model": "CAT-D10T",
+    "type": "bulldozer",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.943449,
+      "lon": -76.441944,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.943449,
+      "lon": -76.441944,
+      "zone": "oeste"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 87,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 13825.3,
+    "last_maintenance_at": "2026-11-09",
+    "next_maintenance_at": "2026-11-25",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "BD-010",
+    "operation_id": "OP-01",
+    "model": "LIE-PR776",
+    "type": "bulldozer",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.958043,
+      "lon": -76.426373,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.958043,
+      "lon": -76.426373,
+      "zone": "oeste"
+    },
+    "status": "maintenance",
+    "severity": "info",
+    "health_score": 91,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 2960.4,
+    "last_maintenance_at": "2026-10-18",
+    "next_maintenance_at": "2026-11-12",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "BD-011",
+    "operation_id": "OP-01",
+    "model": "KOM-D375A",
+    "type": "bulldozer",
+    "zone": "norte",
+    "location": {
+      "lat": -11.912548,
+      "lon": -76.394672,
+      "zone": "norte"
+    },
+    "home_location": {
+      "lat": -11.912548,
+      "lon": -76.394672,
+      "zone": "norte"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 83,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 16791.9,
+    "last_maintenance_at": "2026-10-30",
+    "next_maintenance_at": "2026-11-15",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "BD-012",
+    "operation_id": "OP-01",
+    "model": "CAT-D10T",
+    "type": "bulldozer",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.944194,
+      "lon": -76.426756,
+      "zone": "oeste"
+    },
+    "home_location": {
+      "lat": -11.944194,
+      "lon": -76.426756,
+      "zone": "oeste"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 90,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 14891.7,
+    "last_maintenance_at": "2026-11-09",
+    "next_maintenance_at": "2026-11-25",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "PF-001",
+    "operation_id": "OP-01",
+    "model": "EPI-PV271",
+    "type": "drill",
+    "zone": "este",
+    "location": {
+      "lat": -11.944383,
+      "lon": -76.359094,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.944383,
+      "lon": -76.359094,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 82,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 13133.6,
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-12",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
   },
   {
     "machine_id": "PF-002",
@@ -2734,13 +2734,75 @@
     "type": "drill",
     "zone": "este",
     "location": {
-      "lat": -11.952158,
-      "lon": -76.376632,
+      "lat": -11.941704,
+      "lon": -76.358976,
       "zone": "este"
     },
     "home_location": {
-      "lat": -11.952158,
-      "lon": -76.376632,
+      "lat": -11.941704,
+      "lon": -76.358976,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 91,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 9159.4,
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "PF-003",
+    "operation_id": "OP-01",
+    "model": "CAT-MD6250",
+    "type": "drill",
+    "zone": "este",
+    "location": {
+      "lat": -11.944159,
+      "lon": -76.37394,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.944159,
+      "lon": -76.37394,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 95,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 1695.0,
+    "last_maintenance_at": "2026-11-03",
+    "next_maintenance_at": "2026-11-19",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "PF-004",
+    "operation_id": "OP-01",
+    "model": "EPI-PV271",
+    "type": "drill",
+    "zone": "este",
+    "location": {
+      "lat": -11.953912,
+      "lon": -76.37366,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.953912,
+      "lon": -76.37366,
       "zone": "este"
     },
     "status": "operational",
@@ -2748,193 +2810,131 @@
     "health_score": 90,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 9922.5,
-    "last_maintenance_at": "2026-11-12",
-    "next_maintenance_at": "2026-11-28",
+    "operating_hours": 10681.2,
+    "last_maintenance_at": "2026-10-30",
+    "next_maintenance_at": "2026-11-15",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
-    "machine_id": "PF-003",
+    "machine_id": "PF-005",
     "operation_id": "OP-01",
-    "model": "EPI-PV271",
+    "model": "EPI-D65",
     "type": "drill",
-    "zone": "oeste",
+    "zone": "este",
     "location": {
-      "lat": -11.958518,
-      "lon": -76.441357,
-      "zone": "oeste"
+      "lat": -11.945186,
+      "lon": -76.374751,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.958518,
-      "lon": -76.441357,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 93,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 5498.0,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-11-23",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "PF-004",
-    "operation_id": "OP-01",
-    "model": "SAN-DR412i",
-    "type": "drill",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.959631,
-      "lon": -76.428812,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.959631,
-      "lon": -76.428812,
-      "zone": "oeste"
+      "lat": -11.945186,
+      "lon": -76.374751,
+      "zone": "este"
     },
     "status": "operational",
     "severity": "info",
     "health_score": 91,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 17256.7,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-11-23",
+    "operating_hours": 2095.2,
+    "last_maintenance_at": "2026-11-01",
+    "next_maintenance_at": "2026-11-26",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "PF-005",
-    "operation_id": "OP-01",
-    "model": "EPI-PV271",
-    "type": "drill",
-    "zone": "sur",
-    "location": {
-      "lat": -11.984459,
-      "lon": -76.398141,
-      "zone": "sur"
-    },
-    "home_location": {
-      "lat": -11.984459,
-      "lon": -76.398141,
-      "zone": "sur"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 88,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 10903.5,
-    "last_maintenance_at": "2026-11-08",
-    "next_maintenance_at": "2026-11-24",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "PF-006",
     "operation_id": "OP-01",
     "model": "SAN-DR412i",
     "type": "drill",
-    "zone": "oeste",
+    "zone": "este",
     "location": {
-      "lat": -11.952448,
-      "lon": -76.430892,
-      "zone": "oeste"
+      "lat": -11.951193,
+      "lon": -76.372761,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.952448,
-      "lon": -76.430892,
-      "zone": "oeste"
+      "lat": -11.951193,
+      "lon": -76.372761,
+      "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 99,
+    "health_score": 94,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 14981.6,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-11-23",
+    "operating_hours": 4363.1,
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "PF-007",
     "operation_id": "OP-01",
-    "model": "EPI-PV271",
+    "model": "CAT-MD6250",
     "type": "drill",
-    "zone": "sur",
+    "zone": "este",
     "location": {
-      "lat": -11.979291,
-      "lon": -76.391087,
-      "zone": "sur"
+      "lat": -11.955378,
+      "lon": -76.354613,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.979291,
-      "lon": -76.391087,
-      "zone": "sur"
+      "lat": -11.955378,
+      "lon": -76.354613,
+      "zone": "este"
     },
-    "status": "operational",
+    "status": "stopped",
     "severity": "info",
-    "health_score": 86,
+    "health_score": 98,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 4104.4,
-    "last_maintenance_at": "2026-11-13",
-    "next_maintenance_at": "2026-11-29",
+    "operating_hours": 1178.9,
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "PF-008",
     "operation_id": "OP-01",
-    "model": "SAN-DR412i",
+    "model": "EPI-PV271",
     "type": "drill",
-    "zone": "oeste",
+    "zone": "este",
     "location": {
-      "lat": -11.941719,
-      "lon": -76.437466,
-      "zone": "oeste"
+      "lat": -11.943431,
+      "lon": -76.363561,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.941719,
-      "lon": -76.437466,
-      "zone": "oeste"
+      "lat": -11.943431,
+      "lon": -76.363561,
+      "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 93,
+    "health_score": 85,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 16242.0,
+    "operating_hours": 12387.7,
     "last_maintenance_at": "2026-11-09",
     "next_maintenance_at": "2026-11-25",
     "failure_probability": null,
@@ -2942,115 +2942,22 @@
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "machine_id": "PF-009",
     "operation_id": "OP-01",
     "model": "EPI-PV271",
     "type": "drill",
-    "zone": "este",
-    "location": {
-      "lat": -11.94567,
-      "lon": -76.359822,
-      "zone": "este"
-    },
-    "home_location": {
-      "lat": -11.94567,
-      "lon": -76.359822,
-      "zone": "este"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 90,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 11746.8,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-11-23",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "PF-010",
-    "operation_id": "OP-01",
-    "model": "SAN-DR412i",
-    "type": "drill",
     "zone": "oeste",
     "location": {
-      "lat": -11.959461,
-      "lon": -76.441445,
+      "lat": -11.953628,
+      "lon": -76.445804,
       "zone": "oeste"
     },
     "home_location": {
-      "lat": -11.959461,
-      "lon": -76.441445,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 96,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 5407.9,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "PF-011",
-    "operation_id": "OP-01",
-    "model": "EPI-PV271",
-    "type": "drill",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.95118,
-      "lon": -76.439716,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.95118,
-      "lon": -76.439716,
-      "zone": "oeste"
-    },
-    "status": "operational",
-    "severity": "info",
-    "health_score": 96,
-    "last_seen_at": null,
-    "expected_interval_s": 60,
-    "operating_hours": 10583.9,
-    "last_maintenance_at": "2026-11-13",
-    "next_maintenance_at": "2026-11-29",
-    "failure_probability": null,
-    "rul_hours": null,
-    "open_incident_id": null,
-    "top_factors": [],
-    "model_version": null,
-    "seed_version": 3
-  },
-  {
-    "machine_id": "PF-012",
-    "operation_id": "OP-01",
-    "model": "SAN-DR412i",
-    "type": "drill",
-    "zone": "oeste",
-    "location": {
-      "lat": -11.949927,
-      "lon": -76.43279,
-      "zone": "oeste"
-    },
-    "home_location": {
-      "lat": -11.949927,
-      "lon": -76.43279,
+      "lat": -11.953628,
+      "lon": -76.445804,
       "zone": "oeste"
     },
     "status": "operational",
@@ -3058,45 +2965,138 @@
     "health_score": 88,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 8686.9,
-    "last_maintenance_at": "2026-11-13",
-    "next_maintenance_at": "2026-11-29",
+    "operating_hours": 9840.2,
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "machine_id": "PF-010",
+    "operation_id": "OP-01",
+    "model": "SAN-DR412i",
+    "type": "drill",
+    "zone": "este",
+    "location": {
+      "lat": -11.946219,
+      "lon": -76.375156,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.946219,
+      "lon": -76.375156,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 92,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 3577.5,
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "PF-011",
+    "operation_id": "OP-01",
+    "model": "CAT-MD6250",
+    "type": "drill",
+    "zone": "este",
+    "location": {
+      "lat": -11.949946,
+      "lon": -76.35537,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.949946,
+      "lon": -76.35537,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 92,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 1458.0,
+    "last_maintenance_at": "2026-11-03",
+    "next_maintenance_at": "2026-11-19",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
+  },
+  {
+    "machine_id": "PF-012",
+    "operation_id": "OP-01",
+    "model": "EPI-PV271",
+    "type": "drill",
+    "zone": "este",
+    "location": {
+      "lat": -11.949604,
+      "lon": -76.356907,
+      "zone": "este"
+    },
+    "home_location": {
+      "lat": -11.949604,
+      "lon": -76.356907,
+      "zone": "este"
+    },
+    "status": "operational",
+    "severity": "info",
+    "health_score": 88,
+    "last_seen_at": null,
+    "expected_interval_s": 60,
+    "operating_hours": 11627.2,
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
+    "failure_probability": null,
+    "rul_hours": null,
+    "open_incident_id": null,
+    "top_factors": [],
+    "model_version": null,
+    "seed_version": 4
   },
   {
     "machine_id": "PF-013",
     "operation_id": "OP-01",
-    "model": "EPI-PV271",
+    "model": "EPI-D65",
     "type": "drill",
-    "zone": "sur",
+    "zone": "este",
     "location": {
-      "lat": -11.987879,
-      "lon": -76.394723,
-      "zone": "sur"
+      "lat": -11.957357,
+      "lon": -76.35989,
+      "zone": "este"
     },
     "home_location": {
-      "lat": -11.987879,
-      "lon": -76.394723,
-      "zone": "sur"
+      "lat": -11.957357,
+      "lon": -76.35989,
+      "zone": "este"
     },
     "status": "operational",
     "severity": "info",
-    "health_score": 90,
+    "health_score": 89,
     "last_seen_at": null,
     "expected_interval_s": 60,
-    "operating_hours": 11713.3,
-    "last_maintenance_at": "2026-11-05",
-    "next_maintenance_at": "2026-11-21",
+    "operating_hours": 2873.9,
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-12-03",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 3
+    "seed_version": 4
   }
 ]

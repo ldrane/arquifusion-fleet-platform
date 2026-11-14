@@ -1,8 +1,12 @@
-"""Respuestas deterministas cuando Gemini no está disponible (MH-MC-03: la IA nunca bloquea el flujo).
+"""Respuestas deterministas cuando el LLM (Gemini o Bedrock) no está disponible.
+
+MH-MC-03: la IA nunca bloquea el flujo.
 
 Cada función recibe el `payload` del contrato (contratos.md §8) y devuelve un `result` con la misma forma
 que la respuesta de Gemini. Son defensivas: un payload incompleto produce un texto genérico, nunca una excepción.
 """
+
+import re
 
 # Variable de telemetría -> (causa probable, acción sugerida). Base de conocimiento mínima de mantenimiento.
 CAUSES_BY_VARIABLE: dict[str, tuple[str, str]] = {
@@ -135,14 +139,55 @@ def common_cause(payload: dict) -> dict:
     return {"probable_common_cause": cause, "evidence": evidence, "confidence": 0.35}
 
 
+# ---------------------------------------------------------------- summarize_chat (RF-16.8)
+# Mensajes que no son conversación del chat (p. ej. notas de resolución o eventos del sistema, si un llamador
+# los marca con `kind`/`type`/`source`) se descartan: el resumen de cierre es solo del chat.
+NON_CHAT_KINDS = {"resolution", "resolution_notes", "system", "event"}
+MIN_WORD = 5
+
+
+def chat_messages(payload: dict) -> list[dict]:
+    """Mensajes del chat del incidente con texto o acción rápida, sin entradas que no sean conversación."""
+    out = []
+    for m in payload.get("messages") or []:
+        if not isinstance(m, dict) or not (m.get("text") or m.get("quick_action")):
+            continue
+        if any(str(m.get(k, "")).lower() in NON_CHAT_KINDS for k in ("kind", "type", "source")):
+            continue
+        out.append(m)
+    return out
+
+
+def chat_text(payload: dict) -> str:
+    return "\n".join(str(m.get("text") or "") for m in chat_messages(payload)).lower()
+
+
+def mentioned(item: str, text: str) -> bool:
+    """True si `item` (o alguna de sus palabras significativas) aparece en el texto del chat."""
+    item = item.lower().strip()
+    if not item:
+        return False
+    if item in text:
+        return True
+    words = [w for w in re.findall(r"[\wáéíóúñ-]+", item) if len(w) >= MIN_WORD]
+    return any(w in text for w in words)
+
+
 def summarize_chat(payload: dict) -> dict:
-    messages = [m for m in payload.get("messages") or [] if isinstance(m, dict)]
-    texts = [m.get("text", "") for m in messages if m.get("text")]
-    if texts:
-        summary = f"Conversación de {len(messages)} mensajes. Inicio: «{texts[0][:120]}». Cierre: «{texts[-1][:120]}»."
+    messages = chat_messages(payload)
+    texts = [str(m["text"]).strip() for m in messages if str(m.get("text") or "").strip()]
+    if not messages:
+        summary = "No hubo conversación en el chat del incidente."
     else:
-        summary = "Incidente cerrado sin conversación registrada."
-    actions = [m["quick_action"] for m in messages if m.get("quick_action")]
+        roles = sorted({str(m["role"]) for m in messages if m.get("role")})
+        who = f" entre {', '.join(roles)}" if roles else ""
+        summary = f"Conversación de {len(messages)} mensajes{who}."
+        if texts:
+            summary += f" Inicio: «{texts[0][:120]}»."
+        if len(texts) > 1:
+            summary += f" Cierre: «{texts[-1][:120]}»."
+    actions = list(dict.fromkeys(str(m["quick_action"]) for m in messages if m.get("quick_action")))
+    # Sin LLM no se puede distinguir "reemplacé X" de "¿hay stock de X?": no se afirma ningún repuesto.
     return {"summary": summary, "root_cause": None, "actions_taken": actions, "parts_replaced": []}
 
 

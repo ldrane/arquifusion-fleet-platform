@@ -14,6 +14,14 @@ from simulator.history import generate_history, upload
 from simulator.scenarios import SCENARIOS
 from simulator.sender import TelemetrySender, batches
 
+# Cadencia por defecto: 2 lecturas por cada `expected_interval_s` del seed (60 s -> cada 30 s). Antes era 1 (cada 60 s).
+# Enviar más seguido que el intervalo esperado es inocuo para heartbeat (silencio = 3 × 60 s) y deja ver los cambios
+# en el mapa y en la detección el doble de rápido. Costo: el doble de requests/escrituras SOLO mientras corre el stream.
+DEFAULT_READINGS_PER_INTERVAL = 2.0
+# Aceleración por defecto del escenario: 240 (1 min real = 4 h simuladas; la degradación de 48 h llega al máximo en
+# 12 min). Antes 60 (48 min reales): demasiado lento para la demo.
+DEFAULT_SPEEDUP = 240.0
+
 
 def _days(value: str) -> int:
     """Acepta `90` o `90d`."""
@@ -41,11 +49,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--rate",
         type=float,
         default=None,
-        help="lecturas por máquina por minuto (default: 60 / expected_interval_s del seed = 1)",
+        help="lecturas por máquina por minuto (default: 2 × 60 / expected_interval_s del seed = 2, cada 30 s)",
     )
     stream.add_argument("--duration", type=float, default=0, help="minutos a simular; 0 = sin fin")
     stream.add_argument(
-        "--speedup", type=float, default=60.0, help="aceleración del escenario (default 60: 1 min real = 1 h simulada)"
+        "--speedup",
+        type=float,
+        default=DEFAULT_SPEEDUP,
+        help="aceleración del escenario (default 240: 1 min real = 4 h simuladas)",
     )
     stream.add_argument("--dry-run", action="store_true", help="no envía: imprime los lotes como JSON")
     stream.add_argument("--out", type=Path, help="con --dry-run, guarda los lotes en este archivo JSONL")
@@ -66,6 +77,9 @@ def resolve_targets(fleet, scenario, machines, zone):
     targets = select(fleet, machines, zone) or scenario.default_targets(fleet)
     if scenario.name != "normal" and not targets:
         raise SystemExit("Ninguna máquina coincide con --machine/--zone")
+    parked = [m.machine_id for m in targets if m.parked_state]
+    if parked and scenario.name != "normal":
+        print(f"Aviso: {parked} está(n) en taller/reserva según el seed; el escenario no las afecta", file=sys.stderr)
     return targets
 
 
@@ -76,8 +90,8 @@ def run_stream(args, fleet) -> None:
         raise SystemExit("--dry-run requiere --duration (el reloj simulado no espera)")
     scenario = SCENARIOS[args.scenario]
     targets = resolve_targets(fleet, scenario, args.machine, args.zone)
-    # Por defecto se envía al ritmo que espera heartbeat (expected_interval_s del seed, contratos.md §3).
-    rate = args.rate or 60.0 / min(m.expected_interval_s for m in fleet)
+    # Por defecto, 2 lecturas por expected_interval_s del seed (contratos.md §3): más rápido que lo que exige heartbeat.
+    rate = args.rate or DEFAULT_READINGS_PER_INTERVAL * 60.0 / min(m.expected_interval_s for m in fleet)
     interval_s = 60.0 / rate
     # En --dry-run el reloj es simulado: los ticks se generan de inmediato, sin esperar en tiempo real.
     started_at = datetime.now(UTC)

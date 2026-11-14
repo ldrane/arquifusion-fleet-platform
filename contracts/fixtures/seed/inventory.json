@@ -10,7 +10,7 @@
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -19,11 +19,11 @@
     "zone": "norte",
     "component_id": "CMP-002",
     "name": "Filtro de combustible",
-    "stock": 12,
+    "stock": 6,
     "stock_min": 10,
     "stock_max": 40,
-    "alert": "none",
-    "seed_version": 3
+    "alert": "low_stock",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -36,7 +36,7 @@
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -49,7 +49,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -62,7 +62,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -75,7 +75,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -88,7 +88,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -101,7 +101,7 @@
     "stock_min": 10,
     "stock_max": 40,
     "alert": "overstock",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -114,7 +114,7 @@
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -127,7 +127,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -140,7 +140,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -153,7 +153,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -166,7 +166,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -179,7 +179,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -192,7 +192,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -205,7 +205,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -218,7 +218,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -231,7 +231,7 @@
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -244,7 +244,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -257,7 +257,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -266,11 +266,11 @@
     "zone": "norte",
     "component_id": "CMP-021",
     "name": "Neumático OTR 59/80R63",
-    "stock": 2,
+    "stock": 1,
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -283,7 +283,7 @@
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -296,7 +296,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -309,7 +309,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-01",
@@ -322,7 +322,72 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-01",
+    "location_id": "WH-01",
+    "warehouse_name": "Almacén Norte",
+    "zone": "norte",
+    "component_id": "CMP-026",
+    "name": "Cuchilla de hoja topadora",
+    "stock": 4,
+    "stock_min": 1,
+    "stock_max": 4,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-01",
+    "location_id": "WH-01",
+    "warehouse_name": "Almacén Norte",
+    "zone": "norte",
+    "component_id": "CMP-027",
+    "name": "Cuchilla de cucharón de cargador",
+    "stock": 4,
+    "stock_min": 1,
+    "stock_max": 4,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-01",
+    "location_id": "WH-01",
+    "warehouse_name": "Almacén Norte",
+    "zone": "norte",
+    "component_id": "CMP-028",
+    "name": "Motor de tracción eléctrico de rueda",
+    "stock": 1,
+    "stock_min": 1,
+    "stock_max": 2,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-01",
+    "location_id": "WH-01",
+    "warehouse_name": "Almacén Norte",
+    "zone": "norte",
+    "component_id": "CMP-029",
+    "name": "Compresor de aire de perforación",
+    "stock": 2,
+    "stock_min": 1,
+    "stock_max": 2,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-01",
+    "location_id": "WH-01",
+    "warehouse_name": "Almacén Norte",
+    "zone": "norte",
+    "component_id": "CMP-030",
+    "name": "Rodillo inferior de tren de rodaje",
+    "stock": 4,
+    "stock_min": 2,
+    "stock_max": 8,
+    "alert": "none",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -331,11 +396,11 @@
     "zone": "sur",
     "component_id": "CMP-001",
     "name": "Filtro de aceite de motor",
-    "stock": 23,
+    "stock": 18,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -344,11 +409,11 @@
     "zone": "sur",
     "component_id": "CMP-002",
     "name": "Filtro de combustible",
-    "stock": 35,
+    "stock": 26,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -357,11 +422,11 @@
     "zone": "sur",
     "component_id": "CMP-003",
     "name": "Filtro de aire primario",
-    "stock": 23,
+    "stock": 34,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -370,11 +435,11 @@
     "zone": "sur",
     "component_id": "CMP-004",
     "name": "Inyector de combustible",
-    "stock": 7,
+    "stock": 3,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -383,11 +448,11 @@
     "zone": "sur",
     "component_id": "CMP-005",
     "name": "Turbocompresor",
-    "stock": 2,
+    "stock": 4,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -396,11 +461,11 @@
     "zone": "sur",
     "component_id": "CMP-006",
     "name": "Bomba de agua",
-    "stock": 6,
+    "stock": 8,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -413,7 +478,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -422,11 +487,11 @@
     "zone": "sur",
     "component_id": "CMP-008",
     "name": "Correa de accesorios",
-    "stock": 19,
+    "stock": 26,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -435,11 +500,11 @@
     "zone": "sur",
     "component_id": "CMP-009",
     "name": "Bomba hidráulica principal",
-    "stock": 2,
+    "stock": 1,
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -448,11 +513,11 @@
     "zone": "sur",
     "component_id": "CMP-010",
     "name": "Cilindro hidráulico de brazo",
-    "stock": 2,
+    "stock": 3,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -461,11 +526,11 @@
     "zone": "sur",
     "component_id": "CMP-011",
     "name": "Manguera hidráulica de alta presión",
-    "stock": 8,
+    "stock": 22,
     "stock_min": 2,
     "stock_max": 8,
-    "alert": "none",
-    "seed_version": 3
+    "alert": "overstock",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -474,11 +539,11 @@
     "zone": "sur",
     "component_id": "CMP-012",
     "name": "Kit de sellos de cilindro hidráulico",
-    "stock": 5,
+    "stock": 4,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -491,7 +556,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -500,11 +565,11 @@
     "zone": "sur",
     "component_id": "CMP-014",
     "name": "Kit de rodamientos de motor",
-    "stock": 6,
+    "stock": 5,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -513,11 +578,11 @@
     "zone": "sur",
     "component_id": "CMP-015",
     "name": "Alternador",
-    "stock": 3,
+    "stock": 8,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -526,11 +591,11 @@
     "zone": "sur",
     "component_id": "CMP-016",
     "name": "Motor de arranque",
-    "stock": 8,
+    "stock": 6,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -539,11 +604,11 @@
     "zone": "sur",
     "component_id": "CMP-017",
     "name": "Batería 12 V servicio pesado",
-    "stock": 4,
+    "stock": 8,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -556,7 +621,7 @@
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -565,11 +630,11 @@
     "zone": "sur",
     "component_id": "CMP-019",
     "name": "Sensor de vibración (acelerómetro)",
-    "stock": 4,
+    "stock": 2,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -578,11 +643,11 @@
     "zone": "sur",
     "component_id": "CMP-020",
     "name": "Módulo de control electrónico (ECU)",
-    "stock": 4,
+    "stock": 3,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -595,7 +660,7 @@
     "stock_min": 1,
     "stock_max": 2,
     "alert": "low_stock",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -604,11 +669,11 @@
     "zone": "sur",
     "component_id": "CMP-022",
     "name": "Neumático OTR 45/65R45",
-    "stock": 1,
+    "stock": 2,
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -617,11 +682,11 @@
     "zone": "sur",
     "component_id": "CMP-023",
     "name": "Zapata de oruga",
-    "stock": 7,
+    "stock": 3,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -634,7 +699,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-02",
@@ -643,11 +708,76 @@
     "zone": "sur",
     "component_id": "CMP-025",
     "name": "Kit de discos de freno",
+    "stock": 1,
+    "stock_min": 1,
+    "stock_max": 4,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-02",
+    "location_id": "WH-02",
+    "warehouse_name": "Almacén Sur",
+    "zone": "sur",
+    "component_id": "CMP-026",
+    "name": "Cuchilla de hoja topadora",
+    "stock": 4,
+    "stock_min": 1,
+    "stock_max": 4,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-02",
+    "location_id": "WH-02",
+    "warehouse_name": "Almacén Sur",
+    "zone": "sur",
+    "component_id": "CMP-027",
+    "name": "Cuchilla de cucharón de cargador",
     "stock": 2,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-02",
+    "location_id": "WH-02",
+    "warehouse_name": "Almacén Sur",
+    "zone": "sur",
+    "component_id": "CMP-028",
+    "name": "Motor de tracción eléctrico de rueda",
+    "stock": 0,
+    "stock_min": 1,
+    "stock_max": 2,
+    "alert": "low_stock",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-02",
+    "location_id": "WH-02",
+    "warehouse_name": "Almacén Sur",
+    "zone": "sur",
+    "component_id": "CMP-029",
+    "name": "Compresor de aire de perforación",
+    "stock": 2,
+    "stock_min": 1,
+    "stock_max": 2,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-02",
+    "location_id": "WH-02",
+    "warehouse_name": "Almacén Sur",
+    "zone": "sur",
+    "component_id": "CMP-030",
+    "name": "Rodillo inferior de tren de rodaje",
+    "stock": 5,
+    "stock_min": 2,
+    "stock_max": 8,
+    "alert": "none",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -660,7 +790,7 @@
     "stock_min": 10,
     "stock_max": 40,
     "alert": "overstock",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -669,11 +799,11 @@
     "zone": "este",
     "component_id": "CMP-002",
     "name": "Filtro de combustible",
-    "stock": 14,
+    "stock": 39,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -682,11 +812,11 @@
     "zone": "este",
     "component_id": "CMP-003",
     "name": "Filtro de aire primario",
-    "stock": 32,
+    "stock": 29,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -695,11 +825,11 @@
     "zone": "este",
     "component_id": "CMP-004",
     "name": "Inyector de combustible",
-    "stock": 4,
+    "stock": 7,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -712,7 +842,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "low_stock",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -721,11 +851,11 @@
     "zone": "este",
     "component_id": "CMP-006",
     "name": "Bomba de agua",
-    "stock": 6,
+    "stock": 4,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -734,11 +864,11 @@
     "zone": "este",
     "component_id": "CMP-007",
     "name": "Radiador",
-    "stock": 4,
+    "stock": 2,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -747,11 +877,11 @@
     "zone": "este",
     "component_id": "CMP-008",
     "name": "Correa de accesorios",
-    "stock": 15,
+    "stock": 31,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -764,7 +894,7 @@
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -773,11 +903,11 @@
     "zone": "este",
     "component_id": "CMP-010",
     "name": "Cilindro hidráulico de brazo",
-    "stock": 4,
+    "stock": 1,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -786,11 +916,11 @@
     "zone": "este",
     "component_id": "CMP-011",
     "name": "Manguera hidráulica de alta presión",
-    "stock": 5,
+    "stock": 8,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -799,11 +929,11 @@
     "zone": "este",
     "component_id": "CMP-012",
     "name": "Kit de sellos de cilindro hidráulico",
-    "stock": 4,
+    "stock": 2,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -812,11 +942,11 @@
     "zone": "este",
     "component_id": "CMP-013",
     "name": "Válvula de control hidráulico",
-    "stock": 2,
+    "stock": 4,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -825,11 +955,11 @@
     "zone": "este",
     "component_id": "CMP-014",
     "name": "Kit de rodamientos de motor",
-    "stock": 4,
+    "stock": 5,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -838,11 +968,11 @@
     "zone": "este",
     "component_id": "CMP-015",
     "name": "Alternador",
-    "stock": 7,
+    "stock": 6,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -851,11 +981,11 @@
     "zone": "este",
     "component_id": "CMP-016",
     "name": "Motor de arranque",
-    "stock": 8,
+    "stock": 3,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -864,11 +994,11 @@
     "zone": "este",
     "component_id": "CMP-017",
     "name": "Batería 12 V servicio pesado",
-    "stock": 8,
+    "stock": 14,
     "stock_min": 2,
     "stock_max": 8,
-    "alert": "none",
-    "seed_version": 3
+    "alert": "overstock",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -877,11 +1007,11 @@
     "zone": "este",
     "component_id": "CMP-018",
     "name": "Sensor de temperatura de refrigerante",
-    "stock": 32,
+    "stock": 14,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -890,11 +1020,11 @@
     "zone": "este",
     "component_id": "CMP-019",
     "name": "Sensor de vibración (acelerómetro)",
-    "stock": 7,
+    "stock": 4,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -903,11 +1033,11 @@
     "zone": "este",
     "component_id": "CMP-020",
     "name": "Módulo de control electrónico (ECU)",
-    "stock": 2,
+    "stock": 1,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -916,11 +1046,11 @@
     "zone": "este",
     "component_id": "CMP-021",
     "name": "Neumático OTR 59/80R63",
-    "stock": 2,
+    "stock": 1,
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -933,7 +1063,7 @@
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -946,7 +1076,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -955,11 +1085,11 @@
     "zone": "este",
     "component_id": "CMP-024",
     "name": "Broca tricónica 10 5/8 in",
-    "stock": 1,
+    "stock": 3,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-03",
@@ -968,11 +1098,76 @@
     "zone": "este",
     "component_id": "CMP-025",
     "name": "Kit de discos de freno",
-    "stock": 4,
+    "stock": 1,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-03",
+    "location_id": "WH-03",
+    "warehouse_name": "Almacén Este",
+    "zone": "este",
+    "component_id": "CMP-026",
+    "name": "Cuchilla de hoja topadora",
+    "stock": 1,
+    "stock_min": 1,
+    "stock_max": 4,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-03",
+    "location_id": "WH-03",
+    "warehouse_name": "Almacén Este",
+    "zone": "este",
+    "component_id": "CMP-027",
+    "name": "Cuchilla de cucharón de cargador",
+    "stock": 1,
+    "stock_min": 1,
+    "stock_max": 4,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-03",
+    "location_id": "WH-03",
+    "warehouse_name": "Almacén Este",
+    "zone": "este",
+    "component_id": "CMP-028",
+    "name": "Motor de tracción eléctrico de rueda",
+    "stock": 1,
+    "stock_min": 1,
+    "stock_max": 2,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-03",
+    "location_id": "WH-03",
+    "warehouse_name": "Almacén Este",
+    "zone": "este",
+    "component_id": "CMP-029",
+    "name": "Compresor de aire de perforación",
+    "stock": 0,
+    "stock_min": 1,
+    "stock_max": 2,
+    "alert": "low_stock",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-03",
+    "location_id": "WH-03",
+    "warehouse_name": "Almacén Este",
+    "zone": "este",
+    "component_id": "CMP-030",
+    "name": "Rodillo inferior de tren de rodaje",
+    "stock": 3,
+    "stock_min": 2,
+    "stock_max": 8,
+    "alert": "none",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -981,11 +1176,11 @@
     "zone": "oeste",
     "component_id": "CMP-001",
     "name": "Filtro de aceite de motor",
-    "stock": 39,
+    "stock": 15,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -994,11 +1189,11 @@
     "zone": "oeste",
     "component_id": "CMP-002",
     "name": "Filtro de combustible",
-    "stock": 23,
+    "stock": 32,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1007,11 +1202,11 @@
     "zone": "oeste",
     "component_id": "CMP-003",
     "name": "Filtro de aire primario",
-    "stock": 39,
+    "stock": 24,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1020,11 +1215,11 @@
     "zone": "oeste",
     "component_id": "CMP-004",
     "name": "Inyector de combustible",
-    "stock": 6,
+    "stock": 4,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1037,7 +1232,7 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1046,11 +1241,11 @@
     "zone": "oeste",
     "component_id": "CMP-006",
     "name": "Bomba de agua",
-    "stock": 5,
+    "stock": 2,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1059,11 +1254,11 @@
     "zone": "oeste",
     "component_id": "CMP-007",
     "name": "Radiador",
-    "stock": 2,
+    "stock": 1,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1072,11 +1267,11 @@
     "zone": "oeste",
     "component_id": "CMP-008",
     "name": "Correa de accesorios",
-    "stock": 19,
+    "stock": 33,
     "stock_min": 10,
     "stock_max": 40,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1085,11 +1280,11 @@
     "zone": "oeste",
     "component_id": "CMP-009",
     "name": "Bomba hidráulica principal",
-    "stock": 1,
+    "stock": 0,
     "stock_min": 1,
     "stock_max": 2,
-    "alert": "none",
-    "seed_version": 3
+    "alert": "low_stock",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1098,11 +1293,11 @@
     "zone": "oeste",
     "component_id": "CMP-010",
     "name": "Cilindro hidráulico de brazo",
-    "stock": 1,
+    "stock": 3,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1111,11 +1306,11 @@
     "zone": "oeste",
     "component_id": "CMP-011",
     "name": "Manguera hidráulica de alta presión",
-    "stock": 7,
+    "stock": 5,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1128,7 +1323,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1137,11 +1332,11 @@
     "zone": "oeste",
     "component_id": "CMP-013",
     "name": "Válvula de control hidráulico",
-    "stock": 3,
+    "stock": 2,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1150,11 +1345,11 @@
     "zone": "oeste",
     "component_id": "CMP-014",
     "name": "Kit de rodamientos de motor",
-    "stock": 2,
+    "stock": 3,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1167,7 +1362,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1180,7 +1375,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1189,11 +1384,11 @@
     "zone": "oeste",
     "component_id": "CMP-017",
     "name": "Batería 12 V servicio pesado",
-    "stock": 6,
+    "stock": 3,
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1202,11 +1397,11 @@
     "zone": "oeste",
     "component_id": "CMP-018",
     "name": "Sensor de temperatura de refrigerante",
-    "stock": 38,
+    "stock": 3,
     "stock_min": 10,
     "stock_max": 40,
-    "alert": "none",
-    "seed_version": 3
+    "alert": "low_stock",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1219,7 +1414,7 @@
     "stock_min": 2,
     "stock_max": 8,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1228,11 +1423,11 @@
     "zone": "oeste",
     "component_id": "CMP-020",
     "name": "Módulo de control electrónico (ECU)",
-    "stock": 1,
+    "stock": 4,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1245,7 +1440,7 @@
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1258,7 +1453,7 @@
     "stock_min": 1,
     "stock_max": 2,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1267,11 +1462,11 @@
     "zone": "oeste",
     "component_id": "CMP-023",
     "name": "Zapata de oruga",
-    "stock": 3,
+    "stock": 15,
     "stock_min": 2,
     "stock_max": 8,
-    "alert": "none",
-    "seed_version": 3
+    "alert": "overstock",
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1280,11 +1475,11 @@
     "zone": "oeste",
     "component_id": "CMP-024",
     "name": "Broca tricónica 10 5/8 in",
-    "stock": 4,
+    "stock": 2,
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "warehouse_id": "WH-04",
@@ -1297,6 +1492,71 @@
     "stock_min": 1,
     "stock_max": 4,
     "alert": "none",
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-04",
+    "location_id": "WH-04",
+    "warehouse_name": "Almacén Oeste",
+    "zone": "oeste",
+    "component_id": "CMP-026",
+    "name": "Cuchilla de hoja topadora",
+    "stock": 2,
+    "stock_min": 1,
+    "stock_max": 4,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-04",
+    "location_id": "WH-04",
+    "warehouse_name": "Almacén Oeste",
+    "zone": "oeste",
+    "component_id": "CMP-027",
+    "name": "Cuchilla de cucharón de cargador",
+    "stock": 1,
+    "stock_min": 1,
+    "stock_max": 4,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-04",
+    "location_id": "WH-04",
+    "warehouse_name": "Almacén Oeste",
+    "zone": "oeste",
+    "component_id": "CMP-028",
+    "name": "Motor de tracción eléctrico de rueda",
+    "stock": 1,
+    "stock_min": 1,
+    "stock_max": 2,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-04",
+    "location_id": "WH-04",
+    "warehouse_name": "Almacén Oeste",
+    "zone": "oeste",
+    "component_id": "CMP-029",
+    "name": "Compresor de aire de perforación",
+    "stock": 2,
+    "stock_min": 1,
+    "stock_max": 2,
+    "alert": "none",
+    "seed_version": 4
+  },
+  {
+    "warehouse_id": "WH-04",
+    "location_id": "WH-04",
+    "warehouse_name": "Almacén Oeste",
+    "zone": "oeste",
+    "component_id": "CMP-030",
+    "name": "Rodillo inferior de tren de rodaje",
+    "stock": 4,
+    "stock_min": 2,
+    "stock_max": 8,
+    "alert": "none",
+    "seed_version": 4
   }
 ]

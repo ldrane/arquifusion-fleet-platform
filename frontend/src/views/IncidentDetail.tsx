@@ -1,10 +1,10 @@
 import { Link, useParams } from "react-router-dom";
 import type { Incident } from "@/api/types";
 import { IncidentActions } from "@/components/incidents/IncidentActions";
+import { ClosureSummary } from "@/components/incidents/ClosureSummary";
 import { IncidentChat } from "@/components/incidents/IncidentChat";
 import { Arqui } from "@/components/brand/Arqui";
 import { cx, ErrorBox, HealthBar, Icon, IncidentStatusBadge, Loading, Panel, SeverityBadge, Stat, StatusDot } from "@/components/ui";
-import { COMPONENT_BY_ID } from "@/demo/data";
 import { fmtDateTime, fmtUsd, minutesBetween, timeAgo, VARIABLE_LABEL } from "@/lib/format";
 import { api } from "@/services";
 import { useFleet } from "@/state/FleetContext";
@@ -131,18 +131,7 @@ export function IncidentDetail() {
             )}
           </Panel>
 
-          {inc.status === "closed" && (
-            <Panel icon="task_alt" iconTone="secondary" title="Resumen de cierre (IA)" subtitle="summarize_chat · al cerrar">
-              <p className="text-sm leading-relaxed text-on-surface">{inc.resolution_summary ?? "—"}</p>
-              {inc.components_replaced.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {inc.components_replaced.map((c) => (
-                    <span key={c} className="chip bg-surface-container-high text-on-surface-variant">{c} · {COMPONENT_BY_ID.get(c)?.name}</span>
-                  ))}
-                </div>
-              )}
-            </Panel>
-          )}
+          <ClosureSummary incident={inc} />
 
           <Panel icon="precision_manufacturing" title="Máquinas afectadas" bodyClassName="p-0">
             <ul className="divide-y divide-hairline">

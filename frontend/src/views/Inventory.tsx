@@ -47,7 +47,7 @@ export function Inventory() {
   const [flag, setFlag] = useViewState<"" | "overdue" | "unnecessary">("inv.flag", "");
   const [search, setSearch] = useViewState("inv.search", "");
 
-  const inventory = useQuery("inventory:all", () => api.listInventory(), { staleMs: 10_000, refreshMs: 20_000 });
+  const inventory = useQuery("inventory:all", () => api.listInventory(), { staleMs: 5_000, refreshMs: 10_000 });
   const forecast = useQuery(can(role, "partsForecast") ? `forecast:${horizon}` : null, () => api.partsForecast({ horizon_days: Number(horizon) as 7 | 30 | 90 }), { staleMs: 30_000 });
   const ranking = useQuery(can(role, "partsRanking") ? "parts:ranking" : null, () => api.partsRanking(), { staleMs: 60_000 });
   const plan = useQuery(can(role, "maintenancePlan") ? `plan:${zone}` : null, () => api.maintenancePlan(zone ? { zone } : {}), { staleMs: 30_000 });

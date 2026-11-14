@@ -3,7 +3,7 @@ import json
 import boto3
 import pytest
 import service
-from fakes import TIMEOUT, client
+from fakes import TIMEOUT, bedrock, client, converse_reply
 from ia_tools import ToolBox
 from moto import mock_aws
 
@@ -153,3 +153,78 @@ def test_unknown_tool_returns_error(tables):
 
 def test_is_api_event():
     assert service.is_api_event(api_event()) and not service.is_api_event({"task": "diagnose"})
+
+
+def test_assistant_with_bedrock_tool_use(tables):
+    llm, stubber = bedrock()
+    stubber.add_response(
+        "converse",
+        converse_reply(
+            {"toolUse": {"toolUseId": "tu-1", "name": "get_open_incidents", "input": {"zone": "norte"}}},
+            stop="tool_use",
+        ),
+    )
+    stubber.add_response("converse", converse_reply({"text": "Hay 1 incidente abierto: INC-1."}))
+
+    resp = service.handle_api(api_event("incidentes abiertos"), llm, factory(tables))
+
+    data = body_of(resp)["data"]
+    assert data["degraded"] is False and data["tools_used"] == ["get_open_incidents"]
+    assert data["answer"] == "Hay 1 incidente abierto: INC-1."
+    stubber.assert_no_pending_responses()
+
+
+def test_bedrock_tool_result_message_shape():
+    from bedrock_client import _to_messages
+    from llm_client import LLMTurn, ToolCall
+
+    call = ToolCall(name="get_insight", args={"kind": "fuel#7d"}, id="tu-9")
+    turn = LLMTurn(tool_calls=[call], raw=[{"toolUse": {"toolUseId": "tu-9", "name": "get_insight", "input": {}}}])
+    msgs = _to_messages(
+        [
+            {"role": "user", "text": "hola"},
+            {"role": "assistant", "turn": turn},
+            {"role": "tool", "results": [(call, {"error": "x"})]},
+        ]
+    )
+    assert [m["role"] for m in msgs] == ["user", "assistant", "user"]
+    result = msgs[2]["content"][0]["toolResult"]
+    assert (
+        result["toolUseId"] == "tu-9"
+        and result["status"] == "error"
+        and result["content"] == [{"json": {"error": "x"}}]
+    )
+
+
+class SlowLLM:
+    """LLM que siempre pide otra función: obliga a agotar el deadline global."""
+
+    provider, model, timeout_s = "fake", "fake", 12.0
+
+    def __init__(self):
+        self.timeouts = []
+
+    def chat(self, *, history, system, tools, timeout_s=None):
+        from llm_client import LLMTurn, ToolCall
+
+        self.timeouts.append(timeout_s)
+        return LLMTurn(tool_calls=[ToolCall(name="get_open_incidents", args={})], raw=[])
+
+
+def test_assistant_respects_global_deadline(tables, monkeypatch):
+    import ia_assistant
+
+    clock = iter([0.0, 0.0, 10.0, 19.0])  # deadline = 20: rondas con 20 y 10 s restantes; la 3.a queda con 1 s
+    monkeypatch.setattr(ia_assistant.time, "monotonic", lambda: next(clock))
+    llm = SlowLLM()
+    with pytest.raises(ia_assistant.LLMError):
+        ia_assistant.answer_with_llm("hola", llm, factory(tables)(None), "s", budget_s=20)
+    assert llm.timeouts == [20.0, 10.0]
+
+
+def test_assistant_degrades_when_deadline_exhausted(tables, monkeypatch):
+    import ia_assistant
+
+    monkeypatch.setattr(ia_assistant, "TOTAL_BUDGET_S", 0.5)
+    resp = service.handle_api(api_event("incidentes abiertos"), SlowLLM(), factory(tables))
+    assert body_of(resp)["data"]["degraded"] is True

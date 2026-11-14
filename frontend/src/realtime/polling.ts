@@ -10,7 +10,7 @@ export class PollingRealtime implements RealtimeSource {
 
   constructor(
     private readonly api: FleetApi,
-    private readonly intervalMs = 10_000,
+    private readonly intervalMs = 5_000, // antes 10_000
   ) {}
 
   start(me: Me, onUpdate: (u: FleetUpdate) => void, onError: (e: unknown) => void) {

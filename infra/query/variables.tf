@@ -27,7 +27,7 @@ variable "gcp_project_id" {
 variable "replica_heartbeat_s" {
   description = "replicar: máximo 1 write cada N s por máquina si solo cambian campos ruidosos (0 = siempre)"
   type        = number
-  default     = 300
+  default     = 60 # antes 300: el mapa (Firestore) ve posición/salud cada 1 min. ≤ 100 writes/min solo con el stream activo
 }
 
 variable "alarms_enabled" {

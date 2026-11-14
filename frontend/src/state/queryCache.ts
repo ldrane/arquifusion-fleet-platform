@@ -75,7 +75,7 @@ export function useQuery<T>(
   fn: () => Promise<T>,
   opts: { staleMs?: number; refreshMs?: number } = {},
 ): QueryResult<T> {
-  const { staleMs = 15_000, refreshMs } = opts;
+  const { staleMs = 10_000, refreshMs } = opts; // staleMs antes 15_000
   const fnRef = useRef(fn);
   fnRef.current = fn;
 

@@ -4,7 +4,8 @@
 La SFN usa integraciones SDK directas para lo simple (reclamar la máquina, crear el incidente, aceptar,
 escalar, PutEvents). Esta Lambda hace lo que en ASL sería frágil: armar `candidate_parts`, guardar el
 diagnóstico (mapas y listas), derivar `required_specialty`, asignar con `scoring_candidates`, guardar los
-task tokens, resolver (downtime) y cerrar (registro `corrective`, descuento de inventario, liberar la máquina).
+task tokens, resolver (downtime + notas de resolución con su autor), leer el chat de Firestore para el resumen IA
+(`chat_mensajes`, RF-15/RF-16.8) y cerrar (registro `corrective`, descuento de inventario, liberar la máquina).
 
 Entrada: `{ "action": "<accion>", ... }`. Cada acción es idempotente frente a reintentos de la SFN.
 """
@@ -90,9 +91,10 @@ def required_specialty(source: str, top_factors: list, parts_suggested, candidat
 
 
 class Incidente:
-    def __init__(self, tables: dict, operation_id: str = "OP-01"):
+    def __init__(self, tables: dict, operation_id: str = "OP-01", chat=None):
         self.t = tables
         self.operation_id = operation_id
+        self._chat = chat  # FirestoreChat (chat_firestore.py); se crea bajo demanda en run()
 
     # ---------- utilidades ----------
     def _key(self, incident_id: str) -> dict:
@@ -301,6 +303,10 @@ class Incidente:
         }
         expr = ("SET #st = :resolved, resolved_at = :now, downtime_minutes = :dt, components_replaced = :comp, "
                 "resolution_notes = :notes")
+        actor = res.get("actor") or {}
+        if actor.get("user_id"):  # autor de las notas de resolución (el front lo muestra junto a ellas)
+            expr += ", resolved_by = :by"
+            values[":by"] = {"user_id": actor["user_id"], "role": actor.get("role")}
         if res.get("cost_usd") is not None:
             expr += ", cost_usd = :cost"
             values[":cost"] = float(res["cost_usd"])
@@ -309,13 +315,30 @@ class Incidente:
         return {"from": "in_progress", "downtime_minutes": downtime, "resolved_at": now,
                 "technician_id": current.get("assigned_technician_id")}
 
+    def chat_mensajes(self, ev: dict) -> dict:
+        """Mensajes del chat del incidente (Firestore) para `summarize_chat`: solo conversación, sin las notas de
+        resolución ni mensajes del sistema (RF-15, RF-16.8). El canal es `chat_channel_id` (o el del padre)."""
+        current = from_ddb(self.get(ev["incident_id"]))
+        channel = current.get("chat_channel_id") or current.get("parent_incident_id") or ev["incident_id"]
+        if self._chat is None:  # pragma: no cover - en Lambda
+            import os
+
+            import chat_firestore
+
+            self._chat = chat_firestore.from_env(os.environ)
+        return {"channel": channel, "messages": self._chat.messages(channel)}
+
     def cerrar(self, ev: dict) -> dict:
-        """resolved → closed: resumen IA, registro `corrective`, descuento de inventario y liberar la máquina."""
+        """resolved → closed: resumen IA, registro `corrective`, descuento de inventario y liberar la máquina.
+
+        `resolution_summary` es SOLO el resumen del chat (summarize_chat); las notas de resolución quedan en
+        `resolution_notes` y el front las muestra en un bloque aparte."""
         current = from_ddb(self.get(ev["incident_id"]))
         if current.get("status") == "closed":  # reintento
             return {"from": "closed", "shortage": False, "low_stock": []}
         summary = ((ev.get("summary") or {}).get("result") or {})
-        text = summary.get("summary") or current.get("resolution_notes") or ""
+        text = summary.get("summary") or None
+        notes = current.get("resolution_notes") or ""
         now = now_iso()
         machine_id = current["machine_id"]
         machine = self.t["machines"].get_item(Key=self._machine_key(machine_id)).get("Item") or {}
@@ -335,16 +358,18 @@ class Incidente:
             "operating_hours": machine.get("operating_hours"),
             "components": [{"component_id": c, "quantity": 1} for c in components],
             "cost_usd": current.get("cost_usd") or 0,
-            "notes": text[:1000] or None,
+            "notes": (notes or text or "")[:1000] or None,
         }
         self.t["maintenance_records"].put_item(Item=to_ddb(record))
         low_stock = self._discount(components, tech_id, current.get("zone"))
+        # Sin resumen del chat (falló la IA): resolution_summary queda vacío; las notas NO lo reemplazan.
         self._update(
             ev["incident_id"],
-            "SET #st = :closed, closed_at = :now, resolution_summary = :sum, root_cause = :rc "
-            "REMOVE ack_token, resolve_token",
-            {":closed": "closed", ":now": now, ":sum": text, ":rc": summary.get("root_cause") or "-",
-             ":r": "resolved"},
+            "SET #st = :closed, closed_at = :now, root_cause = :rc"
+            + (", resolution_summary = :sum REMOVE ack_token, resolve_token" if text
+               else " REMOVE ack_token, resolve_token, resolution_summary"),
+            {":closed": "closed", ":now": now, ":rc": summary.get("root_cause") or "-", ":r": "resolved",
+             **({":sum": text} if text else {})},
             "#st = :r",
             {"#st": "status"},
         )
@@ -406,7 +431,7 @@ class Incidente:
             raise
 
 
-ACTIONS = ("contexto", "enriquecer", "asignar", "guardar_token", "resolver", "cerrar", "liberar")
+ACTIONS = ("contexto", "enriquecer", "asignar", "guardar_token", "resolver", "chat_mensajes", "cerrar", "liberar")
 
 
 def _default_tables() -> dict:  # pragma: no cover
@@ -426,8 +451,11 @@ def _default_tables() -> dict:  # pragma: no cover
 _TABLES: dict | None = None
 
 
-def run(event: dict, tables: dict | None = None) -> dict:
-    global _TABLES
+_CHAT = None
+
+
+def run(event: dict, tables: dict | None = None, chat=None) -> dict:
+    global _TABLES, _CHAT
     from arquifusion_shared import config
 
     if tables is None:
@@ -436,5 +464,8 @@ def run(event: dict, tables: dict | None = None) -> dict:
     action = event.get("action")
     if action not in ACTIONS:
         raise ValueError(f"Acción desconocida: {action}")
-    result = getattr(Incidente(tables, config.default_operation_id()), action)(event)
+    inc = Incidente(tables, config.default_operation_id(), chat or _CHAT)
+    result = getattr(inc, action)(event)
+    if chat is None and inc._chat is not None:
+        _CHAT = inc._chat  # reutiliza el token de GCP entre invocaciones del contenedor
     return json.loads(json.dumps(from_ddb(result)))

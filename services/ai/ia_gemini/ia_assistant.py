@@ -1,46 +1,49 @@
 """Asistente conversacional con function calling (RF-14).
 
-`answer_with_gemini` deja que Gemini decida qué funciones de lectura invocar. Si Gemini falla,
-`answer_deterministic` enruta la pregunta por palabras clave a las mismas funciones (respuesta `degraded`).
+`answer_with_llm` deja que el proveedor LLM configurado (Gemini o Bedrock, ver llm_client) decida qué funciones
+de lectura invocar. Si el LLM falla o se agota el presupuesto de tiempo, `answer_deterministic` enruta la pregunta
+por palabras clave a las mismas funciones (respuesta `degraded`).
 """
 
 import json
 import re
 import time
 
-from gemini_client import GeminiClient, GeminiError
 from ia_tools import FUNCTION_DECLARATIONS, ToolBox
+from llm_client import LLMClient, LLMError
 
 MAX_TOOL_ROUNDS = 4
-TOTAL_BUDGET_S = 20.0  # API Gateway corta a los 29 s; la Lambda tiene 30 s
+# API Gateway corta a los 29 s y la Lambda a los 30 s. El deadline global deja margen para el arranque en frío,
+# la lectura del secreto y la respuesta determinista (scan en DynamoDB) si el LLM no termina a tiempo.
+TOTAL_BUDGET_S = 20.0
+MIN_ROUND_S = 2.0  # no se abre una ronda nueva con menos tiempo que esto
 MACHINE_ID = re.compile(r"\b([A-Za-z]{2}-\d{3,4})\b")
 ZONE = re.compile(r"\bzona\s+([a-záéíóúñ]+)", re.IGNORECASE)
 
 
-def answer_with_gemini(message: str, gemini: GeminiClient, tools: ToolBox, system: str) -> tuple[str, list[str]]:
-    """Ciclo de function calling. Devuelve (respuesta, funciones usadas) o lanza GeminiError."""
-    deadline = time.monotonic() + TOTAL_BUDGET_S
-    contents: list[dict] = [{"role": "user", "parts": [{"text": message}]}]
+def answer_with_llm(
+    message: str, llm: LLMClient, tools: ToolBox, system: str, budget_s: float = TOTAL_BUDGET_S
+) -> tuple[str, list[str]]:
+    """Ciclo de function calling con deadline global. Devuelve (respuesta, funciones usadas) o lanza LLMError."""
+    deadline = time.monotonic() + budget_s
+    history: list[dict] = [{"role": "user", "text": message}]
     used: list[str] = []
     for _ in range(MAX_TOOL_ROUNDS):
         remaining = deadline - time.monotonic()
-        if remaining <= 1:
+        if remaining < MIN_ROUND_S:
             break
-        content = gemini.generate(contents=contents, system=system, tools=FUNCTION_DECLARATIONS, timeout_s=remaining)
-        calls = [part["functionCall"] for part in content["parts"] if "functionCall" in part]
-        if not calls:
-            text = "".join(part.get("text", "") for part in content["parts"]).strip()
-            if not text:
-                raise GeminiError("respuesta vacía del asistente")
-            return text, used
-        contents.append({"role": "model", "parts": content["parts"]})
-        responses = []
-        for call in calls:
-            used.append(call["name"])
-            result = tools.call(call["name"], call.get("args") or {})
-            responses.append({"functionResponse": {"name": call["name"], "response": {"result": result}}})
-        contents.append({"role": "user", "parts": responses})
-    raise GeminiError("el asistente no terminó dentro del presupuesto de tiempo o rondas")
+        turn = llm.chat(history=history, system=system, tools=FUNCTION_DECLARATIONS, timeout_s=remaining)
+        if not turn.tool_calls:
+            if not turn.text:
+                raise LLMError("respuesta vacía del asistente")
+            return turn.text, used
+        history.append({"role": "assistant", "turn": turn})
+        results = []
+        for call in turn.tool_calls:
+            used.append(call.name)
+            results.append((call, tools.call(call.name, call.args or {})))
+        history.append({"role": "tool", "results": results})
+    raise LLMError("el asistente no terminó dentro del presupuesto de tiempo o rondas")
 
 
 def answer_deterministic(message: str, tools: ToolBox) -> tuple[str, list[str]]:
