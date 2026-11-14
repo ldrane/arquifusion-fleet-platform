@@ -69,3 +69,18 @@ resource "aws_dynamodb_table" "machines" {
 # technicians: igual con technician_id · inventory: GSI by_component (component_id, warehouse_id)
 # catalog y notification-rules: solo pk/sk
 ```
+
+## Tablas de B y A (sin seed)
+
+| Tabla | `pk` | `sk` | GSI | Notas |
+|---|---|---|---|---|
+| `incidents` | `INC#<incident_id>` | `META` · `EVT#<ts>` | `by_machine`: `machine_id` → `detected_at` · `by_status`: `status` → `detected_at` | Escribe B. META guarda `ack_token`, `resolve_token`, `execution_arn`, `parent_incident_id`, `child_incident_ids`, `correlation_id` |
+| `machine-state` | `<machine_id>` | `AGG#1h#<ts>` · `BASELINE` · `LAST` | — | Escribe A. TTL `expires_at` |
+| `anomalies` | `<machine_id>` | `<ts>#<anomaly_id>` | `by_zone`: `zone` → `detected_at` | Escribe A |
+| `idempotency` | `<machine_id>#<timestamp>` | — (solo `pk`) | — | Escribe A. TTL `expires_at` (24 h) |
+| `audit-events` | `<entidad>#<id>` | `<ts>#<event_id>` | — | Escribe B. Solo PutItem, nunca modificar |
+
+## Reglas
+
+1. **Sin incidentes duplicados.** `procesar` (A) actualiza `machines` con la condición "solo si no existe `open_incident_id`". Si se cumple, guarda el ID y emite `AnomalyDetected`. El workflow `GestionIncidente` (B) borra ese campo al cerrar el incidente. Nunca se escribe `open_incident_id = NULL`: se omite o se elimina.
+2. **Tokens secretos.** `ack_token`, `resolve_token` y `execution_arn` nunca salen por la API ni se replican a Firestore. `api-lectura` y `replicar` deben quitarlos.
