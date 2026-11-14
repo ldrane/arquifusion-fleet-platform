@@ -37,7 +37,7 @@ KeyFn = Callable[[dict], str]
 KEY_SCHEMA: dict[str, dict[str, Any]] = {
     "machines": {
         "table": "machines",
-        "pk": ("pk", lambda i: f"MACHINE#{i['machine_id']}"),
+        "pk": ("pk", lambda i: f"{i['operation_id']}#{i['machine_id']}"),  # contratos.md §9 (A): OP-01#EX-023
         "sk": ("sk", lambda i: "META"),
         "gsis": [("by_zone", "zone", "machine_id")],
     },
@@ -61,8 +61,8 @@ KEY_SCHEMA: dict[str, dict[str, Any]] = {
     },
     "inventory": {
         "table": "inventory",
-        "pk": ("pk", lambda i: f"WH#{i['warehouse_id']}"),
-        "sk": ("sk", lambda i: f"COMPONENT#{i['component_id']}"),
+        "pk": ("pk", lambda i: i["location_id"]),  # contratos.md §9 (A): pk = WH-01
+        "sk": ("sk", lambda i: i["component_id"]),  # sk = CMP-014
         "gsis": [("by_component", "component_id", "warehouse_id")],
     },
     "notification_rules": {
@@ -213,14 +213,12 @@ def cmd_verify(args: argparse.Namespace) -> int:
     ok = True
     for dataset, schema in KEY_SCHEMA.items():
         name = table_name(args.stage, dataset)
-        prefix = schema["pk"][1]({k: "" for k in ("machine_id", "technician_id", "component_id", "model_id", "warehouse_id", "event_type", "role")})
-        pk_attr = schema["pk"][0]
         count = 0
         scan_kwargs: dict[str, Any] = {
             "TableName": name, "Select": "COUNT",
-            "FilterExpression": "begins_with(#pk, :p)",
-            "ExpressionAttributeNames": {"#pk": pk_attr},
-            "ExpressionAttributeValues": {":p": {"S": prefix}},
+            "FilterExpression": "#e = :e",
+            "ExpressionAttributeNames": {"#e": "entity"},
+            "ExpressionAttributeValues": {":e": {"S": dataset}},
         }
         while True:
             page = client.scan(**scan_kwargs)

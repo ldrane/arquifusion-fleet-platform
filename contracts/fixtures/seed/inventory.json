@@ -1,6 +1,7 @@
 [
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-001",
@@ -13,6 +14,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-002",
@@ -25,6 +27,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-003",
@@ -37,6 +40,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-004",
@@ -49,6 +53,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-005",
@@ -61,6 +66,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-006",
@@ -73,6 +79,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-007",
@@ -85,6 +92,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-008",
@@ -97,6 +105,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-009",
@@ -109,6 +118,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-010",
@@ -121,6 +131,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-011",
@@ -133,6 +144,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-012",
@@ -145,6 +157,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-013",
@@ -157,6 +170,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-014",
@@ -169,6 +183,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-015",
@@ -181,6 +196,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-016",
@@ -193,6 +209,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-017",
@@ -205,6 +222,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-018",
@@ -217,6 +235,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-019",
@@ -229,6 +248,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-020",
@@ -241,6 +261,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-021",
@@ -253,6 +274,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-022",
@@ -265,6 +287,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-023",
@@ -277,6 +300,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-024",
@@ -289,6 +313,7 @@
   },
   {
     "warehouse_id": "WH-01",
+    "location_id": "WH-01",
     "warehouse_name": "Almacén Norte",
     "zone": "norte",
     "component_id": "CMP-025",
@@ -301,6 +326,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-001",
@@ -313,6 +339,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-002",
@@ -325,6 +352,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-003",
@@ -337,6 +365,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-004",
@@ -349,6 +378,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-005",
@@ -361,6 +391,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-006",
@@ -373,6 +404,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-007",
@@ -385,6 +417,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-008",
@@ -397,6 +430,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-009",
@@ -409,6 +443,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-010",
@@ -421,6 +456,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-011",
@@ -433,6 +469,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-012",
@@ -445,6 +482,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-013",
@@ -457,6 +495,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-014",
@@ -469,6 +508,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-015",
@@ -481,6 +521,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-016",
@@ -493,6 +534,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-017",
@@ -505,6 +547,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-018",
@@ -517,6 +560,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-019",
@@ -529,6 +573,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-020",
@@ -541,6 +586,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-021",
@@ -553,6 +599,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-022",
@@ -565,6 +612,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-023",
@@ -577,6 +625,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-024",
@@ -589,6 +638,7 @@
   },
   {
     "warehouse_id": "WH-02",
+    "location_id": "WH-02",
     "warehouse_name": "Almacén Sur",
     "zone": "sur",
     "component_id": "CMP-025",
@@ -601,6 +651,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-001",
@@ -613,6 +664,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-002",
@@ -625,6 +677,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-003",
@@ -637,6 +690,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-004",
@@ -649,6 +703,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-005",
@@ -661,6 +716,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-006",
@@ -673,6 +729,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-007",
@@ -685,6 +742,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-008",
@@ -697,6 +755,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-009",
@@ -709,6 +768,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-010",
@@ -721,6 +781,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-011",
@@ -733,6 +794,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-012",
@@ -745,6 +807,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-013",
@@ -757,6 +820,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-014",
@@ -769,6 +833,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-015",
@@ -781,6 +846,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-016",
@@ -793,6 +859,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-017",
@@ -805,6 +872,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-018",
@@ -817,6 +885,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-019",
@@ -829,6 +898,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-020",
@@ -841,6 +911,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-021",
@@ -853,6 +924,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-022",
@@ -865,6 +937,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-023",
@@ -877,6 +950,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-024",
@@ -889,6 +963,7 @@
   },
   {
     "warehouse_id": "WH-03",
+    "location_id": "WH-03",
     "warehouse_name": "Almacén Este",
     "zone": "este",
     "component_id": "CMP-025",
