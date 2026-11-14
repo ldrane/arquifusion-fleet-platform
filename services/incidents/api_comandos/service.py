@@ -10,7 +10,9 @@ Los clientes AWS se inyectan (deps) para poder probar sin AWS.
 """
 import json
 import logging
+import math
 import os
+import re
 import time
 from decimal import Decimal
 
@@ -32,6 +34,12 @@ _TOKEN_MUERTO = {"InvalidToken", "TaskDoesNotExist", "TaskTimedOut"}
 # Nunca salen por la API (dynamodb.md, regla 2)
 _SECRET_FIELDS = {"pk", "sk", "entity", "ack_token", "resolve_token", "execution_arn", "seed_version"}
 BRIDGE_TTL_S = 7 * 24 * 3600
+# Límites de entrada (F-20/F-37): evitan 502 por superar los 256 KB de SendTaskSuccess y claves absurdas.
+MAX_REASON = 500
+MAX_COMPONENTS = 50
+MAX_COMPONENT_LEN = 64
+MAX_EVENT_ID = 128
+_EVENT_ID_RE = re.compile(r"^[A-Za-z0-9._:\-]+$")
 
 
 # ---------- utilidades ----------
@@ -84,7 +92,11 @@ def _path(event: dict, name: str) -> str:
 
 
 def _public(item: dict) -> dict:
-    return {k: v for k, v in item.items() if k not in _SECRET_FIELDS}
+    out = {k: v for k, v in item.items() if k not in _SECRET_FIELDS}
+    # F-22: el OpenAPI expone `machine_ids[]` (principal primero), igual que api_lectura
+    if "incident_id" in out and not out.get("machine_ids") and out.get("machine_id"):
+        out["machine_ids"] = [out["machine_id"]]
+    return out
 
 
 def _get_incident(deps: dict, incident_id: str) -> dict:
@@ -141,6 +153,16 @@ def _send_success(sfn, token: str, output: dict) -> None:
         raise UpstreamUnavailable("No se pudo contactar a Step Functions") from exc
 
 
+def _reason(body: dict):
+    """`reason` opcional: texto de hasta 500 caracteres (F-20)."""
+    reason = body.get("reason")
+    if reason is None:
+        return None
+    if not isinstance(reason, str) or len(reason) > MAX_REASON:
+        raise ValidationError(f"reason debe ser texto de hasta {MAX_REASON} caracteres", [{"field": "reason"}])
+    return reason
+
+
 def _number(value, field: str, lo: float, hi: float) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not lo <= value <= hi:
         raise ValidationError(f"{field} debe ser un número entre {lo} y {hi}", [{"field": field}])
@@ -156,6 +178,7 @@ def ack(event: dict, deps: dict, cid: str):
     decision = body.get("decision")
     if decision not in ("accept", "reject"):
         raise ValidationError("decision debe ser accept o reject", [{"field": "decision"}])
+    reason = _reason(body)
 
     item = _get_incident(deps, incident_id)
     _require_owner(event, deps, item)
@@ -165,7 +188,7 @@ def ack(event: dict, deps: dict, cid: str):
         _token(item, "ack_token"),
         {
             "decision": decision,
-            "reason": body.get("reason"),
+            "reason": reason,
             "technician_id": item.get("assigned_technician_id"),
             "actor": _actor(event),
             "correlation_id": cid,
@@ -182,6 +205,7 @@ def assign(event: dict, deps: dict, cid: str):
     technician_id = body.get("technician_id")
     if not isinstance(technician_id, str) or not technician_id:
         raise ValidationError("technician_id es obligatorio", [{"field": "technician_id"}])
+    reason = _reason(body)
 
     tech = deps["technicians"].get_item(Key={"pk": f"TECH#{technician_id}", "sk": "META"}).get("Item")
     if not tech:
@@ -197,7 +221,7 @@ def assign(event: dict, deps: dict, cid: str):
         {
             "decision": "reassign",
             "technician_id": technician_id,
-            "reason": body.get("reason"),
+            "reason": reason,
             "actor": _actor(event),
             "correlation_id": cid,
         },
@@ -216,11 +240,19 @@ def resolve(event: dict, deps: dict, cid: str):
     if len(notes) > 2000:
         raise ValidationError("resolution_notes excede 2000 caracteres", [{"field": "resolution_notes"}])
     components = body.get("components_replaced", [])
-    if not isinstance(components, list) or not all(isinstance(c, str) for c in components):
-        raise ValidationError("components_replaced debe ser lista de textos", [{"field": "components_replaced"}])
+    if (
+        not isinstance(components, list)
+        or len(components) > MAX_COMPONENTS
+        or not all(isinstance(c, str) and len(c) <= MAX_COMPONENT_LEN for c in components)
+    ):
+        raise ValidationError(
+            f"components_replaced debe ser lista de hasta {MAX_COMPONENTS} textos", [{"field": "components_replaced"}]
+        )
     cost = body.get("cost_usd")
-    if cost is not None and (isinstance(cost, bool) or not isinstance(cost, (int, float)) or cost < 0):
-        raise ValidationError("cost_usd debe ser un número >= 0", [{"field": "cost_usd"}])
+    if cost is not None and (
+        isinstance(cost, bool) or not isinstance(cost, (int, float)) or not math.isfinite(cost) or cost < 0
+    ):
+        raise ValidationError("cost_usd debe ser un número finito >= 0", [{"field": "cost_usd"}])
 
     item = _get_incident(deps, incident_id)
     _require_owner(event, deps, item)
@@ -319,6 +351,11 @@ def bridge_event(event: dict, deps: dict, cid: str):
     """`POST /bridge/events` (API key). Traduce la acción de Firestore al comando `/incidents/*` equivalente,
     con el actor como claims, e idempotencia por `event_id` (`pk = BRG#<event_id>` en idempotency)."""
     body = _body(event)
+    event_id = body.get("event_id")
+    if event_id is not None and (
+        not isinstance(event_id, str) or len(event_id) > MAX_EVENT_ID or not _EVENT_ID_RE.match(event_id)
+    ):
+        raise ValidationError("event_id inválido (texto simple de hasta 128 caracteres)", [{"field": "event_id"}])
     missing = [f for f in ("event_id", "type", "actor", "occurred_at", "correlation_id") if not body.get(f)]
     if missing:
         raise ValidationError("Faltan campos del BridgeEvent", [{"field": f, "issue": "required"} for f in missing])
@@ -329,6 +366,10 @@ def bridge_event(event: dict, deps: dict, cid: str):
         raise ValidationError("actor inválido", [{"field": "actor"}])
     if body["type"].startswith("incident.") and not body.get("incident_id"):
         raise ValidationError("incident_id es obligatorio", [{"field": "incident_id"}])
+
+    data = body.get("data")
+    if data is not None and not isinstance(data, dict):  # F-37: una lista daba 500
+        raise ValidationError("data debe ser un objeto", [{"field": "data"}])
 
     key = f"BRG#{body['event_id']}"
     try:
@@ -352,13 +393,14 @@ def bridge_event(event: dict, deps: dict, cid: str):
         "resource": resource,
         "pathParameters": {"incident_id": body.get("incident_id")},
         "headers": {"X-Correlation-Id": body["correlation_id"]},
-        "body": body.get("data") or {},
+        "body": data or {},
         "requestContext": {"authorizer": {"claims": claims}},
     }
     try:
         ROUTES[(method, resource)](inner, deps, body["correlation_id"])
     except ApiError as err:
-        if err.status >= 500:  # permite reintentar
+        # permite reintentar: 5xx, o 409 de estado (p. ej. el ack_token aún no se guardó) (F-21)
+        if err.status >= 500 or isinstance(err, IncidentStateInvalid):
             deps["idempotency"].delete_item(Key={"pk": key})
         raise
     except Exception:

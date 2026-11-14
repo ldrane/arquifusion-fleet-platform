@@ -42,7 +42,7 @@ ENUMS = {
     "machine_type": {"excavator", "mining_truck", "loader", "bulldozer", "drill"},
     "machine_status": {"operational", "stopped", "maintenance", "needs_intervention", "silent"},
     "severity": set(items.SEVERITY_RANK),
-    "incident_status": {"detected", "assigned", "in_progress", "resolved", "closed"},
+    "incident_status": {"detected", "assigned", "in_progress", "resolved", "closed", "abandoned"},
     "specialty": {"motor", "hidraulica", "electrica", "neumaticos"},
     "zone": {"norte", "sur", "este", "oeste"},
     "period": {"7d", "30d"},
@@ -131,6 +131,8 @@ def current_user(event: dict) -> User:
     if role is None:
         raise Forbidden("El usuario no pertenece a ningún grupo de la plataforma")
     zone = (claims.get("custom:zone") or "").strip()
+    if not zone and role in rbac.ZONE_ROLES:  # F-11: sin zona = Forbidden; solo `*` es global
+        raise Forbidden("El usuario no tiene zona asignada (custom:zone)")
     tech = (claims.get("custom:technician_id") or "").strip()
     return User(
         # user_id = cognito:username (u-tec-07): el mismo id de Firestore, Pub/Sub y Technicians.user_id
@@ -668,7 +670,14 @@ def analytics_kpis(event: dict, deps: Deps, user: User):
     return data, {**meta, "zone": zone}
 
 
+def _require_global(user: User, what: str) -> None:
+    """F-15: el reporte y el modelo ML son de toda la flota; un usuario acotado a una zona no los ve."""
+    if user.zone:
+        raise Forbidden(f"{what} es global: tu usuario solo ve la zona {user.zone}")
+
+
 def reports_latest(event: dict, deps: Deps, user: User):
+    _require_global(user, "El reporte")
     q = _qs(event)
     rtype = q.get("type", "daily")
     if rtype not in ("daily", "weekly"):
@@ -679,6 +688,7 @@ def reports_latest(event: dict, deps: Deps, user: User):
 
 
 def ml_model(event: dict, deps: Deps, user: User):
+    _require_global(user, "El modelo")
     return _insight_object(deps, "ml_model", what="modelo entrenado")
 
 

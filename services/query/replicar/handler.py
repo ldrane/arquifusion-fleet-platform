@@ -5,12 +5,14 @@ para que el event source mapping reintente (bisect) y, agotados los reintentos, 
 """
 
 import service
+from arquifusion_shared import correlation
 from arquifusion_shared.observability import logger, tracer
 
 
 @logger.inject_lambda_context(clear_state=True)
 @tracer.capture_lambda_handler
 def handler(event, context):
+    logger.set_correlation_id(correlation.from_any(event))  # F-36: consumidor de Streams, TRZ-01
     stats = service.run(event)
     logger.info("replicado", extra=stats)
     return stats

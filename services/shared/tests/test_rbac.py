@@ -26,7 +26,7 @@ def test_require_rol():
 def test_require_zona():
     rbac.require(ev("supervisor", **{"custom:zone": "norte"}), "supervisor", zone="norte")
     rbac.require(ev("admin", **{"custom:zone": "*"}), "admin", zone="sur")
-    rbac.require(ev("admin"), "admin", zone="sur")  # sin atributo = global
+    rbac.require(ev("admin"), "admin", zone="sur")  # rol global sin atributo = global
     with pytest.raises(Forbidden):
         rbac.require(ev("supervisor", **{"custom:zone": "norte"}), "supervisor", zone="sur")
 
@@ -50,3 +50,28 @@ def test_correlation_from_any():
     assert correlation.from_any({"detail-type": "X", "detail": {"correlation_id": "b"}}) == "b"
     assert correlation.from_any({"correlation_id": "c"}) == "c"
     assert correlation.from_any({})
+
+
+def test_f11_roles_de_zona_sin_zona_son_forbidden():
+    for r in ("supervisor", "tecnico", "operador"):
+        with pytest.raises(Forbidden):
+            rbac.zone(ev(r))
+        with pytest.raises(Forbidden):
+            rbac.zone(ev(r, **{"custom:zone": "  "}))
+        assert rbac.zone(ev(r, **{"custom:zone": "*"})) is None
+        assert rbac.zone(ev(r, **{"custom:zone": "Norte"})) == "norte"
+    with pytest.raises(Forbidden):
+        rbac.require(ev("supervisor"), "supervisor", zone="sur")
+
+
+def test_f11_roles_globales_sin_zona_siguen_globales():
+    for r in ("admin", "gerencia", "mantenimiento"):
+        assert rbac.zone(ev(r)) is None
+
+
+def test_f35_correlation_id_validado():
+    mk = lambda v: {"httpMethod": "GET", "headers": {"X-Correlation-Id": v}}  # noqa: E731
+    assert correlation.from_any(mk("abc-123-DEF")) == "abc-123-DEF"
+    for bad in ("a\nb", "x" * 65, "con espacio", "a;b", ""):
+        out = correlation.from_any(mk(bad))
+        assert out != bad and len(out) == 36

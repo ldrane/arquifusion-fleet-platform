@@ -3,7 +3,8 @@ rules_version = '2';
 // ArquiFusion — Security Rules de Firestore (dueña: C). Ver contratos.md §2.1 y §5.
 // Los claims vienen del custom token de POST /auth/firebase-token (api-lectura):
 //   role          operador | tecnico | mantenimiento | supervisor | admin | gerencia
-//   zone          norte | sur | este | oeste ; null o "*" = todas las zonas
+//   zone          norte | sur | este | oeste ; "*" = todas las zonas. Para supervisor/tecnico/operador un zone
+//                 ausente/null NO es global (se deniega, F-11); solo admin/gerencia/mantenimiento lo toleran.
 //   technician_id solo para role=tecnico (= custom:technician_id de Cognito, ej. TEC-07)
 // replicar y api-lectura escriben con la service account (OAuth2, IAM), que NO pasa por estas reglas.
 // Los clientes nunca escriben machines/incidents/technicians/users: son réplica de DynamoDB o perfil del servidor.
@@ -16,7 +17,8 @@ service cloud.firestore {
     function role() { return claims().get('role', ''); }
     function zone() { return claims().get('zone', null); }
     function hasRole(roles) { return signedIn() && role() in roles; }
-    function inZone(z) { return zone() == null || zone() == '*' || zone() == z; }
+    function zoneBound() { return role() in ['supervisor', 'tecnico', 'operador']; }
+    function inZone(z) { return zone() == '*' || zone() == z || (zone() == null && !zoneBound()); }
     function anyRole() { return ['operador', 'tecnico', 'mantenimiento', 'supervisor', 'admin', 'gerencia']; }
 
     // ---------------------------------------------------------------- mapa en vivo
@@ -92,7 +94,10 @@ service cloud.firestore {
             && a.actor.user_id == request.auth.uid
             && a.actor.role == role()
             && a.occurred_at == request.time
-            && a.correlation_id is string;
+            && a.correlation_id is string && a.correlation_id.size() <= 128
+            && a.actor is map && a.actor.size() <= 10
+            // `data` (opcional) es un mapa pequeño: lo reenvía la Cloud Function a /bridge/events (F-38)
+            && (!('data' in a) || (a.data is map && a.data.size() <= 20));
         }
 
         allow create: if hasRole(['tecnico', 'mantenimiento']) && canActOnIncident() && isOpen() && validAction();
