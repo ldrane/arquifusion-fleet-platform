@@ -5,7 +5,7 @@ import json
 import os
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from simulator.fleet import ZONES, build_fleet, select, to_dict
@@ -64,14 +64,18 @@ def resolve_targets(fleet, scenario, machines, zone):
 def run_stream(args, fleet) -> None:
     if not args.dry_run and not (args.api_url and args.api_key):
         raise SystemExit("Faltan --api-url/--api-key (o SIMULATOR_API_URL / SIMULATOR_API_KEY)")
+    if args.dry_run and not args.duration:
+        raise SystemExit("--dry-run requiere --duration (el reloj simulado no espera)")
     scenario = SCENARIOS[args.scenario]
     targets = resolve_targets(fleet, scenario, args.machine, args.zone)
     interval_s = 60.0 / args.rate
+    # En --dry-run el reloj es simulado: los ticks se generan de inmediato, sin esperar en tiempo real.
+    started_at = datetime.now(UTC)
     sim = FleetSimulator(
         fleet,
         scenario.effect,
         {m.machine_id for m in targets},
-        started_at=datetime.now(UTC),
+        started_at=started_at,
         seed=args.seed,
         speedup=args.speedup,
     )
@@ -83,7 +87,8 @@ def run_stream(args, fleet) -> None:
     try:
         while total_ticks is None or tick < total_ticks:
             started = time.monotonic()
-            readings = sim.tick(datetime.now(UTC))
+            now = started_at + timedelta(seconds=tick * interval_s) if args.dry_run else datetime.now(UTC)
+            readings = sim.tick(now)
             if sender:
                 ids = sender.send(readings)
                 print(f"tick {tick}: {len(readings)} lecturas en {len(ids)} lotes", file=sys.stderr)
@@ -91,7 +96,7 @@ def run_stream(args, fleet) -> None:
                 for batch in batches(readings):
                     out.write(json.dumps({"readings": batch}, ensure_ascii=False) + "\n")
             tick += 1
-            if total_ticks is None or tick < total_ticks:
+            if not args.dry_run and (total_ticks is None or tick < total_ticks):
                 time.sleep(max(0.0, interval_s - (time.monotonic() - started)))
     except KeyboardInterrupt:
         print("Detenido", file=sys.stderr)
