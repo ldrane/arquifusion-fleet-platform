@@ -47,11 +47,11 @@ output "reentrenamiento_arn" {
 }
 
 output "artifacts_bucket" {
-  value = aws_s3_bucket.artifacts.bucket
+  value = module.artifacts_bucket.id
 }
 
 output "lake_bucket" {
-  value = aws_s3_bucket.lake.bucket
+  value = module.lake_bucket.id
 }
 
 output "ecr_repository_url" {

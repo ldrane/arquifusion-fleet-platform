@@ -36,7 +36,7 @@ resource "aws_lambda_function" "procesar" {
       TABLE_IDEMPOTENCY       = local.tables.idempotency
       TABLE_ANOMALIES         = local.tables.anomalies
       FIREHOSE_STREAM         = aws_kinesis_firehose_delivery_stream.telemetry.name
-      MODEL_BUCKET            = aws_s3_bucket.artifacts.bucket
+      MODEL_BUCKET            = module.artifacts_bucket.id
     })
   }
 
