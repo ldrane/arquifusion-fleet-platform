@@ -15,9 +15,10 @@ import math
 import random
 from datetime import date, timedelta
 
-SEED_VERSION = 2  # v2: WH-04 oeste, expected_interval_s=60, reglas alineadas a contratos.md §10
+SEED_VERSION = 3  # v2: WH-04 oeste, expected_interval_s=60, reglas §10. v3: ~8 % de mantenimientos vencidos (no 53 %)
 RANDOM_SEED = 27  # Grupo 27
 REFERENCE_DATE = date(2026, 11, 14)  # fechas relativas a este día (no a "hoy") para que sea determinista
+OVERDUE_RAW_MIN = 38  # sorteo 3..40: 38-40 => mantenimiento vencido (~8 % de la flota)
 OPERATION_ID = "OP-01"
 # El simulador envía cada 60 s (simulator/cli.py); heartbeat declara silencio a 3x = 180 s (contratos.md §3).
 EXPECTED_INTERVAL_S = 60
@@ -388,10 +389,17 @@ def build_machines() -> list[dict]:
             zone = pinned.get("zone") or ZONE_ORDER[rng.randrange(len(ZONE_ORDER))]
             model_cfg = next(m for m in MACHINE_MODELS if m["model_id"] == model)
             interval = model_cfg["maintenance_interval_h"]
-            days_since = rng.randint(3, 40)
-            last_maint = REFERENCE_DATE - timedelta(days=days_since)
             # ~16 h de uso diario -> días hasta el próximo mantenimiento por horas
-            next_maint = last_maint + timedelta(days=round(interval / 16))
+            interval_days = round(interval / 16)
+            # Un solo sorteo (misma secuencia RNG que v2: zonas/coords/horas no cambian). v3: ~8 % vencidas
+            # (raw >= OVERDUE_RAW_MIN, 2-6 días de atraso); el resto repartido dentro del ciclo. EX-023 nunca vencida.
+            raw = rng.randint(3, 40)
+            if raw >= OVERDUE_RAW_MIN and machine_id not in PINNED_MACHINES:
+                days_since = interval_days + (raw - OVERDUE_RAW_MIN + 1) * 2
+            else:
+                days_since = 1 + (min(raw, OVERDUE_RAW_MIN - 1) - 3) * (interval_days - 2) // (OVERDUE_RAW_MIN - 4)
+            last_maint = REFERENCE_DATE - timedelta(days=days_since)
+            next_maint = last_maint + timedelta(days=interval_days)
             machines.append(
                 {
                     "machine_id": machine_id,
