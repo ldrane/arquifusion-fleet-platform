@@ -173,7 +173,7 @@ export function FleetMap({
       const m = machineById.get(i.machine_ids[0] ?? "");
       return t && m ? [{ id: i.incident_id, from: [t.location.lat, t.location.lon] as [number, number], to: [m.location.lat, m.location.lon] as [number, number], active: i.status === "in_progress" }] : [];
     });
-  const [layer, setLayer] = useViewState<Basemap>("map.layer", "dark");
+  const [layer, setLayer] = useViewState<Basemap>("map.layer", "satellite");
   const fitPoints = useMemo(() => machines.map((m) => [m.location.lat, m.location.lon] as [number, number]), [machines.length, zone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

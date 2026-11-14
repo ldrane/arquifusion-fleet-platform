@@ -1,6 +1,6 @@
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { errorMessage } from "@/api/errors";
-import type { Incident } from "@/api/types";
+import type { DegradedReason, Incident } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { can } from "@/auth/permissions";
 import { Arqui, type ArquiState, setArquiThinking } from "@/components/brand/Arqui";
@@ -11,11 +11,25 @@ import { useZoned } from "@/state/FleetContext";
 import { useQuery } from "@/state/queryCache";
 import { useViewState } from "@/state/viewState";
 
+const DEGRADED_TEXT: Record<DegradedReason, string> = {
+  secret_missing: "Gemini sin API key configurada",
+  http_4xx: "Gemini rechazó la solicitud (revisa key/modelo/cuota)",
+  timeout: "Gemini tardó demasiado",
+  model_not_found: "Modelo no disponible",
+  other: "Error desconocido",
+};
+
+/** Texto del badge de respaldo: con motivo si el backend lo envía, genérico si no. */
+function degradedLabel(reason?: DegradedReason | null) {
+  return reason && DEGRADED_TEXT[reason] ? `Respuesta de respaldo: ${DEGRADED_TEXT[reason]}` : "Respuesta de respaldo";
+}
+
 interface Turn {
   role: "user" | "assistant";
   text: string;
   tools?: string[];
   degraded?: boolean;
+  degradedReason?: DegradedReason | null;
   error?: boolean;
 }
 
@@ -227,7 +241,7 @@ export function Assistant() {
     try {
       const r = await api.assistant(msg, session ?? undefined);
       setSession(r.session_id);
-      setTurns((t) => [...t, { role: "assistant", text: r.answer, tools: r.tools_used, degraded: r.degraded }]);
+      setTurns((t) => [...t, { role: "assistant", text: r.answer, tools: r.tools_used, degraded: r.degraded, degradedReason: r.degraded_reason ?? null }]);
     } catch (e) {
       setTurns((t) => [...t, { role: "assistant", text: errorMessage(e), error: true }]);
     } finally {
@@ -369,7 +383,7 @@ export function Assistant() {
                               {tool}
                             </span>
                           ))}
-                          {t.degraded && <Badge tone="warn">Respuesta de respaldo</Badge>}
+                          {t.degraded && <Badge tone="warn">{degradedLabel(t.degradedReason)}</Badge>}
                         </div>
                       ) : null}
                     </div>

@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { can } from "@/auth/permissions";
 import { DEMO_USERS, SEED } from "@/demo/data";
 import { fmtTime, ROLE_LABEL } from "@/lib/format";
+import { hasFirebase } from "@/config";
 import { realtime } from "@/services";
 import { useViewState } from "@/state/viewState";
 import { Button, cx, Empty, Icon } from "../ui";
@@ -39,6 +40,14 @@ function authorName(m: ChatMessage) {
   return u?.name ?? t?.name ?? m.author_id;
 }
 
+/** Mensaje entendible para un rechazo de envío (Firestore: permission-denied, etc.). */
+function sendErrorMessage(e: unknown): string {
+  const code = typeof e === "object" && e && "code" in e ? String((e as { code: unknown }).code) : "";
+  if (code.includes("permission-denied")) return "No se pudo enviar: sin permiso. Revisa que el incidente esté abierto y asignado a ti.";
+  if (code.includes("unauthenticated")) return "No se pudo enviar: tu sesión de chat expiró. Vuelve a iniciar sesión.";
+  return `No se pudo enviar el mensaje${e instanceof Error && e.message ? `: ${e.message}` : ""}. Revisa que el incidente esté abierto y asignado.`;
+}
+
 /** Chat del incidente en Firestore (contratos.md §5): append-only, offline con caché persistente. */
 export function IncidentChat({ incident }: { incident: Incident }) {
   const { me } = useAuth();
@@ -66,7 +75,7 @@ export function IncidentChat({ incident }: { incident: Incident }) {
     if (!text.trim()) return;
     setSending(true);
     try {
-      await realtime.sendMessage(channel, text.trim(), quick ?? null);
+      await realtime.sendMessage(channel, text.trim(), quick ?? null, (err) => toast(sendErrorMessage(err), "bad"));
       if (!quick) setDraft("");
     } catch (e) {
       toast(errorMessage(e), "bad");
@@ -78,7 +87,9 @@ export function IncidentChat({ incident }: { incident: Incident }) {
   if (!realtime.canChat) {
     return (
       <Empty icon="forum" title="Chat no disponible">
-        El chat del incidente vive en Firestore. Configura <code className="font-mono">VITE_FIREBASE_*</code> para habilitarlo (frontend/README.md).
+        El chat del incidente vive en Firestore y{" "}
+        {hasFirebase ? "no está activo en este modo" : <>falta configurar <code className="font-mono">VITE_FIREBASE_API_KEY</code> y <code className="font-mono">VITE_FIREBASE_PROJECT_ID</code> (y el resto de <code className="font-mono">VITE_FIREBASE_*</code>)</>}
+        . Reconstruye el front tras definirlas (frontend/README.md).
       </Empty>
     );
   }

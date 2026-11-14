@@ -19,7 +19,11 @@ export interface RealtimeSource {
   readonly canChat: boolean;
   start(me: Me, onUpdate: (u: FleetUpdate) => void, onError: (e: unknown) => void): () => void;
   subscribeMessages(incidentId: string, onMessages: (m: ChatMessage[]) => void, onError: (e: unknown) => void): () => void;
-  sendMessage(incidentId: string, text: string, quickAction?: string | null): Promise<void>;
+  /**
+   * La promesa resuelve cuando el mensaje queda encolado (con caché offline no espera al servidor).
+   * `onAsyncError` recibe el rechazo posterior del servidor (p. ej. permission-denied de las Security Rules).
+   */
+  sendMessage(incidentId: string, text: string, quickAction?: string | null, onAsyncError?: (e: unknown) => void): Promise<void>;
   /** Solo demo: avisos de eventos que no tienen colección en Firestore (repuestos, modelo). */
   subscribeNotifications?(onNotifications: (n: Notification[]) => void): () => void;
 }

@@ -164,7 +164,7 @@ export class FirestoreRealtime implements RealtimeSource {
     };
   }
 
-  async sendMessage(incidentId: string, text: string, quickAction?: string | null) {
+  async sendMessage(incidentId: string, text: string, quickAction?: string | null, onAsyncError?: (e: unknown) => void) {
     const me = this.me;
     if (!me) throw new Error("Sin sesión");
     const { fs, db, uid, role } = await this.connect(me);
@@ -178,6 +178,10 @@ export class FirestoreRealtime implements RealtimeSource {
     };
     if (quickAction) doc.quick_action = quickAction;
     // Sin await del servidor: con caché persistente el mensaje queda en cola si no hay red.
-    void fs.addDoc(fs.collection(db, "incidents", incidentId, "messages"), doc);
+    // El rechazo del servidor (permission-denied, etc.) se reporta por onAsyncError hacia la UI (F-10).
+    fs.addDoc(fs.collection(db, "incidents", incidentId, "messages"), doc).catch((e: unknown) => {
+      if (onAsyncError) onAsyncError(e);
+      else console.error("[chat] addDoc rechazado", e);
+    });
   }
 }
