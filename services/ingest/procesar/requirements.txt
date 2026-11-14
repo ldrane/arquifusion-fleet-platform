@@ -1,1 +1,4 @@
 aws-lambda-powertools[tracer]==3.*
+numpy==2.*
+scikit-learn==1.9.*  # debe coincidir con la versión de retrain (artefacto joblib)
+joblib==1.*

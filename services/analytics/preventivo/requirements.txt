@@ -1,1 +1,1 @@
-aws-lambda-powertools[tracer]==3.*
+# Sin dependencias propias: arquifusion_shared, arquifusion_ml y Powertools vienen en la capa común; boto3 en el runtime.

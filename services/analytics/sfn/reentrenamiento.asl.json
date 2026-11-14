@@ -1,10 +1,193 @@
 {
-  "Comment": "Athena \u2192 entrenar \u2192 Choice de promoci\u00f3n \u2192 S3 + SSM (RF-13.2). TODO Persona A",
-  "StartAt": "Inicio",
+  "Comment": "Reentrenamiento (RF-13.2, MH-SFN-03, MH-AI-04): Athena → entrenar candidato → Choice de promoción.",
+  "StartAt": "Contexto",
   "States": {
-    "Inicio": {
+    "Contexto": {
       "Type": "Pass",
-      "End": true
+      "Parameters": {
+        "correlation_id.$": "$$.Execution.Name",
+        "run_at.$": "$$.Execution.StartTime"
+      },
+      "ResultPath": "$.ctx",
+      "Next": "VersionActiva"
+    },
+    "VersionActiva": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:ssm:getParameter",
+      "Parameters": {
+        "Name": "${active_version_param}"
+      },
+      "ResultSelector": {
+        "version.$": "$.Parameter.Value"
+      },
+      "ResultPath": "$.active",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "Ssm.ParameterNotFoundException"
+          ],
+          "ResultPath": "$.error",
+          "Next": "SinModeloActivo"
+        }
+      ],
+      "Next": "ExtraerDatos"
+    },
+    "SinModeloActivo": {
+      "Type": "Pass",
+      "Result": {
+        "version": "v0"
+      },
+      "ResultPath": "$.active",
+      "Next": "ExtraerDatos"
+    },
+    "ExtraerDatos": {
+      "Type": "Task",
+      "Comment": "retrain/training.sql: 90 días de variables del modelo",
+      "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+      "Parameters": {
+        "QueryString": "${sql_training}",
+        "WorkGroup": "${workgroup}",
+        "QueryExecutionContext": {
+          "Database": "${database}"
+        }
+      },
+      "ResultSelector": {
+        "output_location.$": "$.QueryExecution.ResultConfiguration.OutputLocation"
+      },
+      "ResultPath": "$.athena",
+      "TimeoutSeconds": 900,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Fallo"
+        }
+      ],
+      "Next": "Entrenar"
+    },
+    "Entrenar": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_retrain}",
+        "Payload": {
+          "output_location.$": "$.athena.output_location",
+          "active_version.$": "$.active.version",
+          "correlation_id.$": "$.ctx.correlation_id"
+        }
+      },
+      "ResultSelector": {
+        "candidate_version.$": "$.Payload.candidate_version",
+        "active_version.$": "$.Payload.active_version",
+        "better.$": "$.Payload.better",
+        "candidate.$": "$.Payload.candidate"
+      },
+      "ResultPath": "$.train",
+      "TimeoutSeconds": 900,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Fallo"
+        }
+      ],
+      "Next": "EsMejor"
+    },
+    "EsMejor": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.train.better",
+          "BooleanEquals": true,
+          "Next": "Promover"
+        }
+      ],
+      "Default": "Descartar"
+    },
+    "Promover": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_promote}",
+        "Payload": {
+          "candidate_version.$": "$.train.candidate_version",
+          "correlation_id.$": "$.ctx.correlation_id"
+        }
+      },
+      "ResultSelector": {
+        "result.$": "$.Payload"
+      },
+      "ResultPath": "$.promotion",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Fallo"
+        }
+      ],
+      "Next": "Fin"
+    },
+    "Descartar": {
+      "Type": "Pass",
+      "Comment": "El candidato queda en S3 con promoted=false para auditoría (TRZ-05)",
+      "Parameters": {
+        "discarded.$": "$.train.candidate_version",
+        "kept.$": "$.train.active_version"
+      },
+      "ResultPath": "$.promotion",
+      "Next": "Fin"
+    },
+    "Fin": {
+      "Type": "Succeed"
+    },
+    "Fallo": {
+      "Type": "Fail",
+      "Error": "ReentrenamientoFallido",
+      "Cause": "Revisar $.error en el historial de la ejecución"
     }
   }
 }

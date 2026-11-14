@@ -1,8 +1,15 @@
 [tool.pytest.ini_options]
 # --import-mode=importlib permite tener service.py en cada servicio sin colisiones
 addopts = "--import-mode=importlib"
-testpaths = ["services", "gcp"]
+testpaths = ["services", "gcp", "simulator"]
 
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+
+[tool.ruff.lint]
+# E/F errores, I imports ordenados, UP sintaxis moderna (py312: datetime.UTC), B bugs comunes
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"

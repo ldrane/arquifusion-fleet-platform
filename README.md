@@ -29,7 +29,7 @@ services/
   query/                   (C) api_lectura, replicar
 gcp/
   functions/notify_bridge/ (B) Pub/Sub → FCM · Firestore actions → /bridge/events
-  firestore/               (C) Security Rules
+  firestore/               (C) README de Firestore (las reglas están en infra/gcp/firestore.rules)
 simulator/                 (A) Simulador de flota y escenarios
 scripts/                   seed.py (C), smoke_golden_path.sh (todos)
 frontend/                  (C) App web/móvil

@@ -11,3 +11,20 @@ variable "aws_region" {
 locals {
   prefix = "arquifusion-${var.stage}"
 }
+
+variable "default_operation_id" {
+  description = "operation_id que usa procesar mientras haya una sola operación (contratos.md §9)"
+  type        = string
+  default     = "OP-01"
+}
+
+variable "image_tag" {
+  description = "Tag de las imágenes ECR de procesar y retrain"
+  type        = string
+  default     = "latest"
+}
+
+variable "log_retention_days" {
+  type    = number
+  default = 7
+}

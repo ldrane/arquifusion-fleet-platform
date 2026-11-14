@@ -1,10 +1,329 @@
 {
-  "Comment": "Parallel de 4 ramas: preventivo, repuestos, combustible, productividad (RF-03, RF-04, RF-07, RF-08). TODO Persona A",
-  "StartAt": "Inicio",
+  "Comment": "AnalisisDiario (RF-03, RF-04, RF-07, RF-08, RF-10.3, MH-SFN-02): una consulta Athena compartida, 4 ramas en paralelo y cierre con KPIs + resumen ejecutivo IA.",
+  "StartAt": "Contexto",
   "States": {
-    "Inicio": {
+    "Contexto": {
       "Type": "Pass",
-      "End": true
+      "Parameters": {
+        "correlation_id.$": "$$.Execution.Name",
+        "run_at.$": "$$.Execution.StartTime"
+      },
+      "ResultPath": "$.ctx",
+      "Next": "EstadisticasDiarias"
+    },
+    "EstadisticasDiarias": {
+      "Type": "Task",
+      "Comment": "analytics_common/sql/daily_machine_stats.sql: escanea el lake una sola vez por ejecución",
+      "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+      "Parameters": {
+        "QueryString": "${sql_daily_stats}",
+        "WorkGroup": "${workgroup}",
+        "QueryExecutionContext": {
+          "Database": "${database}"
+        }
+      },
+      "ResultSelector": {
+        "query_execution_id.$": "$.QueryExecution.QueryExecutionId"
+      },
+      "ResultPath": "$.athena",
+      "TimeoutSeconds": 600,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Fallo"
+        }
+      ],
+      "Next": "Ramas"
+    },
+    "Ramas": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "RamaPreventivo",
+          "States": {
+            "RamaPreventivo": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${fn_preventivo}",
+                "Payload": {
+                  "query_execution_id.$": "$.athena.query_execution_id",
+                  "correlation_id.$": "$.ctx.correlation_id",
+                  "run_at.$": "$.ctx.run_at"
+                }
+              },
+              "ResultSelector": {
+                "result.$": "$.Payload"
+              },
+              "OutputPath": "$.result",
+              "TimeoutSeconds": 300,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException",
+                    "States.Timeout"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.error",
+                  "Next": "RamaPreventivoFallida"
+                }
+              ],
+              "End": true
+            },
+            "RamaPreventivoFallida": {
+              "Type": "Pass",
+              "Parameters": {
+                "kind": "preventivo",
+                "status": "failed",
+                "error.$": "$.error.Error"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "RamaRepuestos",
+          "States": {
+            "RamaRepuestos": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${fn_repuestos}",
+                "Payload": {
+                  "query_execution_id.$": "$.athena.query_execution_id",
+                  "correlation_id.$": "$.ctx.correlation_id",
+                  "run_at.$": "$.ctx.run_at"
+                }
+              },
+              "ResultSelector": {
+                "result.$": "$.Payload"
+              },
+              "OutputPath": "$.result",
+              "TimeoutSeconds": 300,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException",
+                    "States.Timeout"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.error",
+                  "Next": "RamaRepuestosFallida"
+                }
+              ],
+              "End": true
+            },
+            "RamaRepuestosFallida": {
+              "Type": "Pass",
+              "Parameters": {
+                "kind": "repuestos",
+                "status": "failed",
+                "error.$": "$.error.Error"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "RamaCombustible",
+          "States": {
+            "RamaCombustible": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${fn_combustible}",
+                "Payload": {
+                  "query_execution_id.$": "$.athena.query_execution_id",
+                  "correlation_id.$": "$.ctx.correlation_id",
+                  "run_at.$": "$.ctx.run_at"
+                }
+              },
+              "ResultSelector": {
+                "result.$": "$.Payload"
+              },
+              "OutputPath": "$.result",
+              "TimeoutSeconds": 300,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException",
+                    "States.Timeout"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.error",
+                  "Next": "RamaCombustibleFallida"
+                }
+              ],
+              "End": true
+            },
+            "RamaCombustibleFallida": {
+              "Type": "Pass",
+              "Parameters": {
+                "kind": "combustible",
+                "status": "failed",
+                "error.$": "$.error.Error"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "RamaProductividad",
+          "States": {
+            "RamaProductividad": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${fn_productividad}",
+                "Payload": {
+                  "query_execution_id.$": "$.athena.query_execution_id",
+                  "correlation_id.$": "$.ctx.correlation_id",
+                  "run_at.$": "$.ctx.run_at"
+                }
+              },
+              "ResultSelector": {
+                "result.$": "$.Payload"
+              },
+              "OutputPath": "$.result",
+              "TimeoutSeconds": 300,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException",
+                    "States.Timeout"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.error",
+                  "Next": "RamaProductividadFallida"
+                }
+              ],
+              "End": true
+            },
+            "RamaProductividadFallida": {
+              "Type": "Pass",
+              "Parameters": {
+                "kind": "productividad",
+                "status": "failed",
+                "error.$": "$.error.Error"
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "ResultPath": "$.branches",
+      "Next": "KpisYReporte"
+    },
+    "KpisYReporte": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_kpis_report}",
+        "Payload": {
+          "query_execution_id.$": "$.athena.query_execution_id",
+          "correlation_id.$": "$.ctx.correlation_id",
+          "run_at.$": "$.ctx.run_at",
+          "branches.$": "$.branches"
+        }
+      },
+      "ResultSelector": {
+        "result.$": "$.Payload"
+      },
+      "ResultPath": "$.report",
+      "TimeoutSeconds": 300,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Fallo"
+        }
+      ],
+      "Next": "Fin"
+    },
+    "Fin": {
+      "Type": "Succeed"
+    },
+    "Fallo": {
+      "Type": "Fail",
+      "Error": "AnalisisDiarioFallido",
+      "Cause": "Revisar $.error en el historial de la ejecución"
     }
   }
 }

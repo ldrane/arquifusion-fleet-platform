@@ -30,6 +30,11 @@ Plan completo y responsables: [`docs/division-trabajo-backend.md`](docs/division
 - [ ] README del servicio con el RF que cubre
 - [ ] `scripts/smoke_golden_path.sh` sigue pasando (desde H2)
 
+## Tests
+- Cada servicio tiene su propio `service.py`; el `conftest.py` del servicio lo pone al frente del `sys.path`.
+- Importa `service` y `handler` **solo a nivel de módulo** en tests y conftest, nunca dentro de una función o fixture: en la corrida completa se resolvería al `service` de otro servicio.
+- Para lógica con varios módulos, usa un paquete con nombre único (ej. `ingest_procesar/`, `analytics_common/`).
+
 ## Setup local
 ```bash
 python3.12 -m venv .venv && source .venv/bin/activate

@@ -1,0 +1,16 @@
+-- training v1 (RF-13.2): ventana de 90 días con las variables del modelo (arquifusion_ml.features.RAW_FEATURES)
+-- y la etiqueta del simulador. Las ventanas de falla se leen de s3://<lake>/labels/failures.parquet.
+SELECT
+  machine_id,
+  ts,
+  sim_scenario,
+  state,
+  temperature_c,
+  vibration_mm_s,
+  pressure_bar,
+  fuel_rate_lph,
+  load_pct,
+  rpm,
+  speed_kmh
+FROM telemetry_raw
+WHERE dt >= date_format(current_date - INTERVAL '90' DAY, '%Y-%m-%d')

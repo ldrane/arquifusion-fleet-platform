@@ -2,12 +2,24 @@
 
 Handler delgado: parsea, valida y delega en service.py. La lógica de negocio va en service.py.
 """
+from arquifusion_shared import correlation, response
+from arquifusion_shared.errors import ApiError
 from arquifusion_shared.observability import logger, tracer
 
 import service
 
 
-@logger.inject_lambda_context(correlation_id_path="correlation_id")
+@logger.inject_lambda_context(clear_state=True)
 @tracer.capture_lambda_handler
 def handler(event, context):
-    return service.run(event)
+    cid = correlation.from_api_event(event)
+    logger.set_correlation_id(cid)
+    logger.append_keys(route=f"{event.get('httpMethod')} {event.get('resource')}")
+    try:
+        return response.ok(service.run(event), cid)
+    except ApiError as err:
+        logger.warning("api_error", extra={"code": err.code, "status": err.status})
+        return response.error(err, cid)
+    except Exception:
+        logger.exception("unhandled")
+        return response.error(ApiError("Error interno"), cid)

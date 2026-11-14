@@ -1,0 +1,456 @@
+[
+  {
+    "component_id": "CMP-001",
+    "name": "Filtro de aceite de motor",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 45,
+    "lead_time_days": 2,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-002",
+    "name": "Filtro de combustible",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 38,
+    "lead_time_days": 2,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-003",
+    "name": "Filtro de aire primario",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 120,
+    "lead_time_days": 3,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-004",
+    "name": "Inyector de combustible",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 650,
+    "lead_time_days": 7,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-005",
+    "name": "Turbocompresor",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 4800,
+    "lead_time_days": 21,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-006",
+    "name": "Bomba de agua",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 1200,
+    "lead_time_days": 10,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-007",
+    "name": "Radiador",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 6500,
+    "lead_time_days": 30,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-008",
+    "name": "Correa de accesorios",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 85,
+    "lead_time_days": 3,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-009",
+    "name": "Bomba hidráulica principal",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 18500,
+    "lead_time_days": 35,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-010",
+    "name": "Cilindro hidráulico de brazo",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000"
+    ],
+    "cost_usd": 9200,
+    "lead_time_days": 28,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-011",
+    "name": "Manguera hidráulica de alta presión",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 260,
+    "lead_time_days": 4,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-012",
+    "name": "Kit de sellos de cilindro hidráulico",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 340,
+    "lead_time_days": 5,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-013",
+    "name": "Válvula de control hidráulico",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 5400,
+    "lead_time_days": 20,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-014",
+    "name": "Kit de rodamientos de motor",
+    "specialty": "motor",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 1350,
+    "lead_time_days": 10,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-015",
+    "name": "Alternador",
+    "specialty": "electrica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 1900,
+    "lead_time_days": 12,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-016",
+    "name": "Motor de arranque",
+    "specialty": "electrica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 1600,
+    "lead_time_days": 12,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-017",
+    "name": "Batería 12 V servicio pesado",
+    "specialty": "electrica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 320,
+    "lead_time_days": 3,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-018",
+    "name": "Sensor de temperatura de refrigerante",
+    "specialty": "electrica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 140,
+    "lead_time_days": 4,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-019",
+    "name": "Sensor de vibración (acelerómetro)",
+    "specialty": "electrica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 480,
+    "lead_time_days": 7,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-020",
+    "name": "Módulo de control electrónico (ECU)",
+    "specialty": "electrica",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 7800,
+    "lead_time_days": 30,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-021",
+    "name": "Neumático OTR 59/80R63",
+    "specialty": "neumaticos",
+    "compatible_models": [
+      "CAT-793F",
+      "KOM-930E"
+    ],
+    "cost_usd": 42000,
+    "lead_time_days": 45,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-022",
+    "name": "Neumático OTR 45/65R45",
+    "specialty": "neumaticos",
+    "compatible_models": [
+      "CAT-994K",
+      "KOM-WA900"
+    ],
+    "cost_usd": 18000,
+    "lead_time_days": 40,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-023",
+    "name": "Zapata de oruga",
+    "specialty": "neumaticos",
+    "compatible_models": [
+      "CAT-336",
+      "KOM-PC2000",
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 650,
+    "lead_time_days": 14,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-024",
+    "name": "Broca tricónica 10 5/8 in",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "EPI-PV271",
+      "SAN-DR412i"
+    ],
+    "cost_usd": 2900,
+    "lead_time_days": 15,
+    "seed_version": 1
+  },
+  {
+    "component_id": "CMP-025",
+    "name": "Kit de discos de freno",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "CAT-793F",
+      "KOM-930E",
+      "CAT-994K",
+      "KOM-WA900"
+    ],
+    "cost_usd": 2100,
+    "lead_time_days": 10,
+    "seed_version": 1
+  }
+]
