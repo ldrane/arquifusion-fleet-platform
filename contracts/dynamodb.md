@@ -28,7 +28,9 @@
 ## Forma de los ítems (ver `contracts/fixtures/seed/*.json`)
 
 - **Machine**: campos de `Machine`/`MachineDetail` del OpenAPI + `operation_id`, `zone` (copia de `location.zone` para el GSI), `home_location`, `expected_interval_s` (lo usa heartbeat), `seed_version`.
-  `last_seen_at = null` hasta que llegue la primera lectura: **heartbeat (A) debe ignorar las máquinas con `null`**.
+  En los fixtures `last_seen_at`, `open_incident_id`, `model_version`, `rul_hours` y `failure_probability` valen `null`.
+  **En DynamoDB esos atributos no se escriben** (`seed.py` omite los `None`): un atributo `NULL` cuenta como existente para
+  `attribute_exists`/`attribute_not_exists`. Así heartbeat (A) ignora las máquinas sin lectura y el dedup de `procesar` funciona.
 - **Technician**: `Technician` del OpenAPI + `user_id` (= `cognito:username`, ej. `u-tec-07`), `zone`, `home_warehouse_id`.
 - **Component** (`entity=catalog`): `component_id`, `name`, `specialty` (enum de técnicos), `compatible_models[]`, `cost_usd`, `lead_time_days`.
 - **MachineModel** (`entity=machine_models`): `model_id`, `brand`, `type`, `payload_t`, `maintenance_interval_h`, `nominal{variable: [media, desv]}`, `component_ids[]`.
