@@ -194,3 +194,58 @@ def test_tecnicos_variados_sin_tocar_la_zona_del_golden_path():
             assert t["available"] and t["current_load"] == 0
     for zone in seed_data.ZONES:
         assert any(t["zone"] == zone and t["available"] and t["shift"] == "day" for t in techs), zone
+
+
+class FakeStateTable:
+    """machine-state con paginación: scan filtrado por sk y batch_writer de borrado."""
+
+    def __init__(self, keys):
+        self.items = {k: {"pk": k[0], "sk": k[1]} for k in keys}
+
+    def scan(
+        self,
+        FilterExpression,
+        ProjectionExpression,
+        ExpressionAttributeNames,
+        ExpressionAttributeValues,
+        ExclusiveStartKey=None,
+    ):
+        rows = sorted(k for k in self.items if k[1] == ExpressionAttributeValues[":b"])
+        start = rows.index(ExclusiveStartKey["_k"]) + 1 if ExclusiveStartKey else 0
+        page = rows[start : start + 2]
+        out = {"Items": [dict(self.items[k]) for k in page]}
+        if start + 2 < len(rows):
+            out["LastEvaluatedKey"] = {"_k": page[-1]}
+        return out
+
+    def batch_writer(self):
+        table = self
+
+        class _Batch:  # como boto3: los borrados se envían al salir (o cada 25), no durante el scan
+            pending: list = []
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                for key in self.pending:
+                    table.items.pop(key)
+                return False
+
+            def delete_item(self, Key):
+                self.pending.append((Key["pk"], Key["sk"]))
+
+        return _Batch()
+
+
+def test_reset_baselines_borra_solo_baseline():
+    keys = [
+        ("EX-001", "BASELINE"),
+        ("EX-001", "LAST"),
+        ("EX-002", "BASELINE"),
+        ("EX-002", "AGG#1h#2026-11-14T10"),
+        ("COHORT#excavator#norte", "BASELINE"),
+    ]
+    table = FakeStateTable(keys)
+    assert seed.delete_baselines(table) == 3
+    assert set(table.items) == {("EX-001", "LAST"), ("EX-002", "AGG#1h#2026-11-14T10")}

@@ -1,9 +1,9 @@
 """Detección de máquinas silenciosas (OBS-09, RF-05).
 
-Cada 1 min (EventBridge Scheduler; antes 5 min) recorre `machines` y marca `status = silent` las máquinas cuya última lectura
-(`last_seen_at`) es más antigua que `factor × expected_interval_s` (por defecto 3 × 60 s). Por cada máquina que pasa a
-silenciosa emite UN `MachineSilent` (contratos.md §3) con `zone` (del seed) y `silence_threshold_s` = factor ×
-`expected_interval_s` (#21). La escritura es condicional sobre `last_seen_at`, así que:
+Cada 1 min (EventBridge Scheduler; antes 5 min) recorre `machines` y marca `status = silent` las máquinas cuya
+última lectura (`last_seen_at`) es más antigua que `factor × expected_interval_s` (por defecto 3 × 60 s). Por cada
+máquina que pasa a silenciosa emite UN `MachineSilent` (contratos.md §3) con `zone` (del seed) y
+`silence_threshold_s` = factor × `expected_interval_s` (#21). La escritura es condicional sobre `last_seen_at`, así que:
 - no se emite dos veces por el mismo silencio;
 - si llega una lectura nueva entre el scan y la escritura, no se marca.
 Cuando `procesar` recibe una lectura nueva, el status deja de ser `silent` y un silencio posterior vuelve a emitir.
