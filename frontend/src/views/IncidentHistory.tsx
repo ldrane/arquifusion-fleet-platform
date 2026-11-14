@@ -90,7 +90,7 @@ export function IncidentHistory() {
               <thead className="table-head">
                 <tr><th className="px-4 py-2.5">Incidente</th><th className="px-4 py-2.5">Máquina(s)</th><th className="px-4 py-2.5">Severidad</th><th className="px-4 py-2.5">Estado</th><th className="px-4 py-2.5">Causa probable (IA)</th><th className="px-4 py-2.5">Técnico</th><th className="px-4 py-2.5">Detectado</th><th className="px-4 py-2.5 text-right">MTTR</th></tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/15">
+              <tbody className="divide-y divide-hairline">
                 {rows.slice(current * PAGE, current * PAGE + PAGE).map((i) => (
                   <tr key={i.incident_id} className="cursor-pointer hover:bg-surface-container" onClick={() => navigate(`/incidentes/${i.incident_id}`)} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/incidentes/${i.incident_id}`)}>
                     <td className="px-4 py-2.5 font-mono text-xs font-semibold text-on-surface">
@@ -111,7 +111,7 @@ export function IncidentHistory() {
             </table>
           </div>
         )}
-        <div className="flex items-center justify-between border-t border-outline-variant/20 px-5 py-2 font-mono text-[11px] text-outline">
+        <div className="flex items-center justify-between border-t border-hairline px-5 py-2 font-mono text-[11px] text-outline">
           <span>{rows.length} incidentes</span>
           <span className="flex items-center gap-2">
             <Button size="sm" variant="ghost" icon="chevron_left" disabled={current === 0} onClick={() => setPage(current - 1)} aria-label="Página anterior" />

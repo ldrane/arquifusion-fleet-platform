@@ -44,10 +44,10 @@ function MlModelCard() {
         <p className="text-xs text-on-surface-variant">Cargando…</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div><span className="label">Versión</span><div className="font-mono text-xl font-bold text-on-surface">{q.data.model_version}</div><Badge tone={q.data.promoted ? "good" : "warn"}>{q.data.promoted ? "Promovido" : "Candidato"}</Badge></div>
-          <div><span className="label">Precisión</span><div className="font-mono text-xl font-bold text-on-surface">{Math.round(q.data.precision * 100)}%</div></div>
-          <div><span className="label">Recall</span><div className="font-mono text-xl font-bold text-on-surface">{Math.round(q.data.recall * 100)}%</div></div>
-          <div><span className="label">Anticipación media</span><div className="font-mono text-xl font-bold text-secondary">{q.data.mean_lead_time_hours} h</div><span className="text-[11px] text-outline">entrenado {fmtDateTime(q.data.trained_at)}</span></div>
+          <div><span className="label">Versión</span><div className="font-mono text-xl font-semibold text-on-surface">{q.data.model_version}</div><Badge tone={q.data.promoted ? "good" : "warn"}>{q.data.promoted ? "Promovido" : "Candidato"}</Badge></div>
+          <div><span className="label">Precisión</span><div className="font-mono text-xl font-semibold text-on-surface">{Math.round(q.data.precision * 100)}%</div></div>
+          <div><span className="label">Recall</span><div className="font-mono text-xl font-semibold text-on-surface">{Math.round(q.data.recall * 100)}%</div></div>
+          <div><span className="label">Anticipación media</span><div className="text-xl font-semibold text-secondary">{q.data.mean_lead_time_hours} h</div><span className="text-[11px] text-outline">entrenado {fmtDateTime(q.data.trained_at)}</span></div>
         </div>
       )}
     </Panel>
@@ -131,7 +131,7 @@ export function PredictiveHealth() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/15">
+              <tbody className="divide-y divide-hairline">
                 {rows.map((m) => {
                   const inc = m.open_incident_id ? incidents.find((i) => i.incident_id === m.open_incident_id) : undefined;
                   return (
@@ -141,12 +141,12 @@ export function PredictiveHealth() {
                         <Icon name={TYPE_ICON[m.type]} className="mr-1.5 align-middle text-[16px] text-outline" />
                         {TYPE_LABEL[m.type]} · <span className="font-mono">{m.model}</span>
                       </td>
-                      <td className="px-4 py-2.5 font-mono text-xs capitalize text-on-surface-variant">{m.location.zone}</td>
+                      <td className="px-4 py-2.5 text-xs capitalize text-on-surface-variant">{m.location.zone}</td>
                       <td className="px-4 py-2.5"><StatusDot status={m.status} /></td>
                       <td className="px-4 py-2.5"><HealthBar value={m.health_score} /></td>
                       <td className="px-4 py-2.5">{m.severity !== "info" ? <SeverityBadge severity={m.severity} /> : <span className="text-xs text-outline">—</span>}</td>
                       <td className="px-4 py-2.5 font-mono text-xs text-on-surface-variant">{timeAgo(m.last_seen_at)}</td>
-                      <td className="px-4 py-2.5 font-mono text-xs">{inc ? <span className="text-error">{inc.incident_id}</span> : <span className="text-outline">—</span>}</td>
+                      <td className="px-4 py-2.5 text-xs">{inc ? <span className="text-error">{inc.incident_id}</span> : <span className="text-outline">—</span>}</td>
                     </tr>
                   );
                 })}
@@ -154,7 +154,7 @@ export function PredictiveHealth() {
             </table>
           </div>
         )}
-        <div className="border-t border-outline-variant/20 px-5 py-2 font-mono text-[11px] text-outline">{rows.length} de {machines.length} máquinas · clic en una fila para ver telemetría, factores y línea de tiempo</div>
+        <div className="border-t border-hairline px-5 py-2 text-[11px] text-outline">{rows.length} de {machines.length} máquinas · clic en una fila para ver telemetría, factores y línea de tiempo</div>
       </Panel>
     </>
   );

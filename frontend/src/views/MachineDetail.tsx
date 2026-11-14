@@ -60,12 +60,12 @@ export function MachineDetail() {
 
       <section className="panel flex flex-wrap items-center justify-between gap-4 p-5">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Icon name="precision_manufacturing" className="text-[26px]" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-mono text-headline-md font-bold text-on-surface">{m.machine_id}</h1>
+              <h1 className="font-mono text-headline-md font-semibold text-on-surface">{m.machine_id}</h1>
               {m.severity !== "info" && <SeverityBadge severity={m.severity} />}
               <StatusDot status={m.status} />
             </div>
@@ -88,7 +88,7 @@ export function MachineDetail() {
             <div>
               <span className="label">Health score</span>
               <div className="mt-1 flex items-center gap-3">
-                <span className="font-mono text-4xl font-bold text-on-surface">{m.health_score}</span>
+                <span className="text-4xl font-semibold text-on-surface">{m.health_score}</span>
                 <HealthBar value={m.health_score} />
               </div>
             </div>
@@ -175,7 +175,7 @@ export function MachineDetail() {
                 <Stat label="MTTR" value={`${fmt1(timeline.data.kpis.mttr_hours)} h`} />
                 <Stat label="Disponibilidad" value={`${fmt1(timeline.data.kpis.availability_pct)}%`} tone="text-secondary" />
               </div>
-              <ol className="relative max-h-80 overflow-y-auto border-l border-outline-variant/40 pl-5 scroll-thin lg:col-span-3">
+              <ol className="relative max-h-80 overflow-y-auto border-l border-hairline pl-5 scroll-thin lg:col-span-3">
                 {timeline.data.events.length === 0 && <li className="text-xs text-on-surface-variant">Sin eventos registrados.</li>}
                 {timeline.data.events.map((e, i) => {
                   const s = KIND_STYLE[e.kind];

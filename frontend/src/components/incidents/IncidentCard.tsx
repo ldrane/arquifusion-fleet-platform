@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Incident, Machine, Technician } from "@/api/types";
 import { fmtTime, timeAgo, VARIABLE_LABEL } from "@/lib/format";
+import { Arqui } from "../brand/Arqui";
 import { cx, Icon, IncidentStatusBadge, SeverityBadge, sevStyle, Stat } from "../ui";
 import { IncidentActions } from "./IncidentActions";
 
@@ -10,14 +11,18 @@ export function IncidentCard({ incident, machine, technician }: { incident: Inci
   const factors = incident.ai_diagnosis?.top_factors ?? [];
   const group = incident.child_incident_ids.length > 0;
   return (
-    <article className={cx("flex flex-col gap-3.5 rounded-2xl border border-l-4 border-outline-variant/30 bg-surface-container-low p-5 shadow-sm transition-all hover:border-outline-variant", s.border)}>
+    <article className="relative flex flex-col gap-3.5 overflow-hidden rounded-xl border border-hairline bg-surface-container-low p-5 transition-colors duration-200 hover:border-hairline-strong hover:bg-surface-container">
+      <span aria-hidden="true" className={cx("absolute bottom-5 left-0 top-5 w-[2px] rounded-r-full opacity-80", s.dot)} />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Link to={`/incidentes/${incident.incident_id}`} className={cx("chip hover:underline", "bg-error/15", s.text)}>
+            <Link
+              to={`/incidentes/${incident.incident_id}`}
+              className="rounded-md bg-white/[0.05] px-1.5 py-0.5 font-mono text-[11px] text-on-surface-variant transition-colors duration-150 hover:bg-white/[0.08] hover:text-on-surface"
+            >
               {incident.incident_id}
             </Link>
-            <h3 className="font-mono text-sm font-bold text-on-surface">
+            <h3 className="font-mono text-sm font-semibold text-on-surface">
               {group ? `Grupal · ${incident.machine_ids.length} máquinas` : incident.machine_ids[0]}
             </h3>
             {incident.escalated && (
@@ -28,7 +33,7 @@ export function IncidentCard({ incident, machine, technician }: { incident: Inci
             )}
             {incident.is_recurrence && <span className="chip bg-tertiary/15 text-tertiary">Recurrente</span>}
           </div>
-          <p className="mt-0.5 truncate font-mono text-xs text-outline">
+          <p className="mt-1 truncate text-xs text-outline">
             Zona {incident.zone} · {machine?.model ?? incident.machine_ids.join(", ")} · {timeAgo(incident.detected_at)}
           </p>
         </div>
@@ -48,8 +53,8 @@ export function IncidentCard({ incident, machine, technician }: { incident: Inci
         </div>
       )}
 
-      <div className="flex items-start gap-2.5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/80 p-3">
-        <Icon name="smart_toy" className="mt-0.5 text-[18px] text-primary" />
+      <div className="flex items-start gap-2.5 rounded-xl border border-hairline bg-surface-container-lowest/80 p-3">
+        <Arqui className="h-6 w-6" />
         <div className="text-xs">
           {incident.ai_diagnosis ? (
             <>

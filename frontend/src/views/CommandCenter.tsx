@@ -56,7 +56,7 @@ export function CommandCenter() {
 
   return (
     <>
-      <section className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="stagger grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Disponibilidad flota"
           tone="good"
@@ -152,7 +152,7 @@ export function CommandCenter() {
         )}
       </section>
 
-      <section className="grid w-full grid-cols-1 items-start gap-5 xl:grid-cols-12">
+      <section className="stagger grid w-full grid-cols-1 items-start gap-5 xl:grid-cols-12">
         <Panel
           className="xl:col-span-7"
           icon="radar"
@@ -174,17 +174,17 @@ export function CommandCenter() {
         >
           <div className="relative">
             {banner && (
-              <div className="absolute left-4 right-4 top-4 z-[500] flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-error/30 bg-surface-container/90 px-4 py-3 shadow-lg backdrop-blur-md">
+              <div className="absolute left-4 right-4 top-4 z-[500] flex flex-wrap items-center justify-between gap-3 rounded-xl border border-error/30 bg-surface-container/90 px-4 py-3 shadow-pop backdrop-blur-md">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-error/15 text-error">
                     <Icon name="warning" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-bold uppercase text-on-surface">
+                      <span className="text-xs font-semibold uppercase text-on-surface tracking-[0.06em]">
                         {banner.child_incident_ids.length ? `Alerta grupal · zona ${banner.zone}` : `Alerta crítica · ${banner.machine_ids[0]}`}
                       </span>
-                      <span className="rounded-full bg-error px-2 py-0.5 font-mono text-[10px] font-bold text-on-error">{banner.incident_id}</span>
+                      <span className="rounded-full bg-error px-2 py-0.5 font-mono text-[10px] font-semibold text-on-error">{banner.incident_id}</span>
                     </div>
                     <span className="block truncate text-xs text-on-surface-variant">
                       {banner.ai_diagnosis?.probable_cause ?? "Diagnóstico IA en curso"} · {banner.machine_ids.length} máquina(s) · {timeAgo(banner.detected_at)}
@@ -207,10 +207,10 @@ export function CommandCenter() {
               className="h-[540px] w-full"
             />
             {sel && (
-              <div className="absolute bottom-4 left-4 right-4 z-[500] flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest/95 p-3 shadow-xl backdrop-blur-md sm:right-auto sm:w-96">
+              <div key={sel.machine_id} className="rise absolute bottom-4 left-4 right-4 z-[500] flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-container/85 p-3 shadow-pop backdrop-blur-xl sm:right-auto sm:w-96">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold text-on-surface">{sel.machine_id}</span>
+                    <span className="font-mono text-sm font-semibold text-on-surface">{sel.machine_id}</span>
                     <span className="font-mono text-[11px] text-outline">{sel.model} · {TYPE_LABEL[sel.type]}</span>
                   </div>
                   <div className="mt-1 flex items-center gap-3">
@@ -230,7 +230,7 @@ export function CommandCenter() {
               </div>
             )}
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/20 bg-surface-container px-5 py-3 font-mono text-xs text-on-surface-variant">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline bg-surface-container px-5 py-3 font-mono text-xs text-on-surface-variant">
             <div className="flex flex-wrap items-center gap-4">
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-error" />Crítico/alto ({counts.critical})</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-tertiary" />Advertencia ({counts.warning})</span>
@@ -243,17 +243,17 @@ export function CommandCenter() {
         </Panel>
 
         <div className="flex flex-col gap-4 xl:col-span-5" id="incidentes">
-          <div className="flex items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 shadow-sm">
+          <div className="flex items-center justify-between rounded-xl border border-hairline bg-surface-container-low p-4">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-error/15 text-error">
                 <Icon name="warning" className="text-[18px]" />
               </div>
               <div>
-                <h2 className="font-mono text-sm font-bold uppercase text-on-surface">{me?.role === "tecnico" ? "Mis asignaciones y cola" : "Incidentes y triaje prioritario"}</h2>
-                <span className="font-mono text-xs font-medium text-secondary">GestionIncidente · {open.length} abiertos</span>
+                <h2 className="text-sm font-semibold text-on-surface">{me?.role === "tecnico" ? "Mis asignaciones y cola" : "Incidentes y triaje prioritario"}</h2>
+                <span className="text-xs font-medium text-secondary">GestionIncidente · {open.length} abiertos</span>
               </div>
             </div>
-            <label className="flex items-center gap-1 rounded-full border border-outline-variant/30 bg-surface-container px-3 py-1 font-mono text-xs text-on-surface-variant">
+            <label className="flex items-center gap-1 rounded-full border border-hairline bg-surface-container px-3 py-1 font-mono text-xs text-on-surface-variant">
               <span className="sr-only">Ordenar</span>
               <select className="cursor-pointer bg-transparent focus:outline-none" value={sort} onChange={(e) => setSort(e.target.value as "severity" | "age")}>
                 <option className="bg-surface-container-high" value="severity">Por severidad</option>
@@ -267,12 +267,12 @@ export function CommandCenter() {
             </div>
           )}
           {queue.slice(0, 4).map((i) => (
-            <div key={i.incident_id} className={cx(me?.role === "tecnico" && i.assigned_technician_id === myTech && "rounded-2xl ring-1 ring-primary/40")}>
+            <div key={i.incident_id} className={cx(me?.role === "tecnico" && i.assigned_technician_id === myTech && "rounded-xl ring-1 ring-primary/40")}>
               <IncidentCard incident={i} machine={machines.find((m) => m.machine_id === i.machine_ids[0])} technician={technicians.find((t) => t.technician_id === i.assigned_technician_id)} />
             </div>
           ))}
           {queue.length > 4 && (
-            <Link to="/incidentes" className="text-center font-mono text-xs font-semibold text-primary hover:underline">
+            <Link to="/incidentes" className="text-center text-xs font-semibold text-primary hover:underline">
               Ver los {queue.length} incidentes abiertos →
             </Link>
           )}

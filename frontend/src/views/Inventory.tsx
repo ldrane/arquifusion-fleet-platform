@@ -93,7 +93,7 @@ export function Inventory() {
       >
         {tab === "stock" && (
           <>
-            <div className="flex flex-wrap items-center gap-2 border-b border-outline-variant/20 px-5 py-3">
+            <div className="flex flex-wrap items-center gap-2 border-b border-hairline px-5 py-3">
               <input className="input w-48 py-1.5 text-xs" placeholder="Buscar componente" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Buscar componente" />
               <select className="input w-auto py-1.5 text-xs" value={wh} onChange={(e) => setWh(e.target.value)} aria-label="Almacén">
                 <option value="">Todos los almacenes</option>
@@ -117,7 +117,7 @@ export function Inventory() {
                   <thead className="table-head">
                     <tr><th className="px-4 py-2.5">Componente</th><th className="px-4 py-2.5">Almacén</th><th className="px-4 py-2.5">Especialidad</th><th className="px-4 py-2.5 text-right">Stock</th><th className="px-4 py-2.5">Rango min–max</th><th className="px-4 py-2.5">Estado</th></tr>
                   </thead>
-                  <tbody className="divide-y divide-outline-variant/15">
+                  <tbody className="divide-y divide-hairline">
                     {items.map((i) => {
                       const c = COMPONENT_BY_ID.get(i.component_id);
                       return (
@@ -125,8 +125,8 @@ export function Inventory() {
                           <td className="px-4 py-2.5"><span className="font-mono text-xs text-outline">{i.component_id}</span> <span className="text-on-surface">{i.name}</span></td>
                           <td className="px-4 py-2.5 font-mono text-xs text-on-surface-variant">{i.warehouse_id}</td>
                           <td className="px-4 py-2.5 text-xs text-on-surface-variant">{c ? SPECIALTY_LABEL[c.specialty] : "—"}</td>
-                          <td className="px-4 py-2.5 text-right font-mono font-semibold text-on-surface">{i.stock}</td>
-                          <td className="px-4 py-2.5"><div className="flex items-center gap-2"><StockBar item={i} /><span className="font-mono text-[11px] text-outline">{i.stock_min}–{i.stock_max}</span></div></td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-on-surface">{i.stock}</td>
+                          <td className="px-4 py-2.5"><div className="flex items-center gap-2"><StockBar item={i} /><span className="text-[11px] text-outline">{i.stock_min}–{i.stock_max}</span></div></td>
                           <td className="px-4 py-2.5">{ALERT_BADGE[i.alert]}</td>
                         </tr>
                       );
@@ -140,7 +140,7 @@ export function Inventory() {
 
         {tab === "forecast" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/20 px-5 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-5 py-3">
               <Segmented label="Horizonte" value={horizon} onChange={setHorizon} options={[{ value: "7", label: "7 d" }, { value: "30", label: "30 d" }, { value: "90", label: "90 d" }]} />
               <span className="text-xs text-on-surface-variant">Mín/máx recomendados según lead time y preventivos programados (AnalisisDiario · rama repuestos)</span>
             </div>
@@ -148,14 +148,14 @@ export function Inventory() {
               <div className="max-h-[560px] overflow-auto scroll-thin">
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead className="table-head"><tr><th className="px-4 py-2.5">Componente</th><th className="px-4 py-2.5">Almacén</th><th className="px-4 py-2.5 text-right">Demanda esperada</th><th className="px-4 py-2.5 text-right">Stock</th><th className="px-4 py-2.5 text-right">Mín / máx recomendado</th><th className="px-4 py-2.5">Preventivos</th></tr></thead>
-                  <tbody className="divide-y divide-outline-variant/15">
+                  <tbody className="divide-y divide-hairline">
                     {[...forecast.data].sort((a, b) => Number(b.shortage_for_planned_maintenance) - Number(a.shortage_for_planned_maintenance) || b.expected_demand - a.expected_demand).map((f) => (
                       <tr key={`${f.warehouse_id}-${f.component_id}`} className="hover:bg-surface-container">
                         <td className="px-4 py-2.5"><span className="font-mono text-xs text-outline">{f.component_id}</span> {COMPONENT_BY_ID.get(f.component_id)?.name}</td>
                         <td className="px-4 py-2.5 font-mono text-xs text-on-surface-variant">{f.warehouse_id}</td>
                         <td className="px-4 py-2.5 text-right font-mono">{fmt1(f.expected_demand)}</td>
                         <td className={cx("px-4 py-2.5 text-right font-mono font-semibold", f.stock < f.recommended_min ? "text-error" : "text-on-surface")}>{f.stock}</td>
-                        <td className="px-4 py-2.5 text-right font-mono text-on-surface-variant">{f.recommended_min} / {f.recommended_max}</td>
+                        <td className="px-4 py-2.5 text-right text-on-surface-variant">{f.recommended_min} / {f.recommended_max}</td>
                         <td className="px-4 py-2.5">{f.shortage_for_planned_maintenance ? <Badge tone="bad">Faltante</Badge> : <Badge tone="good">Cubierto</Badge>}</td>
                       </tr>
                     ))}
@@ -168,17 +168,17 @@ export function Inventory() {
 
         {tab === "ranking" && (
           ranking.error ? <div className="p-5"><ErrorBox error={ranking.error} onRetry={ranking.refetch} /></div> : !ranking.data ? <Loading /> : (
-            <ol className="divide-y divide-outline-variant/15">
+            <ol className="divide-y divide-hairline">
               {ranking.data.slice(0, 15).map((p, idx) => {
                 const max = ranking.data![0]?.units_used_90d || 1;
                 return (
                   <li key={p.component_id} className="flex items-center gap-4 px-5 py-2.5">
-                    <span className="w-6 font-mono text-xs text-outline">{idx + 1}</span>
+                    <span className="w-6 text-xs text-outline">{idx + 1}</span>
                     <span className="w-64 truncate text-sm text-on-surface"><span className="font-mono text-xs text-outline">{p.component_id}</span> {p.name}</span>
                     <div className="h-2 flex-1 rounded-full bg-surface-container-highest">
                       <div className="h-full rounded-full bg-[#3987e5]" style={{ width: `${(p.units_used_90d / max) * 100}%` }} />
                     </div>
-                    <span className="w-16 text-right font-mono text-sm font-semibold text-on-surface">{p.units_used_90d}</span>
+                    <span className="w-16 text-right text-sm font-semibold text-on-surface">{p.units_used_90d}</span>
                     <span className="w-28 text-right">{p.irregular_consumption ? <Badge tone="warn">Irregular</Badge> : null}</span>
                   </li>
                 );
@@ -189,7 +189,7 @@ export function Inventory() {
 
         {tab === "plan" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/20 px-5 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-5 py-3">
               <Segmented label="Filtro" value={flag} onChange={setFlag} options={[{ value: "", label: `Todos (${plan.data?.length ?? 0})` }, { value: "overdue", label: `Vencidos (${overdue.length})` }, { value: "unnecessary", label: `Postergables (${postponable.length})` }]} />
               <span className="text-xs text-on-surface-variant">Priorizado por condición, no solo por calendario (RF-03)</span>
             </div>
@@ -197,12 +197,12 @@ export function Inventory() {
               <div className="max-h-[560px] overflow-auto scroll-thin">
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead className="table-head"><tr><th className="px-4 py-2.5">#</th><th className="px-4 py-2.5">Máquina</th><th className="px-4 py-2.5">Zona</th><th className="px-4 py-2.5">Próximo</th><th className="px-4 py-2.5">Estado</th><th className="px-4 py-2.5">Motivo</th></tr></thead>
-                  <tbody className="divide-y divide-outline-variant/15">
+                  <tbody className="divide-y divide-hairline">
                     {plan.data.filter((p) => !flag || p.flag === flag).slice(0, 100).map((p) => (
                       <tr key={p.machine_id} className="hover:bg-surface-container">
-                        <td className="px-4 py-2.5 font-mono text-xs text-outline">{p.priority}</td>
+                        <td className="px-4 py-2.5 text-xs text-outline">{p.priority}</td>
                         <td className="px-4 py-2.5 font-mono font-semibold"><Link to={`/salud/${p.machine_id}`} className="text-on-surface hover:text-primary">{p.machine_id}</Link></td>
-                        <td className="px-4 py-2.5 font-mono text-xs capitalize text-on-surface-variant">{p.zone}</td>
+                        <td className="px-4 py-2.5 text-xs capitalize text-on-surface-variant">{p.zone}</td>
                         <td className="px-4 py-2.5 font-mono text-xs text-on-surface-variant">{fmtDate(p.next_maintenance_at)}</td>
                         <td className="px-4 py-2.5">{FLAG_BADGE[p.flag]}</td>
                         <td className="px-4 py-2.5 text-xs text-on-surface-variant">{p.reason}</td>
