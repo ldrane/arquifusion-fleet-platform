@@ -83,7 +83,7 @@ def test_claves_unicas_por_tabla():
 def test_to_item_convierte_float_a_decimal():
     rec = seed_data.build_all()["machines"][0]
     item = seed.to_item("machines", rec)
-    assert item["pk"] == f"MACHINE#{rec['machine_id']}" and item["sk"] == "META"
+    assert item["pk"] == f"OP-01#{rec['machine_id']}" and item["sk"] == "META"
     assert isinstance(item["location"]["lat"], Decimal)
 
 
@@ -111,3 +111,13 @@ def test_load_es_idempotente():
     assert seed.put_records(table, "machines", records, force=False) == (0, len(records))
     assert seed.put_records(table, "machines", records, force=True) == (len(records), 0)
     assert len(table.items) == len(records)
+
+
+def test_claves_segun_contrato_seccion_9():
+    data = seed_data.build_all()
+    ex = next(m for m in data["machines"] if m["machine_id"] == "EX-023")
+    assert seed.to_item("machines", ex)["pk"] == "OP-01#EX-023"
+    inv = next(i for i in data["inventory"] if (i["warehouse_id"], i["component_id"]) == ("WH-01", "CMP-014"))
+    item = seed.to_item("inventory", inv)
+    assert (item["pk"], item["sk"], item["location_id"]) == ("WH-01", "CMP-014", "WH-01")
+    assert "cost_usd" in data["catalog"][0]

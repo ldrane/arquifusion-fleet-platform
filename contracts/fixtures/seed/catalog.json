@@ -15,7 +15,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 45,
+    "cost_usd": 45,
     "lead_time_days": 2,
     "seed_version": 1
   },
@@ -35,7 +35,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 38,
+    "cost_usd": 38,
     "lead_time_days": 2,
     "seed_version": 1
   },
@@ -55,7 +55,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 120,
+    "cost_usd": 120,
     "lead_time_days": 3,
     "seed_version": 1
   },
@@ -75,7 +75,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 650,
+    "cost_usd": 650,
     "lead_time_days": 7,
     "seed_version": 1
   },
@@ -95,7 +95,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 4800,
+    "cost_usd": 4800,
     "lead_time_days": 21,
     "seed_version": 1
   },
@@ -115,7 +115,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 1200,
+    "cost_usd": 1200,
     "lead_time_days": 10,
     "seed_version": 1
   },
@@ -135,7 +135,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 6500,
+    "cost_usd": 6500,
     "lead_time_days": 30,
     "seed_version": 1
   },
@@ -155,7 +155,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 85,
+    "cost_usd": 85,
     "lead_time_days": 3,
     "seed_version": 1
   },
@@ -173,7 +173,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 18500,
+    "cost_usd": 18500,
     "lead_time_days": 35,
     "seed_version": 1
   },
@@ -185,7 +185,7 @@
       "CAT-336",
       "KOM-PC2000"
     ],
-    "unit_cost_usd": 9200,
+    "cost_usd": 9200,
     "lead_time_days": 28,
     "seed_version": 1
   },
@@ -205,7 +205,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 260,
+    "cost_usd": 260,
     "lead_time_days": 4,
     "seed_version": 1
   },
@@ -225,7 +225,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 340,
+    "cost_usd": 340,
     "lead_time_days": 5,
     "seed_version": 1
   },
@@ -243,7 +243,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 5400,
+    "cost_usd": 5400,
     "lead_time_days": 20,
     "seed_version": 1
   },
@@ -263,7 +263,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 1350,
+    "cost_usd": 1350,
     "lead_time_days": 10,
     "seed_version": 1
   },
@@ -283,7 +283,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 1900,
+    "cost_usd": 1900,
     "lead_time_days": 12,
     "seed_version": 1
   },
@@ -303,7 +303,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 1600,
+    "cost_usd": 1600,
     "lead_time_days": 12,
     "seed_version": 1
   },
@@ -323,7 +323,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 320,
+    "cost_usd": 320,
     "lead_time_days": 3,
     "seed_version": 1
   },
@@ -343,7 +343,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 140,
+    "cost_usd": 140,
     "lead_time_days": 4,
     "seed_version": 1
   },
@@ -363,7 +363,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 480,
+    "cost_usd": 480,
     "lead_time_days": 7,
     "seed_version": 1
   },
@@ -383,7 +383,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 7800,
+    "cost_usd": 7800,
     "lead_time_days": 30,
     "seed_version": 1
   },
@@ -395,7 +395,7 @@
       "CAT-793F",
       "KOM-930E"
     ],
-    "unit_cost_usd": 42000,
+    "cost_usd": 42000,
     "lead_time_days": 45,
     "seed_version": 1
   },
@@ -407,7 +407,7 @@
       "CAT-994K",
       "KOM-WA900"
     ],
-    "unit_cost_usd": 18000,
+    "cost_usd": 18000,
     "lead_time_days": 40,
     "seed_version": 1
   },
@@ -423,7 +423,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 650,
+    "cost_usd": 650,
     "lead_time_days": 14,
     "seed_version": 1
   },
@@ -435,7 +435,7 @@
       "EPI-PV271",
       "SAN-DR412i"
     ],
-    "unit_cost_usd": 2900,
+    "cost_usd": 2900,
     "lead_time_days": 15,
     "seed_version": 1
   },
@@ -449,7 +449,7 @@
       "CAT-994K",
       "KOM-WA900"
     ],
-    "unit_cost_usd": 2100,
+    "cost_usd": 2100,
     "lead_time_days": 10,
     "seed_version": 1
   }

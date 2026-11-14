@@ -253,7 +253,7 @@ def build_catalog() -> list[dict]:
             "name": name,
             "specialty": specialty,
             "compatible_models": models,
-            "unit_cost_usd": cost,
+            "cost_usd": cost,  # nombre que lee la analítica de A (contratos.md §9)
             "lead_time_days": lead,
             "seed_version": SEED_VERSION,
         }
@@ -287,7 +287,8 @@ def build_inventory() -> list[dict]:
             smin, smax = _stock_limits(cost)
             stock = INVENTORY_OVERRIDES.get((wh["warehouse_id"], cid), rng.randint(smin, smax))
             items.append({
-                "warehouse_id": wh["warehouse_id"],
+                "warehouse_id": wh["warehouse_id"],  # nombre del OpenAPI (InventoryItem)
+                "location_id": wh["warehouse_id"],   # nombre que lee A (contratos.md §9)
                 "warehouse_name": wh["name"],
                 "zone": wh["zone"],
                 "component_id": cid,
