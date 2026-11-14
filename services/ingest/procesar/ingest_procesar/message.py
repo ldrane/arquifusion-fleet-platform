@@ -35,6 +35,19 @@ class Envelope:
     invalid: int  # lecturas descartadas por campos faltantes
 
 
+def _is_valid(reading) -> bool:
+    """Claves presentes y tipos mínimos (F-19): `machine_id`/`timestamp` texto no vacío, `location` objeto.
+
+    Un `timestamp` no-string rompía el `sorted` del lote y lo mandaba a la DLQ tras 3 intentos.
+    """
+    if not isinstance(reading, dict) or not all(k in reading for k in REQUIRED):
+        return False
+    return (
+        all(isinstance(reading[k], str) and reading[k] for k in ("machine_id", "timestamp", "type"))
+        and isinstance(reading["location"], dict)
+    )
+
+
 def parse(body: str) -> Envelope:
     """Valida el envoltorio y separa las lecturas válidas.
 
@@ -49,6 +62,6 @@ def parse(body: str) -> Envelope:
     if not isinstance(readings, list):
         raise InvalidMessage("batch.readings no es una lista")
 
-    valid = [r for r in readings if isinstance(r, dict) and all(k in r for k in REQUIRED)]
+    valid = [r for r in readings if _is_valid(r)]
     correlation_id = payload.get("correlation_id") or str(uuid.uuid4())
     return Envelope(correlation_id=correlation_id, readings=valid, invalid=len(readings) - len(valid))

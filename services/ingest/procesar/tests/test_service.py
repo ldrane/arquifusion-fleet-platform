@@ -154,3 +154,35 @@ def test_update_machine_requires_existing_item(aws, settings):
         is False
     )
     assert "Item" not in aws["ddb"].Table(settings.table_machines).get_item(Key={"pk": "OP-01#ZZ-999", "sk": "META"})
+
+
+def test_f18_reclamo_pending_vencido_se_reprocesa_y_done_es_duplicado(aws, settings, now):
+    repo, table = aws["repo"], aws["ddb"].Table(settings.table_idempotency)
+    t0 = int(now.timestamp())
+    assert repo.claim_reading("EX-023", "ts", t0) is True
+    assert table.get_item(Key={"pk": "EX-023#ts"})["Item"]["state"] == "pending"
+    # reclamo pendiente vigente: duplicado
+    assert repo.claim_reading("EX-023", "ts", t0 + 10) is False
+    # la Lambda murió: pasado el TTL corto el reintento puede reclamar de nuevo
+    assert repo.claim_reading("EX-023", "ts", t0 + settings.claim_pending_s + 1) is True
+    repo.mark_done("EX-023", "ts", t0 + 100)
+    item = table.get_item(Key={"pk": "EX-023#ts"})["Item"]
+    assert item["state"] == "done" and int(item["expires_at"]) == t0 + 100 + settings.idempotency_ttl_s
+    # ya `done`: duplicado aunque pase el TTL corto
+    assert repo.claim_reading("EX-023", "ts", t0 + 10_000) is False
+
+
+def test_f18_lectura_reclamada_por_lambda_muerta_no_se_pierde(processor, aws, reading, sqs, settings, now):
+    r = reading(0)
+    aws["repo"].claim_reading(r["machine_id"], r["timestamp"], int(now.timestamp()) - 3600)  # pending vencido
+    processor.handle(sqs([r]))
+    assert len(aws["firehose"].records) == 1
+    item = aws["ddb"].Table(settings.table_idempotency).get_item(Key={"pk": f"{r['machine_id']}#{r['timestamp']}"})
+    assert item["Item"]["state"] == "done"
+
+
+def test_f19_timestamp_o_machine_id_no_string_se_descartan_sin_romper_el_lote(processor, aws, reading, sqs):
+    bad = [reading(1, timestamp=12345), reading(2, machine_id=None), reading(3, machine_id=7), reading(4, location="x")]
+    result = processor.handle(sqs([reading(0), *bad, reading(5)]))
+    assert result == {"batchItemFailures": []}
+    assert len(aws["firehose"].records) == 2

@@ -5,7 +5,7 @@ Keyschema esperado de las tablas de infra/base (Persona B). Atributos `pk` y `sk
 - machines:      pk `{operation_id}#{machine_id}`, sk `META`. Ítem sembrado por C: `procesar` solo actualiza los
                  campos dinámicos y nunca crea máquinas (`attribute_exists(pk)`, contratos.md §9, hallazgo #1).
 - machine-state: pk `{machine_id}` o `COHORT#{type}#{zone}`; sk `LAST`, `BASELINE` o `AGG#1h#{YYYY-MM-DDTHH}`.
-- idempotency:   pk `{machine_id}#{timestamp}`, sin sk, TTL en `expires_at`.
+- idempotency:   pk `{machine_id}#{timestamp}`, sin sk, `state` pending|done, TTL en `expires_at`.
 - anomalies:     pk `{machine_id}`, sk `{detected_at}#{anomaly_id}`; GSI `by_zone`: `zone` → `detected_at`
                  (`detected_at` = timestamp ISO de la lectura, hallazgo #7).
 """
@@ -61,17 +61,38 @@ class Repository:
 
     # ------------------------------------------------------------------ idempotencia (RNF-07)
     def claim_reading(self, machine_id: str, timestamp: str, now_epoch: int) -> bool:
-        """Registra la lectura. False si ya se había procesado (duplicado)."""
+        """Fase 1: reclama la lectura como `pending` con TTL corto. False si es un duplicado real.
+
+        Es duplicado si ya está `done` (o es una clave heredada sin `state`) o si hay un reclamo `pending` aún
+        vigente. Un `pending` vencido (la Lambda murió por timeout/OOM antes de `mark_done`) se puede reclamar de
+        nuevo, así el reintento de SQS no pierde la lectura (F-18).
+        """
         try:
             self._idempotency.put_item(
-                Item={"pk": f"{machine_id}#{timestamp}", "expires_at": now_epoch + self._s.idempotency_ttl_s},
-                ConditionExpression="attribute_not_exists(pk)",
+                Item={
+                    "pk": f"{machine_id}#{timestamp}",
+                    "state": "pending",
+                    "expires_at": now_epoch + self._s.claim_pending_s,
+                },
+                ConditionExpression="attribute_not_exists(pk) OR (#st = :pending AND #exp < :now)",
+                ExpressionAttributeNames={"#st": "state", "#exp": "expires_at"},
+                ExpressionAttributeValues={":pending": "pending", ":now": now_epoch},
             )
             return True
         except ClientError as exc:
             if _is_conditional_failure(exc):
                 return False
             raise
+
+    def mark_done(self, machine_id: str, timestamp: str, now_epoch: int) -> None:
+        """Fase 2: la lectura ya se procesó; queda `done` durante la ventana completa de deduplicación (RNF-07)."""
+        self._idempotency.put_item(
+            Item={
+                "pk": f"{machine_id}#{timestamp}",
+                "state": "done",
+                "expires_at": now_epoch + self._s.idempotency_ttl_s,
+            }
+        )
 
     def release_reading(self, machine_id: str, timestamp: str) -> None:
         """Libera el registro si el mensaje falla, para que el reintento de SQS la procese."""
