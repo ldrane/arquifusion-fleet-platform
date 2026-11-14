@@ -43,7 +43,8 @@ paths:
       summary: Ingesta de lecturas en lote (1 request = hasta 100 lecturas)
       description: |
         API Gateway valida el JSON Schema y la API key, y deja el lote en SQS (integración directa, sin Lambda).
-        Responde 202 de inmediato. Lote inválido = 400 completo (no se paga Lambda).
+        Responde 202 de inmediato con el `message_id` de SQS y el `correlation_id` del lote (no cuenta lecturas:
+        la integración directa no ejecuta código). Lote inválido = 400 completo (no se paga Lambda).
         Idempotencia aguas abajo por `machine_id#timestamp`.
       security: [{ApiKeyIngest: []}]
       x-lambda: ninguna (API Gateway → SQS ingest)
@@ -73,7 +74,7 @@ paths:
           description: Aceptado y encolado
           content:
             application/json:
-              example: {data: {accepted: 1}}
+              example: {data: {accepted: true, message_id: 5fea7756-0ea4-451a-a703-a558b933e274, correlation_id: c0a8b2f1-3d4e-4f60-9a71-2b3c4d5e6f70}}
         '400': {$ref: '#/components/responses/ValidationError'}
         '401': {$ref: '#/components/responses/Unauthenticated'}
         '429': {$ref: '#/components/responses/RateLimited'}
@@ -511,6 +512,7 @@ paths:
                       type: object
                       properties:
                         machine_id: {type: string}
+                        zone: {type: string}
                         next_maintenance_at: {type: string, format: date}
                         priority: {type: integer, description: 1 = más urgente}
                         flag: {type: string, enum: [overdue, unnecessary, on_track]}
@@ -539,6 +541,7 @@ paths:
                       type: object
                       properties:
                         machine_id: {type: string}
+                        zone: {type: string}
                         lph: {type: number}
                         l_per_ton: {type: number}
                         vs_peers_pct: {type: number}
@@ -569,6 +572,7 @@ paths:
                       type: object
                       properties:
                         machine_id: {type: string}
+                        zone: {type: string}
                         utilization_pct: {type: number}
                         classification: {type: string, enum: [underused, normal, overused]}
                         cost_per_hour_usd: {type: number}

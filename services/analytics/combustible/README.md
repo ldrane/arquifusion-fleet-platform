@@ -1,9 +1,9 @@
 # combustible
 
 - **Dueño:** Persona A
-- **Qué hace:** Rama de `AnalisisDiario`: L/h y L/ton vs pares e historial.
-- **Consume:** Resultados Athena
-- **Produce:** tabla `Insights`
-- **Cubre:** RF-07
-- **Despliegue:** Fuera de la VPC.
+- **Qué hace:** rama de `AnalisisDiario`. L/h en operación y L/t, comparación con la mediana de su tipo y con su propio historial (días 31-90), aumento progresivo (pendiente ≥ 2 %/semana en 30 días) y causas probables por reglas (sobrecarga, RPM, temperatura, ralentí, desgaste).
+- **Consume:** estadísticas diarias de Athena (`daily_machine_stats.sql`).
+- **Produce:** `insights` `fuel#7d` y `fuel#30d` (GET /v1/analytics/fuel, + campo `zone`).
+- **Cubre:** RF-07.1 a RF-07.4.
+- **Despliegue:** zip + `analytics_common` + capa común (`infra/ingest/analytics.tf`).
 - **Cómo probar:** `pytest services/analytics/combustible/tests`

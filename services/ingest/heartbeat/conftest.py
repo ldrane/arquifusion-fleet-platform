@@ -1,4 +1,5 @@
 """Permite `import service` en los tests de este servicio aunque cada servicio tenga su propio service.py."""
+
 import sys
 from pathlib import Path
 

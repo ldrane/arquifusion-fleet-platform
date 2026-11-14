@@ -1,1 +1,7 @@
 aws-lambda-powertools[tracer]==3.*
+numpy==2.*
+pandas==3.*
+pyarrow
+joblib==1.*
+# Misma versión que la imagen de procesar: los .joblib no son portables entre versiones de scikit-learn.
+scikit-learn==1.9.*

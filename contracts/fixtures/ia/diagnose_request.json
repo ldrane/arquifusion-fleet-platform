@@ -3,13 +3,16 @@
   "correlation_id": "7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11",
   "payload": {
     "machine_id": "EX-023",
-    "model": "excavadora",
-    "top_factors": [
-      "vibration_mm_s",
-      "temperature_c",
-      "fuel_rate_lph"
-    ],
+    "machine_type": "excavator",
+    "model": "EX-350",
+    "severity": "high",
     "health_score": 42,
+    "top_factors": [
+      { "variable": "vibration_mm_s", "z_score": 3.1, "direction": "high" },
+      { "variable": "temperature_c", "z_score": 2.4, "direction": "high" },
+      { "variable": "fuel_rate_lph", "z_score": 1.9, "direction": "high" }
+    ],
+    "latest_reading": { "temperature_c": 98.4, "vibration_mm_s": 7.2, "fuel_rate_lph": 38.5, "rpm": 1850 },
     "recent_incidents": []
   }
 }
