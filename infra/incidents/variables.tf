@@ -56,6 +56,22 @@ variable "pubsub_topic" {
   default     = "notificaciones"
 }
 
+variable "push_mode" {
+  description = "Cómo sale el push de notificar: pubsub (topic notificaciones) o direct (invoca notify-push sin Pub/Sub)"
+  type        = string
+  default     = "pubsub"
+  validation {
+    condition     = contains(["pubsub", "direct"], var.push_mode)
+    error_message = "push_mode debe ser pubsub o direct."
+  }
+}
+
+variable "push_audience" {
+  description = "Audience del token OIDC de la suscripción push (debe coincidir con infra/gcp var.push_audience)"
+  type        = string
+  default     = "arquifusion-notify-push"
+}
+
 variable "alarms_enabled" {
   description = "Crea alarmas hacia {p}-platform-alarms (requiere infra/base)"
   type        = bool

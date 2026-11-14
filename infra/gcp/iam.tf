@@ -11,10 +11,14 @@ resource "google_service_account" "aws" {
 
 locals {
   # Mínimo privilegio por consumidor (MH-SEC-07)
-  aws_sa_roles = {
-    "roles/datastore.user"   = "replicar escribe Firestore (C)"
-    "roles/pubsub.publisher" = "notificar publica en topic notificaciones (B)"
-  }
+  aws_sa_roles = merge(
+    {
+      "roles/datastore.user"   = "replicar escribe Firestore (C); notify-push lee users (B, sin facturación)"
+      "roles/pubsub.publisher" = "notificar publica en topic notificaciones (B)"
+    },
+    # Sin facturación el push FCM sale de la Lambda notify-push (AWS) con esta misma SA
+    { for r, why in { "roles/firebasecloudmessaging.admin" = "notify-push envía FCM HTTP v1 (B)" } : r => why if !var.gcp_billing },
+  )
   # firebase-token (C6) no necesita rol: firma el custom token localmente con la llave privada.
 }
 
@@ -27,7 +31,9 @@ resource "google_project_iam_member" "aws" {
 }
 
 # ---------------------------------------------------------------- Cloud Function notify_bridge (B, notify.tf)
+# Solo con gcp_billing = true (las Cloud Functions exigen facturación).
 resource "google_service_account" "notify_bridge" {
+  count        = var.gcp_billing ? 1 : 0
   account_id   = "notify-bridge"
   display_name = "Cloud Function notify_bridge (ArquiFusion)"
   description  = "Pub/Sub -> FCM y Firestore actions -> AWS /bridge/events (RF-10.2, RF-16.5)"
@@ -45,9 +51,9 @@ locals {
 }
 
 resource "google_project_iam_member" "notify_bridge" {
-  for_each = local.notify_bridge_roles
+  for_each = { for r, why in local.notify_bridge_roles : r => why if var.gcp_billing }
 
   project = var.gcp_project_id
   role    = each.key
-  member  = "serviceAccount:${google_service_account.notify_bridge.email}"
+  member  = "serviceAccount:${google_service_account.notify_bridge[0].email}"
 }

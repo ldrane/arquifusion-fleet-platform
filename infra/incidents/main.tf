@@ -124,6 +124,26 @@ locals {
         ALERTS_TOPIC_ARN_PREFIX  = "arn:aws:sns:${var.aws_region}:${local.account_id}:${local.prefix}-alerts-"
         GCP_SA_SECRET_NAME       = "arquifusion/${var.stage}/gcp/service-account"
         PUBSUB_TOPIC             = var.pubsub_topic
+        PUSH_MODE                = var.push_mode # pubsub | direct (plan B sin Pub/Sub, ver notify_push)
+        NOTIFY_PUSH_FUNCTION     = "${local.prefix}-notify-push"
+      }
+    }
+    # Push FCM desde AWS cuando GCP no tiene facturación (infra/gcp gcp_billing=false): reemplaza a la
+    # Cloud Function notify-push con la misma lógica (gcp/functions/notify_bridge/main.py va en el zip).
+    notify_push = {
+      name  = "${local.prefix}-notify-push"
+      dir   = "notify_push"
+      files = ["handler.py", "service.py", "gcp_rest.py"]
+      extra = {
+        "gcp_auth.py"      = "${local.services_dir}/incidents/notificar/gcp_auth.py"
+        "notify_bridge.py" = "${path.module}/../../gcp/functions/notify_bridge/main.py"
+      }
+      timeout = 20
+      memory  = 256
+      rf      = "RF-10.2 MH-MC-02"
+      env = {
+        GCP_SA_SECRET_NAME = "arquifusion/${var.stage}/gcp/service-account"
+        PUSH_AUDIENCE      = var.push_audience
       }
     }
     auditoria = {
@@ -142,7 +162,7 @@ locals {
 }
 
 # ---------------------------------------------------------------- Lambdas
-# Zip = archivos del servicio + librería arquifusion_shared. Powertools llega por la layer pública. Sin dependencias
+# Zip = archivos del servicio (+ `extra` de otras carpetas) + librería arquifusion_shared. Powertools llega por la layer pública. Sin dependencias
 # externas (notificar firma el JWT de GCP con la stdlib, gcp_auth.py).
 data "archive_file" "fn" {
   for_each    = local.functions
@@ -154,6 +174,13 @@ data "archive_file" "fn" {
     content {
       content  = file("${local.services_dir}/incidents/${each.value.dir}/${source.value}")
       filename = source.value
+    }
+  }
+  dynamic "source" {
+    for_each = try(each.value.extra, {}) # archivos de otras carpetas: nombre en el zip => ruta
+    content {
+      content  = file(source.value)
+      filename = source.key
     }
   }
   dynamic "source" {
@@ -205,6 +232,15 @@ resource "aws_lambda_permission" "apigw_comandos" {
   function_name = aws_lambda_function.fn["api_comandos"].function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${data.aws_api_gateway_rest_api.api.execution_arn}/*/*/*"
+}
+
+# API Gateway → notify-push (POST /bridge/push, sin authorizer: la Lambda valida el OIDC de Pub/Sub)
+resource "aws_lambda_permission" "apigw_notify_push" {
+  statement_id  = "AllowApiGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.fn["notify_push"].function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${data.aws_api_gateway_rest_api.api.execution_arn}/*/POST/bridge/push"
 }
 
 # ---------------------------------------------------------------- Step Functions GestionIncidente (Standard)

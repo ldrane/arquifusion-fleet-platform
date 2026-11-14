@@ -16,6 +16,7 @@ locals {
     lectura  = "${local.prefix}-api-lectura"  # C (infra/query)
     comandos = "${local.prefix}-api-comandos" # B (infra/incidents)
     gemini   = "${local.prefix}-ia-gemini"    # A (infra/ingest)
+    push     = "${local.prefix}-notify-push"  # B (infra/incidents): push FCM si GCP no tiene facturación
   }
 
   # Árbol de recursos (máx. 3 niveles). `/telemetry` NO va aquí: lo crea A.
@@ -24,14 +25,15 @@ locals {
   paths_l2 = toset([
     "auth/firebase-token", "machines/{machine_id}", "incidents/{incident_id}", "technicians/me",
     "parts/ranking", "parts/forecast", "maintenance/plan", "analytics/fuel", "analytics/productivity",
-    "analytics/kpis", "reports/latest", "ml/model", "ml/retrain", "assistant/chat", "bridge/events",
+    "analytics/kpis", "reports/latest", "ml/model", "ml/retrain", "assistant/chat", "bridge/events", "bridge/push",
   ])
   paths_l3 = toset([
     "machines/{machine_id}/telemetry", "machines/{machine_id}/timeline", "incidents/{incident_id}/ack",
     "incidents/{incident_id}/assign", "incidents/{incident_id}/resolve", "technicians/me/status",
   ])
 
-  # "MÉTODO ruta" => Lambda y autenticación (cognito | api_key). Fuente: tabla de contratos.md §2.
+  # "MÉTODO ruta" => Lambda y autenticación (cognito | api_key | oidc). Fuente: tabla de contratos.md §2.
+  # oidc = sin authorizer en API Gateway: Pub/Sub no puede mandar x-api-key, la Lambda valida su token OIDC de Google.
   routes = {
     "GET me"                               = { fn = "lectura", auth = "cognito" }
     "POST auth/firebase-token"             = { fn = "lectura", auth = "cognito" }
@@ -58,6 +60,7 @@ locals {
     "POST ml/retrain"                      = { fn = "comandos", auth = "cognito" }
     "POST assistant/chat"                  = { fn = "gemini", auth = "cognito" }
     "POST bridge/events"                   = { fn = "comandos", auth = "api_key" }
+    "POST bridge/push"                     = { fn = "push", auth = "oidc" } # suscripción push de Pub/Sub
   }
 
   all_paths = setunion(local.paths_l1, local.paths_l2, local.paths_l3)

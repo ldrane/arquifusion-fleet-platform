@@ -4,6 +4,28 @@
 - **Contiene:** provider `google`: Firestore `(default)` en `nam5` con PITR (7 días) y protección de borrado, Security Rules (`firestore.rules`), índice de `users.fcm_tokens` desactivado, APIs, service account `aws-integration` para las Lambdas de AWS.
 - **State:** `s3://<bucket-tfstate>/arquifusion/gcp/terraform.tfstate` (uno solo: Firestore `(default)` es único por proyecto).
 - **Desplegar:** `terraform -chdir=infra/gcp init -backend-config=../backend.hcl && terraform -chdir=infra/gcp apply -var stage=<stage> -var gcp_project_id=<id>` (runbook `docs/h0-persona-c.md` §5).
+  Requiere `infra/base` aplicado antes (lee el SSM `/arquifusion/<stage>/api/url` para la suscripción push).
+
+## Facturación: `gcp_billing` (por defecto `false`)
+
+El proyecto puede quedar en el plan **Spark** (sin cuenta de facturación). Nada del diseño original se borra: con
+`-var gcp_billing=true` se despliega exactamente el plan original.
+
+| Pieza | `gcp_billing = false` (Spark) | `gcp_billing = true` (Blaze) |
+|---|---|---|
+| Firestore, reglas, Auth, FCM, Pub/Sub `notificaciones`, SA `aws-integration` | ✅ | ✅ |
+| PITR de Firestore | ❌ (exige facturación; la fuente de verdad es DynamoDB con PITR y `replicar` vuelve a copiar) | ✅ 7 días |
+| Push FCM (RF-10.2) | Suscripción push `notificaciones-push` → AWS `POST /bridge/push` → Lambda `notify-push` (misma lógica, `services/incidents/notify_push`) | Cloud Function `notify-push` |
+| Acciones del técnico (RF-16.5) | El front llama directo a `/incidents/{id}/ack|resolve` y `/technicians/me/status` (ya lo hace) | además, Cloud Function `notify-actions` (Firestore `actions` → `/bridge/events`) |
+| Secret Manager `bridge-api-key`, bucket de código, APIs de Functions/Run/Build/Eventarc/Artifact Registry | no se crean | ✅ |
+| Roles extra de `aws-integration` | `firebasecloudmessaging.admin` (la Lambda envía FCM) | — |
+
+La suscripción push firma cada entrega con un token OIDC de la SA `pubsub-push` (`aud = arquifusion-notify-push`); la
+Lambda lo valida.
+
+**Plan B** si GCP no deja crear la suscripción push sin facturación: aplicar este stack con `-var push_subscription=false`
+e `infra/incidents` con `-var push_mode=direct` (notificar invoca `notify-push` directo; el push sigue llegando, solo
+que sin pasar por Pub/Sub).
 
 ## Colecciones (contratos.md §5)
 
