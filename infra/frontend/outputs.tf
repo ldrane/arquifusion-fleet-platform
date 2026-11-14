@@ -1,5 +1,5 @@
 output "bucket" {
-  value = aws_s3_bucket.web.bucket
+  value = module.web_bucket.id
 }
 
 output "distribution_id" {

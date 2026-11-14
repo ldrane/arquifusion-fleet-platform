@@ -61,20 +61,23 @@ data "aws_api_gateway_rest_api" "api" {
 }
 
 # Bucket de artefactos: modelos ML, código de las Lambdas zip y resultados de Athena.
-resource "aws_s3_bucket" "artifacts" {
-  bucket        = "${local.prefix}-artifacts-${local.account_id}"
-  force_destroy = true
+# Learner Lab: no usar resource "aws_s3_bucket" (SCP bloquea GetBucketObjectLockConfiguration).
+# Ver infra/modules/lab_s3_bucket. Ojo: terraform destroy ya no vacía ni borra este bucket.
+module "artifacts_bucket" {
+  source = "../modules/lab_s3_bucket"
+  name   = "${local.prefix}-artifacts-${local.account_id}"
+  region = var.aws_region
 }
 
 resource "aws_s3_bucket_versioning" "artifacts" {
-  bucket = aws_s3_bucket.artifacts.id
+  bucket = module.artifacts_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 resource "aws_s3_bucket_public_access_block" "artifacts" {
-  bucket                  = aws_s3_bucket.artifacts.id
+  bucket                  = module.artifacts_bucket.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -82,7 +85,7 @@ resource "aws_s3_bucket_public_access_block" "artifacts" {
 }
 
 resource "aws_s3_bucket_policy" "artifacts_tls" {
-  bucket = aws_s3_bucket.artifacts.id
+  bucket = module.artifacts_bucket.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -90,7 +93,7 @@ resource "aws_s3_bucket_policy" "artifacts_tls" {
       Effect    = "Deny"
       Principal = "*"
       Action    = "s3:*"
-      Resource  = [aws_s3_bucket.artifacts.arn, "${aws_s3_bucket.artifacts.arn}/*"]
+      Resource  = [module.artifacts_bucket.arn, "${module.artifacts_bucket.arn}/*"]
       Condition = { Bool = { "aws:SecureTransport" = "false" } }
     }]
   })

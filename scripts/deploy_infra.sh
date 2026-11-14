@@ -15,6 +15,14 @@ read -r -a STACKS <<<"${STACKS[*]}"
 
 log() { printf '\n[deploy %s] %s\n' "$(date +%H:%M:%S)" "$*" >&2; }
 
+# 0) Learner Lab: una SCP deniega s3:GetBucketObjectLockConfiguration y el proveedor AWS la llama en cada
+#    lectura de `resource "aws_s3_bucket"` -> el apply siempre falla. Los buckets se crean con
+#    infra/modules/lab_s3_bucket. Cortamos aquí antes de dejar un apply a medias.
+if grep -rnE '^\s*resource\s+"aws_s3_bucket"\s' "$ROOT/infra" --include='*.tf' --exclude-dir=.terraform; then
+  log "ERROR: hay 'resource \"aws_s3_bucket\"' en infra/ (arriba). En Learner Lab usa module \"../modules/lab_s3_bucket\"."
+  exit 1
+fi
+
 # 1) Bucket de tfstate (idempotente) + backend.hcl
 if ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
   log "Creando bucket de tfstate $BUCKET"
@@ -35,6 +43,15 @@ for s in "${STACKS[@]}"; do
   log "== $s"
   extra_var="TF_ARGS_${s}"
   terraform -chdir="$ROOT/infra/$s" init -input=false -reconfigure -backend-config=../backend.hcl >/dev/null
+  # Migración: si un apply anterior dejó aws_s3_bucket.* en el estado, se "olvida" (el bucket NO se borra);
+  # el módulo lab_s3_bucket lo detecta como existente y lo reutiliza. Un `removed {}` no sirve: Terraform
+  # refresca el recurso antes de olvidarlo y vuelve a chocar con la SCP.
+  legacy="$(terraform -chdir="$ROOT/infra/$s" state list 2>/dev/null | grep -E '^aws_s3_bucket\.[^.]+$' || true)"
+  if [[ -n "$legacy" ]]; then
+    log "Quitando del estado (sin borrar en AWS): $(echo $legacy)"
+    # shellcheck disable=SC2086
+    terraform -chdir="$ROOT/infra/$s" state rm $legacy >/dev/null
+  fi
   # shellcheck disable=SC2086
   terraform -chdir="$ROOT/infra/$s" apply -input=false -var "stage=$STAGE" ${!extra_var:-} "${APPROVE[@]}"
 done

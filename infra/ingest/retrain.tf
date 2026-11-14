@@ -14,8 +14,8 @@ locals {
     "operation_id = 'OP-01'", "operation_id = '${var.default_operation_id}'"
   )), "\""), "\"")
   retrain_env = merge(local.common_env, {
-    ARTIFACTS_BUCKET = aws_s3_bucket.artifacts.bucket
-    LAKE_BUCKET      = aws_s3_bucket.lake.bucket
+    ARTIFACTS_BUCKET = module.artifacts_bucket.id
+    LAKE_BUCKET      = module.lake_bucket.id
     TABLE_INSIGHTS   = local.tables.insights
   })
 }

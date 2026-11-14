@@ -4,13 +4,16 @@
 
 data "aws_caller_identity" "current" {}
 
-resource "aws_s3_bucket" "web" {
-  bucket        = "${local.prefix}-web-${data.aws_caller_identity.current.account_id}"
-  force_destroy = true
+# Learner Lab: no usar resource "aws_s3_bucket" (SCP bloquea GetBucketObjectLockConfiguration).
+# Ver infra/modules/lab_s3_bucket. Ojo: terraform destroy ya no vacía ni borra este bucket.
+module "web_bucket" {
+  source = "../modules/lab_s3_bucket"
+  name   = "${local.prefix}-web-${data.aws_caller_identity.current.account_id}"
+  region = var.aws_region
 }
 
 resource "aws_s3_bucket_public_access_block" "web" {
-  bucket                  = aws_s3_bucket.web.id
+  bucket                  = module.web_bucket.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -37,7 +40,7 @@ resource "aws_cloudfront_distribution" "web" {
 
   origin {
     origin_id                = "s3-web"
-    domain_name              = aws_s3_bucket.web.bucket_regional_domain_name
+    domain_name              = module.web_bucket.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.web.id
   }
 
@@ -74,7 +77,7 @@ resource "aws_cloudfront_distribution" "web" {
 data "aws_iam_policy_document" "web" {
   statement {
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.web.arn}/*"]
+    resources = ["${module.web_bucket.arn}/*"]
     principals {
       type        = "Service"
       identifiers = ["cloudfront.amazonaws.com"]
@@ -88,7 +91,7 @@ data "aws_iam_policy_document" "web" {
 }
 
 resource "aws_s3_bucket_policy" "web" {
-  bucket     = aws_s3_bucket.web.id
+  bucket     = module.web_bucket.id
   policy     = data.aws_iam_policy_document.web.json
   depends_on = [aws_s3_bucket_public_access_block.web]
 }

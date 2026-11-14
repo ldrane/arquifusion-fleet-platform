@@ -1,6 +1,6 @@
 # Data lake de telemetría: S3 (Parquet) + Glue + Firehose + Athena.
 # Cubre: RF-01.4, RNF-05, RNF-14, ESC-05, ESC-08, MH-HA-01. Dueño: Persona A (worker 2).
-# Recursos que usa el worker 3 (analítica): aws_s3_bucket.lake, aws_glue_catalog_database.lake,
+# Recursos que usa el worker 3 (analítica): module.lake_bucket, aws_glue_catalog_database.lake,
 # aws_glue_catalog_table.telemetry_raw, aws_athena_workgroup.a.
 
 locals {
@@ -36,19 +36,23 @@ locals {
 }
 
 # ---------------------------------------------------------------- bucket
-resource "aws_s3_bucket" "lake" {
-  bucket = "${local.prefix}-lake-${local.account_id}"
+# Learner Lab: no usar resource "aws_s3_bucket" (SCP bloquea GetBucketObjectLockConfiguration).
+# Ver infra/modules/lab_s3_bucket.
+module "lake_bucket" {
+  source = "../modules/lab_s3_bucket"
+  name   = "${local.prefix}-lake-${local.account_id}"
+  region = var.aws_region
 }
 
 resource "aws_s3_bucket_versioning" "lake" {
-  bucket = aws_s3_bucket.lake.id
+  bucket = module.lake_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "lake" {
-  bucket = aws_s3_bucket.lake.id
+  bucket = module.lake_bucket.id
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -57,7 +61,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "lake" {
 }
 
 resource "aws_s3_bucket_public_access_block" "lake" {
-  bucket                  = aws_s3_bucket.lake.id
+  bucket                  = module.lake_bucket.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -65,7 +69,7 @@ resource "aws_s3_bucket_public_access_block" "lake" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "lake" {
-  bucket = aws_s3_bucket.lake.id
+  bucket = module.lake_bucket.id
   rule {
     id     = "retencion-telemetria"
     status = "Enabled"
@@ -88,7 +92,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "lake" {
 }
 
 resource "aws_s3_bucket_policy" "lake_tls" {
-  bucket = aws_s3_bucket.lake.id
+  bucket = module.lake_bucket.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -96,7 +100,7 @@ resource "aws_s3_bucket_policy" "lake_tls" {
       Effect    = "Deny"
       Principal = "*"
       Action    = "s3:*"
-      Resource  = [aws_s3_bucket.lake.arn, "${aws_s3_bucket.lake.arn}/*"]
+      Resource  = [module.lake_bucket.arn, "${module.lake_bucket.arn}/*"]
       Condition = { Bool = { "aws:SecureTransport" = "false" } }
     }]
   })
@@ -128,7 +132,7 @@ resource "aws_glue_catalog_table" "telemetry_raw" {
     "projection.dt.interval.unit"    = "DAYS"
     "projection.machine_type.type"   = "enum"
     "projection.machine_type.values" = "excavator,mining_truck,loader,bulldozer,drill"
-    "storage.location.template"      = "s3://${aws_s3_bucket.lake.bucket}/telemetry/operation_id=$${operation_id}/dt=$${dt}/machine_type=$${machine_type}/"
+    "storage.location.template"      = "s3://${module.lake_bucket.id}/telemetry/operation_id=$${operation_id}/dt=$${dt}/machine_type=$${machine_type}/"
   }
 
   dynamic "partition_keys" {
@@ -140,7 +144,7 @@ resource "aws_glue_catalog_table" "telemetry_raw" {
   }
 
   storage_descriptor {
-    location      = "s3://${aws_s3_bucket.lake.bucket}/telemetry/"
+    location      = "s3://${module.lake_bucket.id}/telemetry/"
     input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
 
@@ -175,7 +179,7 @@ resource "aws_kinesis_firehose_delivery_stream" "telemetry" {
 
   extended_s3_configuration {
     role_arn            = local.lab_role
-    bucket_arn          = aws_s3_bucket.lake.arn
+    bucket_arn          = module.lake_bucket.arn
     buffering_size      = 64  # MB (mínimo con conversión de formato)
     buffering_interval  = 300 # s
     prefix              = "telemetry/operation_id=!{partitionKeyFromQuery:operation_id}/dt=!{partitionKeyFromQuery:dt}/machine_type=!{partitionKeyFromQuery:machine_type}/"
@@ -243,7 +247,7 @@ resource "aws_athena_workgroup" "a" {
     bytes_scanned_cutoff_per_query     = 1073741824 # 1 GB: tope de costo por consulta
 
     result_configuration {
-      output_location = "s3://${aws_s3_bucket.artifacts.bucket}/athena-results/"
+      output_location = "s3://${module.artifacts_bucket.id}/athena-results/"
       encryption_configuration {
         encryption_option = "SSE_S3"
       }
