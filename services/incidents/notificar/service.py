@@ -8,7 +8,8 @@ Entrada (dos formas):
 
 Pasos: `Query notification-rules pk = EVENT#<event_type>` → filtra `enabled` y `severity ≥ severity_min` →
 throttle (PutItem condicional `NTF#…` en idempotency) → redacta según `content_profile` → envía por canal:
-`push` → Pub/Sub `notificaciones` (→ notify_bridge → FCM), `email` → SNS `{p}-alerts-{rol}`, `dashboard` → nada.
+`push` → Pub/Sub `notificaciones` (→ notify_bridge o notify_push → FCM), `email` → SNS `{p}-alerts-{rol}`,
+`dashboard` → nada. Con `PUSH_MODE=direct` el push salta Pub/Sub e invoca `notify_push` (plan B sin facturación GCP).
 """
 import json
 import logging
@@ -204,9 +205,19 @@ def _default_deps() -> dict:  # pragma: no cover - requiere AWS
         )
 
     publisher = None
+    lambda_client = None
 
     def pubsub(payload, attrs):
-        nonlocal publisher
+        nonlocal publisher, lambda_client
+        if os.environ.get("PUSH_MODE", "pubsub") == "direct":
+            # Plan B sin Pub/Sub (GCP sin facturación y sin suscripción push): notify-push manda el FCM directo
+            lambda_client = lambda_client or boto3.client("lambda")
+            lambda_client.invoke(
+                FunctionName=os.environ["NOTIFY_PUSH_FUNCTION"],
+                InvocationType="Event",
+                Payload=json.dumps({"notification": payload, "attributes": attrs}, default=str).encode(),
+            )
+            return
         if publisher is None:
             from aws_lambda_powertools.utilities import parameters
 

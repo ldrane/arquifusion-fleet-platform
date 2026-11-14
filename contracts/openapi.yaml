@@ -768,6 +768,41 @@ paths:
         '401': {$ref: '#/components/responses/Unauthenticated'}
         '409': {$ref: '#/components/responses/Conflict'}
 
+  /bridge/push:
+    post:
+      tags: [Bridge GCP]
+      summary: Entrega push de Pub/Sub `notificaciones` → FCM (solo con GCP sin facturación)
+      description: |
+        Suscripción push `notificaciones-push` (infra/gcp, `gcp_billing = false`). Reemplaza a la Cloud Function
+        `notify-push`: la Lambda `notify-push` aplica la misma lógica de §4 de contratos.md (destinatarios por
+        `target`, push FCM HTTP v1, limpieza de tokens no registrados). Sin authorizer de API Gateway: la Lambda valida
+        el token OIDC que firma Google (`aud = arquifusion-notify-push`, `email = pubsub-push@<project>.iam.gserviceaccount.com`).
+        Responde 200 también si el push falla (no se reintenta, evita duplicados).
+      security: [{PubSubOIDC: []}]
+      x-lambda: notify-push
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: object
+                  properties:
+                    data: {type: string, description: 'Mensaje de contratos.md §4 en base64'}
+                    attributes: {type: object, additionalProperties: {type: string}}
+                    messageId: {type: string}
+                subscription: {type: string}
+      responses:
+        '200':
+          description: Procesado (ack para Pub/Sub)
+          content:
+            application/json:
+              example: {sent: 1, removed_tokens: 0}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+
 components:
   securitySchemes:
     CognitoJWT:
@@ -785,6 +820,11 @@ components:
       in: header
       name: x-api-key
       description: Usage plan `bridge` (clave distinta, guardada en Secrets Manager y en la Cloud Function).
+    PubSubOIDC:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token OIDC de Google que Pub/Sub adjunta a cada entrega push (lo valida la Lambda, no API Gateway).
 
   parameters:
     MachineId: {name: machine_id, in: path, required: true, schema: {type: string, example: EX-023}}

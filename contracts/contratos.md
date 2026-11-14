@@ -144,6 +144,8 @@ Envoltorio común (`detail`): `{ "event_id", "correlation_id", "occurred_at", "v
 
 Se mantiene el puente: la Lambda *notificar* (B) publica por REST al topic **`notificaciones`** (proyecto GCP con facturación) y la Cloud Function **`notify_bridge`** (`gcp/functions/notify_bridge`, trigger Pub/Sub) lo convierte en push FCM. Fixture: `fixtures/pubsub/notificacion.json`.
 
+**Sin facturación en GCP** (`infra/gcp` con `gcp_billing = false`, por defecto): el mismo mensaje llega por la suscripción push `notificaciones-push` a `POST /bridge/push` (AWS), y la Lambda `notify-push` aplica exactamente las reglas de destino de esta sección. Plan B: `PUSH_MODE=direct` en *notificar* invoca `notify-push` sin Pub/Sub.
+
 ```json
 {
   "notification_id": "ntf-01JC8Z",

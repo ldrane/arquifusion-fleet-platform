@@ -55,7 +55,7 @@ python scripts/seed.py verify --stage dev   # "Verify OK"
 ## 4. Proyecto GCP (consola, una vez)
 
 1. Con tu **cuenta personal** de Google: console.cloud.google.com → Nuevo proyecto (anota el ID exacto, ej. `arquifusion-g27`).
-2. Facturación → vincula la cuenta de facturación → crea una **alerta de presupuesto**.
+2. **Facturación: opcional.** El equipo usa el plan Spark (sin facturación, `gcp_billing = false` en `infra/gcp`). Si algún día se vincula, crea una **alerta de presupuesto** y aplica con `-var gcp_billing=true`.
 3. console.firebase.google.com → **Agregar proyecto** → elige el proyecto existente → **sin Google Analytics**.
    **No** crees Firestore desde la consola (lo crea Terraform; la ubicación es inmutable).
 4. Firebase → **Authentication → Comenzar** (sin proveedores). Firebase → ⚙ Configuración → **Agregar app web** (la config pública va al `.env` del frontend).

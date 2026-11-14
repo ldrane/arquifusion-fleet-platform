@@ -1,11 +1,12 @@
 # infra/incidents
 
 - **Dueño:** Persona B
-- **Contiene:** SFN `GestionIncidente` (Standard + JSONata), reglas EventBridge, Lambdas `api-comandos`, `incidente`, `scoring-tecnicos`, `correlacion-zona`, `notificar`, `auditoria`, DLQ de eventos y alarmas.
+- **Contiene:** SFN `GestionIncidente` (Standard + JSONata), reglas EventBridge, Lambdas `api-comandos`, `incidente`, `scoring-tecnicos`, `correlacion-zona`, `notificar`, `auditoria`, `notify-push` (push FCM desde AWS cuando GCP no tiene facturación, `POST /bridge/push`), DLQ de eventos y alarmas.
 - **State:** `s3://<bucket-tfstate>/arquifusion/incidents/terraform.tfstate`.
 - **Requisitos previos:** `infra/base` (bus, API, tablas, SNS) e `infra/ingest` (publica `/arquifusion/{stage}/lambda/ia-gemini/arn` en SSM).
 - **Desplegar:** `terraform -chdir=infra/incidents init -backend-config=../backend.hcl && terraform -chdir=infra/incidents apply -var stage=<stage>`
   - Demo con escalamiento rápido: `-var ack_timeout_s=120 -var ack_timeout_critical_s=90`.
+  - Push sin Pub/Sub (plan B): `-var push_mode=direct`.
 
 ## Cableado de eventos (contratos.md §3, §10)
 

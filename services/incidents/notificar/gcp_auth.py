@@ -1,8 +1,11 @@
-"""Publicación REST en Pub/Sub sin dependencias externas (RF-10.2, MH-MC-02, contratos.md §4).
+"""Autenticación con GCP y publicación REST en Pub/Sub sin dependencias externas (RF-10.2, MH-MC-02, contratos.md §4).
 
 La Lambda no trae `google-auth` ni `cryptography`: firmamos el JWT RS256 de la service account con
 aritmética de enteros de Python (PKCS#1 v1.5 + SHA-256) y lo cambiamos por un access token OAuth2
 (grant `jwt-bearer`). El token se cachea por contenedor (~55 min).
+
+También lo usa `notify_push` (se copia en su zip): `TokenSource` para Firestore/FCM y `verify_rs256` para
+validar el token OIDC con el que Pub/Sub firma las entregas push.
 """
 import base64
 import hashlib
@@ -52,11 +55,26 @@ def parse_private_key(pem: str) -> tuple[int, int]:
     return ints[1], ints[3]
 
 
+def _emsa_pkcs1(message: bytes, k: int) -> bytes:
+    """EMSA-PKCS1-v1_5 con SHA-256 (RFC 8017 §9.2)."""
+    t = _SHA256_PREFIX + hashlib.sha256(message).digest()
+    return b"\x00\x01" + b"\xff" * (k - len(t) - 3) + b"\x00" + t
+
+
 def sign_rs256(message: bytes, n: int, d: int) -> bytes:
     k = (n.bit_length() + 7) // 8
-    t = _SHA256_PREFIX + hashlib.sha256(message).digest()
-    em = b"\x00\x01" + b"\xff" * (k - len(t) - 3) + b"\x00" + t
-    return pow(int.from_bytes(em, "big"), d, n).to_bytes(k, "big")
+    return pow(int.from_bytes(_emsa_pkcs1(message, k), "big"), d, n).to_bytes(k, "big")
+
+
+def verify_rs256(message: bytes, signature: bytes, n: int, e: int) -> bool:
+    """Verifica una firma RS256 con la llave pública (n, e)."""
+    k = (n.bit_length() + 7) // 8
+    if len(signature) != k:
+        return False
+    s = int.from_bytes(signature, "big")
+    if s >= n:
+        return False
+    return pow(s, e, n).to_bytes(k, "big") == _emsa_pkcs1(message, k)
 
 
 def _b64url(raw: bytes) -> str:
@@ -78,6 +96,26 @@ def _post(url: str, body: bytes, headers: dict, timeout: float = 5.0) -> dict:
         return json.loads(resp.read() or b"{}")
 
 
+class TokenSource:
+    """Access token OAuth2 de la service account para `scope`, cacheado hasta 5 min antes de vencer."""
+
+    def __init__(self, scope: str, http_post=_post):
+        self._scope = scope
+        self._post = http_post
+        self._token: str | None = None
+        self._token_exp = 0.0
+
+    def token(self, sa: dict) -> str:
+        if self._token and time.time() < self._token_exp:
+            return self._token
+        assertion = make_jwt(sa, self._scope)
+        body = f"grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion={assertion}".encode()
+        resp = self._post(TOKEN_URL, body, {"Content-Type": "application/x-www-form-urlencoded"})
+        self._token = resp["access_token"]
+        self._token_exp = time.time() + int(resp.get("expires_in", 3600)) - 300
+        return self._token
+
+
 class PubSubPublisher:
     """Publica en el topic `notificaciones` con la service account de Secrets Manager."""
 
@@ -85,18 +123,10 @@ class PubSubPublisher:
         self._sa_provider = sa_provider
         self._topic = topic
         self._post = http_post
-        self._token: str | None = None
-        self._token_exp = 0.0
+        self._tokens = TokenSource(PUBSUB_SCOPE, http_post)
 
     def _access_token(self, sa: dict) -> str:
-        if self._token and time.time() < self._token_exp:
-            return self._token
-        assertion = make_jwt(sa, PUBSUB_SCOPE)
-        body = f"grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion={assertion}".encode()
-        resp = self._post(TOKEN_URL, body, {"Content-Type": "application/x-www-form-urlencoded"})
-        self._token = resp["access_token"]
-        self._token_exp = time.time() + int(resp.get("expires_in", 3600)) - 300
-        return self._token
+        return self._tokens.token(sa)
 
     def publish(self, message: dict, attributes: dict) -> str:
         sa = self._sa_provider()

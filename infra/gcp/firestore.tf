@@ -9,7 +9,9 @@ resource "google_firestore_database" "default" {
   location_id = var.firestore_location
   type        = "FIRESTORE_NATIVE"
 
-  point_in_time_recovery_enablement = "POINT_IN_TIME_RECOVERY_ENABLED" # 7 días de PITR (rúbrica HA)
+  # 7 días de PITR (rúbrica HA). PITR exige facturación: sin ella se apaga y la recuperación sale de la fuente de
+  # verdad (DynamoDB con PITR en AWS), que `replicar` vuelve a copiar a Firestore.
+  point_in_time_recovery_enablement = var.gcp_billing ? "POINT_IN_TIME_RECOVERY_ENABLED" : "POINT_IN_TIME_RECOVERY_DISABLED"
   delete_protection_state           = "DELETE_PROTECTION_ENABLED"
   deletion_policy                   = "ABANDON" # terraform destroy no borra los datos
 

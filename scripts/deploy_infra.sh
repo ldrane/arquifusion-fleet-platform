@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Despliega la infraestructura AWS en orden (infra/README.md): bootstrap tfstate -> base -> ingest -> incidents/query -> frontend.
 # GCP va aparte (necesita gcloud y gcp_project_id): terraform -chdir=infra/gcp apply -var stage=$STAGE -var gcp_project_id=<id>
+#   (sin facturación por defecto: gcp_billing=false; ver infra/gcp/README.md)
 # Uso: STAGE=dev scripts/deploy_infra.sh [stack ...]   (sin argumentos = todos los de AWS)
 # Extra por stack: TF_ARGS_<stack>="-var ack_timeout_s=120"  ·  AUTO_APPROVE=1 para no confirmar cada apply.
 set -euo pipefail
