@@ -1,9 +1,0 @@
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // TODO(RNF-08) Persona C: reglas por request.auth.token.role y .zone (contratos.md §5)
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}

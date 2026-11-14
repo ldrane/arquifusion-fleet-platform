@@ -89,11 +89,18 @@ def table_name(stage: str, dataset: str) -> str:
 
 
 def to_item(dataset: str, record: dict) -> dict:
-    """Agrega pk/sk al registro de dominio y convierte floats a Decimal (requisito de boto3)."""
+    """Agrega pk/sk al registro de dominio y convierte floats a Decimal (requisito de boto3).
+
+    Omite los campos con valor None: DynamoDB guardaría un atributo de tipo NULL, y para
+    attribute_exists / attribute_not_exists un NULL cuenta como existente. Eso rompería
+    heartbeat (A, `attribute_exists(last_seen_at)`) y el dedup de procesar (A,
+    `attribute_not_exists(open_incident_id)`). En los fixtures JSON el null se mantiene.
+    """
     schema = KEY_SCHEMA[dataset]
     pk_attr, pk_fn = schema["pk"]
     sk_attr, sk_fn = schema["sk"]
-    item = {pk_attr: pk_fn(record), sk_attr: sk_fn(record), "entity": dataset, **record}
+    fields = {k: v for k, v in record.items() if v is not None}
+    item = {pk_attr: pk_fn(record), sk_attr: sk_fn(record), "entity": dataset, **fields}
     return json.loads(json.dumps(item), parse_float=Decimal)
 
 

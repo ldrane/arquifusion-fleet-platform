@@ -144,5 +144,5 @@ El zip de la Lambda incluye `services/shared/arquifusion_shared` (librería de B
 - `contracts/fixtures/seed/machines.json`: los 100 `machine_id` con modelo, tipo, zona y `home_location`. El simulador debe usar **estos** IDs.
 - `machine_models.json`: `nominal` (media y desviación por variable) como baseline del simulador y de las reglas.
 - Prefijos: `EX` excavator · `CM` mining_truck · `CF` loader · `BD` bulldozer · `PF` drill. Zonas: norte, sur, este, oeste.
-- `last_seen_at = null` al inicio → heartbeat debe ignorar esas máquinas. `expected_interval_s = 30`.
+- `last_seen_at = null` en el fixture; en DynamoDB el atributo **no existe** hasta la primera lectura (el seed omite los `null`), así `attribute_exists(last_seen_at)` de heartbeat ya las ignora. Lo mismo con `open_incident_id`. `expected_interval_s = 30`.
 - La service account ya tiene `roles/aiplatform.user` y la API de Vertex AI está habilitada; `ia-gemini` lee la llave del mismo secreto.

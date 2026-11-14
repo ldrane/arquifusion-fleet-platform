@@ -121,3 +121,11 @@ def test_claves_segun_contrato_seccion_9():
     item = seed.to_item("inventory", inv)
     assert (item["pk"], item["sk"], item["location_id"]) == ("WH-01", "CMP-014", "WH-01")
     assert "cost_usd" in data["catalog"][0]
+
+
+def test_to_item_omite_nulls():
+    """Un atributo NULL cuenta como existente en DynamoDB: rompería heartbeat y el dedup de procesar (A)."""
+    for record in seed_data.build_all()["machines"]:
+        item = seed.to_item("machines", record)
+        assert None not in item.values()
+        assert "last_seen_at" not in item and "open_incident_id" not in item

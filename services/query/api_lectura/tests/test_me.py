@@ -9,6 +9,8 @@ HERE = Path(__file__).resolve()
 REPO = HERE.parents[4]
 sys.path[:0] = [str(HERE.parents[1]), str(REPO / "services" / "shared")]
 
+# Se importa aquí y no dentro del test: con la suite completa se resolvería al handler.py de otro servicio.
+import handler  # noqa: E402
 import service  # noqa: E402
 from arquifusion_shared.errors import ApiError  # noqa: E402
 
@@ -55,8 +57,6 @@ def test_ruta_desconocida_404():
 
 
 def test_handler_envelope():
-    pytest.importorskip("aws_lambda_powertools")
-    import handler
 
     class Ctx:
         function_name, memory_limit_in_mb, invoked_function_arn, aws_request_id = "api-lectura", 256, "arn:aws:lambda:us-east-1:1:function:x", "req-1"
