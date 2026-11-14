@@ -1,0 +1,11 @@
+{
+  "Comment": "GestionIncidente: ciclo de vida del incidente (RF-06, RF-10, RF-11). TODO Persona B",
+  "StartAt": "CrearIncidente",
+  "States": {
+    "CrearIncidente": {
+      "Type": "Pass",
+      "Comment": "TODO: DynamoDB PutItem condicional",
+      "End": true
+    }
+  }
+}

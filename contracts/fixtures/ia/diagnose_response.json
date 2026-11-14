@@ -1,0 +1,12 @@
+{
+  "result": {
+    "probable_cause": "Desgaste de rodamiento del tren de rodaje",
+    "suggested_action": "Inspeccionar rodamientos y lubricación",
+    "confidence": 0.72,
+    "parts_suggested": [
+      "CMP-014"
+    ]
+  },
+  "model": "gemini",
+  "latency_ms": 1840
+}

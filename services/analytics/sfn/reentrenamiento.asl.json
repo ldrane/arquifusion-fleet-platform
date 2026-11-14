@@ -1,0 +1,10 @@
+{
+  "Comment": "Athena \u2192 entrenar \u2192 Choice de promoci\u00f3n \u2192 S3 + SSM (RF-13.2). TODO Persona A",
+  "StartAt": "Inicio",
+  "States": {
+    "Inicio": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}

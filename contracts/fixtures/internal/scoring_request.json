@@ -1,0 +1,11 @@
+{
+  "incident_id": "INC-01JC8ZK",
+  "machine_id": "EX-023",
+  "zone": "norte",
+  "severity": "high",
+  "location": {
+    "lat": -12.05,
+    "lon": -77.04
+  },
+  "required_specialty": "hidraulica"
+}

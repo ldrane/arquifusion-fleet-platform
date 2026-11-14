@@ -1,0 +1,15 @@
+{
+  "task": "diagnose",
+  "correlation_id": "7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11",
+  "payload": {
+    "machine_id": "EX-023",
+    "model": "excavadora",
+    "top_factors": [
+      "vibration_mm_s",
+      "temperature_c",
+      "fuel_rate_lph"
+    ],
+    "health_score": 42,
+    "recent_incidents": []
+  }
+}

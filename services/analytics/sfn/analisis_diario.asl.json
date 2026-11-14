@@ -1,0 +1,10 @@
+{
+  "Comment": "Parallel de 4 ramas: preventivo, repuestos, combustible, productividad (RF-03, RF-04, RF-07, RF-08). TODO Persona A",
+  "StartAt": "Inicio",
+  "States": {
+    "Inicio": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}

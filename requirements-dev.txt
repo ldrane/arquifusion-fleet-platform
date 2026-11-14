@@ -1,0 +1,6 @@
+pytest
+moto[dynamodb,sqs,events,stepfunctions]
+boto3
+openapi-core
+ruff
+aws-lambda-powertools[tracer]>=3

@@ -1,0 +1,1001 @@
+openapi: 3.0.3
+info:
+  title: ArquiFusion Fleet Platform API
+  version: 1.0.0
+  description: |
+    Contrato único de la API (Amazon API Gateway REST, us-east-1, Learner Lab).
+
+    Tres familias de rutas, tres mecanismos de autenticación:
+    - `/telemetry` → API key (simulador de flota)
+    - `/v1/*`      → JWT de Cognito (web y móvil; RBAC por grupo `cognito:groups`)
+    - `/bridge/*`  → API key (Cloud Function de GCP → AWS)
+
+    Reglas generales (aplican a todo):
+    - JSON en `snake_case`. Fechas ISO 8601 UTC (`2026-11-13T15:04:05Z`).
+    - Header `X-Correlation-Id` opcional en la request; si falta, se genera. Siempre se devuelve.
+    - Éxito: `{ "data": ..., "meta": {...} }`. Error: `{ "error": {code, message, details}, "correlation_id" }`.
+    - Listas con paginación por cursor: `?limit=` (1-100, defecto 50) y `?cursor=`; el siguiente cursor viene en `meta.next_cursor`.
+    - `x-roles` en cada operación = grupos de Cognito autorizados (RBAC dentro de la Lambda).
+    - `x-lambda` = Lambda que atiende la ruta (nombres del diagrama de arquitectura).
+    - El tiempo real NO va por esta API: lo pone Firestore (ver contratos.md §5).
+servers:
+  - url: https://{apiId}.execute-api.us-east-1.amazonaws.com/{stage}
+    variables:
+      apiId: {default: xxxxxxxxxx}
+      stage: {default: prod, enum: [dev-ana, dev-luis, prod]}
+tags:
+  - {name: Ingesta}
+  - {name: Flota}
+  - {name: Incidentes}
+  - {name: Mantenimiento y repuestos}
+  - {name: Analítica}
+  - {name: IA}
+  - {name: Sesión}
+  - {name: Bridge GCP}
+
+security:
+  - CognitoJWT: []
+
+paths:
+  /telemetry:
+    post:
+      tags: [Ingesta]
+      summary: Ingesta de lecturas en lote (1 request = hasta 100 lecturas)
+      description: |
+        API Gateway valida el JSON Schema y la API key, y deja el lote en SQS (integración directa, sin Lambda).
+        Responde 202 de inmediato. Lote inválido = 400 completo (no se paga Lambda).
+        Idempotencia aguas abajo por `machine_id#timestamp`.
+      security: [{ApiKeyIngest: []}]
+      x-lambda: ninguna (API Gateway → SQS ingest)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TelemetryBatch'}
+            example:
+              readings:
+                - machine_id: EX-023
+                  model: CAT-336
+                  type: excavator
+                  timestamp: '2026-11-13T15:04:05Z'
+                  location: {lat: -12.0464, lon: -77.0428, zone: norte}
+                  operating_hours: 4210.5
+                  temperature_c: 96.4
+                  vibration_mm_s: 7.9
+                  pressure_bar: 280
+                  fuel_rate_lph: 41.2
+                  load_pct: 78
+                  speed_kmh: 6.5
+                  rpm: 1850
+                  state: operating
+      responses:
+        '202':
+          description: Aceptado y encolado
+          content:
+            application/json:
+              example: {data: {accepted: 1}}
+        '400': {$ref: '#/components/responses/ValidationError'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+
+  /v1/me:
+    get:
+      tags: [Sesión]
+      summary: Perfil del usuario autenticado (rol, zona)
+      x-roles: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MeResponse'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+
+  /v1/auth/firebase-token:
+    post:
+      tags: [Sesión]
+      summary: Canjea el JWT de Cognito por un custom token de Firebase (para Firestore y FCM)
+      description: |
+        Necesario para que el frontend/móvil lea Firestore en tiempo real.
+        El token lleva los claims `role`, `zone` y `uid`, que usan las Security Rules.
+        Usa la service account guardada en Secrets Manager (por eso corre fuera de la VPC).
+      x-roles: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-ack
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fcm_token: {type: string, description: 'Token push del dispositivo; se guarda para notificar'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      firebase_token: {type: string}
+                      expires_in: {type: integer, example: 3600}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+
+  /v1/machines:
+    get:
+      tags: [Flota]
+      summary: Lista de máquinas con estado actual (alimenta el mapa)
+      x-roles: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {name: zone, in: query, schema: {type: string}}
+        - {name: type, in: query, schema: {$ref: '#/components/schemas/MachineType'}}
+        - {name: status, in: query, schema: {$ref: '#/components/schemas/MachineStatus'}}
+        - {name: severity, in: query, schema: {$ref: '#/components/schemas/Severity'}}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - {$ref: '#/components/schemas/ListEnvelope'}
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/Machine'}}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+
+  /v1/machines/{machine_id}:
+    get:
+      tags: [Flota]
+      summary: Detalle de la máquina (health, probabilidad de falla, RUL, variables que explican la alerta)
+      x-roles: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {$ref: '#/components/parameters/MachineId'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/MachineDetail'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+  /v1/machines/{machine_id}/telemetry:
+    get:
+      tags: [Flota]
+      summary: Serie temporal agregada (1 min o 1 h) de una máquina
+      x-roles: [tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {$ref: '#/components/parameters/MachineId'}
+        - {name: from, in: query, required: true, schema: {type: string, format: date-time}}
+        - {name: to, in: query, required: true, schema: {type: string, format: date-time}}
+        - {name: resolution, in: query, schema: {type: string, enum: [1m, 1h], default: 1m}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        bucket_start: {type: string, format: date-time}
+                        temperature_c: {$ref: '#/components/schemas/Aggregate'}
+                        vibration_mm_s: {$ref: '#/components/schemas/Aggregate'}
+                        pressure_bar: {$ref: '#/components/schemas/Aggregate'}
+                        fuel_rate_lph: {$ref: '#/components/schemas/Aggregate'}
+                        health_score: {type: number}
+        '400': {$ref: '#/components/responses/ValidationError'}
+
+  /v1/machines/{machine_id}/timeline:
+    get:
+      tags: [Flota]
+      summary: Línea de tiempo de la máquina (incidentes, mantenimientos) y KPIs MTBF / MTTR / disponibilidad
+      x-roles: [tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {$ref: '#/components/parameters/MachineId'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      events:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            at: {type: string, format: date-time}
+                            kind: {type: string, enum: [incident, preventive, corrective, anomaly]}
+                            ref_id: {type: string}
+                            summary: {type: string}
+                      kpis:
+                        type: object
+                        properties:
+                          mtbf_hours: {type: number}
+                          mttr_hours: {type: number}
+                          availability_pct: {type: number}
+
+  /v1/incidents:
+    get:
+      tags: [Incidentes]
+      summary: Cola de incidentes (ordenada por severidad y antigüedad)
+      x-roles: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {name: status, in: query, schema: {$ref: '#/components/schemas/IncidentStatus'}}
+        - {name: severity, in: query, schema: {$ref: '#/components/schemas/Severity'}}
+        - {name: zone, in: query, schema: {type: string}}
+        - {name: machine_id, in: query, schema: {type: string}}
+        - {name: parent_incident_id, in: query, schema: {type: string}}
+        - {$ref: '#/components/parameters/Limit'}
+        - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - {$ref: '#/components/schemas/ListEnvelope'}
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/Incident'}}
+
+  /v1/incidents/{incident_id}:
+    get:
+      tags: [Incidentes]
+      summary: Detalle del incidente (diagnóstico IA, técnico, hijos si es padre)
+      x-roles: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {$ref: '#/components/parameters/IncidentId'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/Incident'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+  /v1/incidents/{incident_id}/ack:
+    post:
+      tags: [Incidentes]
+      summary: El técnico acepta o rechaza el incidente (reanuda Step Functions)
+      description: |
+        Llama a `SendTaskSuccess` con el `ack_token` guardado en el incidente.
+        `accept` → estado `in_progress`. `reject` → Step Functions reasigna al siguiente mejor técnico.
+        Repetir un ack ya procesado responde 409 `INCIDENT_STATE_INVALID`.
+      x-roles: [tecnico, mantenimiento]
+      x-lambda: api-ack
+      parameters:
+        - {$ref: '#/components/parameters/IncidentId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AckRequest'}
+            example: {decision: accept}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/Incident'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+
+  /v1/incidents/{incident_id}/assign:
+    post:
+      tags: [Incidentes]
+      summary: Asignación o reasignación manual (responsable de mantenimiento)
+      description: Devuelve a Step Functions la decisión `reassign`, que notifica de nuevo al técnico elegido.
+      x-roles: [mantenimiento, supervisor, admin]
+      x-lambda: api-ack
+      parameters:
+        - {$ref: '#/components/parameters/IncidentId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [technician_id]
+              properties:
+                technician_id: {type: string, example: TEC-07}
+                reason: {type: string, maxLength: 300}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/Incident'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+
+  /v1/incidents/{incident_id}/resolve:
+    post:
+      tags: [Incidentes]
+      summary: 'Marca el incidente como resuelto (reanuda Step Functions: resumen IA y cierre)'
+      description: Usa un segundo token, `resolve_token`. Step Functions genera el resumen con IA y cierra el incidente.
+      x-roles: [tecnico, mantenimiento]
+      x-lambda: api-ack
+      parameters:
+        - {$ref: '#/components/parameters/IncidentId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ResolveRequest'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/Incident'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+
+  /v1/technicians:
+    get:
+      tags: [Incidentes]
+      summary: Técnicos con disponibilidad, carga y ubicación (y ETA si se pasa machine_id)
+      x-roles: [mantenimiento, supervisor, admin]
+      x-lambda: api-lectura
+      parameters:
+        - {name: machine_id, in: query, description: 'Si se envía, cada técnico trae eta_minutes hasta esa máquina', schema: {type: string}}
+        - {name: available, in: query, schema: {type: boolean}}
+        - {name: specialty, in: query, schema: {type: string, enum: [motor, hidraulica, electrica, neumaticos]}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {type: array, items: {$ref: '#/components/schemas/Technician'}}
+
+  /v1/technicians/me/status:
+    put:
+      tags: [Incidentes]
+      summary: El técnico actualiza su disponibilidad y su ubicación (alimenta el scoring)
+      x-roles: [tecnico]
+      x-lambda: api-ack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                available: {type: boolean}
+                location: {$ref: '#/components/schemas/Location'}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/Technician'}
+
+  /v1/inventory:
+    get:
+      tags: [Mantenimiento y repuestos]
+      summary: Inventario por almacén con alertas de stock
+      x-roles: [mantenimiento, supervisor, admin]
+      x-lambda: api-lectura
+      parameters:
+        - {name: warehouse_id, in: query, schema: {type: string}}
+        - {name: alert, in: query, schema: {type: string, enum: [low_stock, overstock]}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {type: array, items: {$ref: '#/components/schemas/InventoryItem'}}
+
+  /v1/parts/ranking:
+    get:
+      tags: [Mantenimiento y repuestos]
+      summary: Ranking de componentes más demandados
+      x-roles: [mantenimiento, supervisor, admin]
+      x-lambda: api-lectura
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        component_id: {type: string}
+                        name: {type: string}
+                        units_used_90d: {type: integer}
+                        irregular_consumption: {type: boolean}
+
+  /v1/parts/forecast:
+    get:
+      tags: [Mantenimiento y repuestos]
+      summary: Pronóstico de demanda de repuestos por almacén y stock mínimo/máximo recomendado
+      x-roles: [mantenimiento, admin]
+      x-lambda: api-lectura
+      parameters:
+        - {name: horizon_days, in: query, schema: {type: integer, enum: [7, 30, 90], default: 30}}
+        - {name: warehouse_id, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        warehouse_id: {type: string}
+                        component_id: {type: string}
+                        expected_demand: {type: number}
+                        stock: {type: integer}
+                        recommended_min: {type: integer}
+                        recommended_max: {type: integer}
+                        shortage_for_planned_maintenance: {type: boolean}
+
+  /v1/maintenance/plan:
+    get:
+      tags: [Mantenimiento y repuestos]
+      summary: Calendario de mantenimiento preventivo priorizado por condición
+      x-roles: [mantenimiento, supervisor, admin]
+      x-lambda: api-lectura
+      parameters:
+        - {name: zone, in: query, schema: {type: string}}
+        - {name: flag, in: query, schema: {type: string, enum: [overdue, unnecessary]}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        machine_id: {type: string}
+                        next_maintenance_at: {type: string, format: date}
+                        priority: {type: integer, description: 1 = más urgente}
+                        flag: {type: string, enum: [overdue, unnecessary, on_track]}
+                        reason: {type: string}
+
+  /v1/analytics/fuel:
+    get:
+      tags: [Analítica]
+      summary: Consumo de combustible normalizado, comparado con pares e historial
+      x-roles: [supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {name: zone, in: query, schema: {type: string}}
+        - {name: period, in: query, schema: {type: string, enum: [7d, 30d], default: 7d}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        machine_id: {type: string}
+                        lph: {type: number}
+                        l_per_ton: {type: number}
+                        vs_peers_pct: {type: number}
+                        vs_own_history_pct: {type: number}
+                        progressive_increase: {type: boolean}
+                        probable_causes: {type: array, items: {type: string}}
+
+  /v1/analytics/productivity:
+    get:
+      tags: [Analítica]
+      summary: Utilización por máquina y matriz productividad × costo
+      x-roles: [supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {name: zone, in: query, schema: {type: string}}
+        - {name: period, in: query, schema: {type: string, enum: [7d, 30d], default: 7d}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        machine_id: {type: string}
+                        utilization_pct: {type: number}
+                        classification: {type: string, enum: [underused, normal, overused]}
+                        cost_per_hour_usd: {type: number}
+                        quadrant: {type: string, enum: [high_prod_low_cost, high_prod_high_cost, low_prod_low_cost, low_prod_high_cost]}
+                        redistribution_suggestion: {type: string, nullable: true}
+
+  /v1/analytics/kpis:
+    get:
+      tags: [Analítica]
+      summary: KPIs agregados de la flota
+      x-roles: [supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      parameters:
+        - {name: zone, in: query, schema: {type: string}}
+        - {name: period, in: query, schema: {type: string, enum: [7d, 30d], default: 7d}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      availability_pct: {type: number}
+                      mtbf_hours: {type: number}
+                      mttr_hours: {type: number}
+                      open_incidents: {type: integer}
+                      machines_at_risk: {type: integer}
+                      fleet_utilization_pct: {type: number}
+                      fuel_cost_per_ton_usd: {type: number}
+
+  /v1/reports/latest:
+    get:
+      tags: [Analítica]
+      summary: Último resumen gerencial generado por el workflow AnalisisDiario (texto IA + cifras)
+      x-roles: [admin, gerencia, supervisor]
+      x-lambda: api-lectura
+      parameters:
+        - {name: type, in: query, schema: {type: string, enum: [daily, weekly], default: daily}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      generated_at: {type: string, format: date-time}
+                      summary_text: {type: string}
+                      prompt_version: {type: string}
+                      figures: {type: object, additionalProperties: true}
+
+  /v1/ml/model:
+    get:
+      tags: [IA]
+      summary: Versión activa del modelo y sus métricas (precision, recall, anticipación)
+      x-roles: [admin, mantenimiento]
+      x-lambda: api-lectura
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      model_version: {type: string, example: v3}
+                      trained_at: {type: string, format: date-time}
+                      precision: {type: number}
+                      recall: {type: number}
+                      mean_lead_time_hours: {type: number}
+                      promoted: {type: boolean}
+
+  /v1/ml/retrain:
+    post:
+      tags: [IA]
+      summary: Lanza manualmente el workflow Reentrenamiento
+      x-roles: [admin]
+      x-lambda: api-ack
+      responses:
+        '202':
+          description: Ejecución iniciada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      execution_arn: {type: string}
+        '403': {$ref: '#/components/responses/Forbidden'}
+
+  /v1/assistant/chat:
+    post:
+      tags: [IA]
+      summary: Asistente IA con tool-calling sobre datos reales (nunca SQL libre)
+      description: |
+        Atendido por la Lambda `ia-gemini` (fuera de la VPC, porque llama a Vertex AI).
+        Si Gemini falla, responde 200 con `degraded: true` y una respuesta determinista.
+      x-roles: [tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: ia-gemini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: {type: string, maxLength: 1000, example: '¿Qué máquinas de la zona norte están en riesgo?'}
+                session_id: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      answer: {type: string}
+                      session_id: {type: string}
+                      tools_used: {type: array, items: {type: string}, example: [get_machines_at_risk]}
+                      degraded: {type: boolean}
+
+  /bridge/events:
+    post:
+      tags: [Bridge GCP]
+      summary: Eventos GCP → AWS (la Cloud Function reenvía acciones hechas en Firestore)
+      description: |
+        El móvil escribe en Firestore (acepta, resuelve, cambia estado). Una Cloud Function (trigger onWrite)
+        reenvía esa acción aquí. La Lambda `api-ack` ejecuta la misma lógica que los endpoints `/v1/incidents/*`.
+        Idempotente por `event_id` (id del documento de Firestore).
+      security: [{ApiKeyBridge: []}]
+      x-lambda: api-ack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BridgeEvent'}
+            example:
+              event_id: fs-9f3a1
+              type: incident.ack
+              incident_id: INC-01JC8ZK
+              actor: {user_id: u-tec-07, role: tecnico}
+              data: {decision: accept}
+              occurred_at: '2026-11-13T15:06:10Z'
+              correlation_id: 7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11
+      responses:
+        '200':
+          description: Procesado (o ya procesado antes)
+          content:
+            application/json:
+              example: {data: {processed: true, duplicate: false}}
+        '400': {$ref: '#/components/responses/ValidationError'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '409': {$ref: '#/components/responses/Conflict'}
+
+components:
+  securitySchemes:
+    CognitoJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: ID/access token del User Pool. Grupo del usuario en `cognito:groups`; zona en `custom:zone`.
+    ApiKeyIngest:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Usage plan `ingest` (throttling y cuota para el simulador).
+    ApiKeyBridge:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Usage plan `bridge` (clave distinta, guardada en Secrets Manager y en la Cloud Function).
+
+  parameters:
+    MachineId: {name: machine_id, in: path, required: true, schema: {type: string, example: EX-023}}
+    IncidentId: {name: incident_id, in: path, required: true, schema: {type: string, example: INC-01JC8ZK}}
+    Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+    Cursor: {name: cursor, in: query, schema: {type: string}}
+
+  responses:
+    ValidationError:
+      description: Request inválida (VALIDATION_ERROR)
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    Unauthenticated:
+      description: Falta o es inválida la credencial (UNAUTHENTICATED)
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    Forbidden:
+      description: El rol no tiene permiso (FORBIDDEN)
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    NotFound:
+      description: No existe el recurso (NOT_FOUND)
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    Conflict:
+      description: Estado incompatible o evento duplicado (INCIDENT_STATE_INVALID, DUPLICATE_EVENT)
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    RateLimited:
+      description: Throttling del usage plan (RATE_LIMITED)
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [VALIDATION_ERROR, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, INCIDENT_STATE_INVALID, DUPLICATE_EVENT, RATE_LIMITED, UPSTREAM_UNAVAILABLE, INTERNAL]
+            message: {type: string}
+            details: {type: array, items: {type: object, properties: {field: {type: string}, issue: {type: string}}}}
+        correlation_id: {type: string}
+
+    ListEnvelope:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            count: {type: integer}
+            next_cursor: {type: string, nullable: true}
+
+    Severity: {type: string, enum: [info, low, medium, high, critical]}
+    MachineStatus: {type: string, enum: [operational, stopped, maintenance, needs_intervention, silent]}
+    MachineType: {type: string, enum: [excavator, mining_truck, loader, bulldozer, drill]}
+    IncidentStatus: {type: string, enum: [detected, assigned, in_progress, resolved, closed]}
+    Role: {type: string, enum: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]}
+
+    Location:
+      type: object
+      required: [lat, lon]
+      properties:
+        lat: {type: number, minimum: -90, maximum: 90}
+        lon: {type: number, minimum: -180, maximum: 180}
+        zone: {type: string, example: norte}
+
+    Aggregate:
+      type: object
+      properties: {min: {type: number}, avg: {type: number}, max: {type: number}}
+
+    TelemetryReading:
+      type: object
+      required: [machine_id, model, type, timestamp, location, operating_hours, temperature_c, vibration_mm_s, pressure_bar, fuel_rate_lph, load_pct, speed_kmh, rpm, state]
+      additionalProperties: false
+      properties:
+        machine_id: {type: string, pattern: '^[A-Z]{2}-[0-9]{3,4}$', example: EX-023}
+        model: {type: string}
+        type: {$ref: '#/components/schemas/MachineType'}
+        timestamp: {type: string, format: date-time}
+        location: {$ref: '#/components/schemas/Location'}
+        operating_hours: {type: number, minimum: 0}
+        temperature_c: {type: number, minimum: -20, maximum: 250}
+        vibration_mm_s: {type: number, minimum: 0, maximum: 100}
+        pressure_bar: {type: number, minimum: 0, maximum: 1000}
+        fuel_rate_lph: {type: number, minimum: 0, maximum: 500}
+        load_pct: {type: number, minimum: 0, maximum: 150}
+        speed_kmh: {type: number, minimum: 0, maximum: 120}
+        rpm: {type: number, minimum: 0, maximum: 4000}
+        state: {type: string, enum: [operating, idle, stopped, maintenance]}
+        sim_scenario:
+          type: string
+          nullable: true
+          description: Solo simulador. Etiqueta de la falla inyectada. Se guarda para medir precision/recall y el modelo NO la usa.
+
+    TelemetryBatch:
+      type: object
+      required: [readings]
+      additionalProperties: false
+      properties:
+        readings:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: {$ref: '#/components/schemas/TelemetryReading'}
+
+    Machine:
+      type: object
+      properties:
+        machine_id: {type: string}
+        model: {type: string}
+        type: {$ref: '#/components/schemas/MachineType'}
+        location: {$ref: '#/components/schemas/Location'}
+        status: {$ref: '#/components/schemas/MachineStatus'}
+        severity: {$ref: '#/components/schemas/Severity'}
+        health_score: {type: integer, minimum: 0, maximum: 100}
+        last_seen_at: {type: string, format: date-time}
+
+    MachineDetail:
+      allOf:
+        - {$ref: '#/components/schemas/Machine'}
+        - type: object
+          properties:
+            failure_probability: {type: number, minimum: 0, maximum: 1}
+            rul_hours: {type: number}
+            operating_hours: {type: number}
+            last_maintenance_at: {type: string, format: date}
+            next_maintenance_at: {type: string, format: date}
+            open_incident_id: {type: string, nullable: true}
+            latest_reading: {$ref: '#/components/schemas/TelemetryReading'}
+            top_factors: {type: array, maxItems: 3, items: {$ref: '#/components/schemas/Factor'}}
+            model_version: {type: string}
+
+    Factor:
+      type: object
+      properties:
+        variable: {type: string, example: vibration_mm_s}
+        z_score: {type: number}
+        direction: {type: string, enum: [high, low]}
+
+    Incident:
+      type: object
+      properties:
+        incident_id: {type: string}
+        parent_incident_id: {type: string, nullable: true}
+        child_incident_ids: {type: array, items: {type: string}}
+        machine_ids: {type: array, items: {type: string}}
+        zone: {type: string}
+        severity: {$ref: '#/components/schemas/Severity'}
+        status: {$ref: '#/components/schemas/IncidentStatus'}
+        escalated: {type: boolean}
+        is_recurrence: {type: boolean}
+        assigned_technician_id: {type: string, nullable: true}
+        technician_score: {type: number, nullable: true}
+        ai_diagnosis:
+          type: object
+          nullable: true
+          properties:
+            probable_cause: {type: string}
+            suggested_action: {type: string}
+            common_cause: {type: string, nullable: true}
+            top_factors: {type: array, items: {$ref: '#/components/schemas/Factor'}}
+            confidence: {type: number}
+            model_version: {type: string}
+            prompt_version: {type: string}
+            degraded: {type: boolean}
+        resolution_summary: {type: string, nullable: true}
+        detected_at: {type: string, format: date-time}
+        assigned_at: {type: string, format: date-time, nullable: true}
+        accepted_at: {type: string, format: date-time, nullable: true}
+        resolved_at: {type: string, format: date-time, nullable: true}
+        downtime_minutes: {type: integer, nullable: true}
+        components_replaced: {type: array, items: {type: string}}
+        cost_usd: {type: number, nullable: true}
+        chat_channel_id: {type: string, nullable: true}
+
+    AckRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision: {type: string, enum: [accept, reject]}
+        reason: {type: string, maxLength: 300}
+
+    ResolveRequest:
+      type: object
+      required: [resolution_notes]
+      properties:
+        resolution_notes: {type: string, maxLength: 2000}
+        components_replaced: {type: array, items: {type: string}, example: [CMP-014]}
+        cost_usd: {type: number, minimum: 0}
+
+    Technician:
+      type: object
+      properties:
+        technician_id: {type: string, example: TEC-07}
+        name: {type: string}
+        specialties: {type: array, items: {type: string, enum: [motor, hidraulica, electrica, neumaticos]}}
+        location: {$ref: '#/components/schemas/Location'}
+        available: {type: boolean}
+        shift: {type: string, enum: [day, night]}
+        current_load: {type: integer}
+        eta_minutes: {type: integer, nullable: true}
+
+    InventoryItem:
+      type: object
+      properties:
+        warehouse_id: {type: string}
+        component_id: {type: string}
+        name: {type: string}
+        stock: {type: integer}
+        stock_min: {type: integer}
+        stock_max: {type: integer}
+        alert: {type: string, enum: [none, low_stock, overstock]}
+
+    MeResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user_id: {type: string}
+            email: {type: string}
+            role: {$ref: '#/components/schemas/Role'}
+            zone: {type: string, nullable: true}
+
+    BridgeEvent:
+      type: object
+      required: [event_id, type, actor, occurred_at, correlation_id]
+      properties:
+        event_id: {type: string, description: Id del documento de Firestore; clave de idempotencia}
+        type: {type: string, enum: [incident.ack, incident.resolve, technician.status]}
+        incident_id: {type: string}
+        actor:
+          type: object
+          required: [user_id, role]
+          properties:
+            user_id: {type: string}
+            role: {$ref: '#/components/schemas/Role'}
+        data:
+          description: Mismo cuerpo que el endpoint /v1 equivalente (AckRequest, ResolveRequest o el de technicians/me/status)
+          type: object
+          additionalProperties: true
+        occurred_at: {type: string, format: date-time}
+        correlation_id: {type: string}

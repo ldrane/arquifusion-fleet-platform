@@ -1,0 +1,19 @@
+{
+  "readings": [
+    {
+      "machine_id": "EX-023",
+      "operation_id": "OP-01",
+      "timestamp": "2026-11-13T10:14:55Z",
+      "lat": -12.05,
+      "lon": -77.04,
+      "temperature_c": 98.4,
+      "vibration_mm_s": 7.2,
+      "pressure_bar": 210,
+      "fuel_rate_lph": 38.5,
+      "load_t": 22,
+      "speed_kmh": 6,
+      "rpm": 1850,
+      "engine_hours": 10342
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[
+  {
+    "Source": "arquifusion.processor",
+    "DetailType": "AnomalyDetected",
+    "EventBusName": "fleet-events",
+    "Detail": "{\"event_id\": \"01JC8ZK5T7Y2N4Q8R3W6X9A1B2\", \"correlation_id\": \"7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11\", \"occurred_at\": \"2026-11-13T10:15:00Z\", \"version\": 1, \"data\": {\"machine_id\": \"EX-023\", \"zone\": \"norte\", \"severity\": \"high\", \"anomaly_score\": 0.87, \"top_factors\": [{\"variable\": \"vibration_mm_s\", \"z_score\": 3.1}, {\"variable\": \"temperature_c\", \"z_score\": 2.4}, {\"variable\": \"fuel_rate_lph\", \"z_score\": 1.9}], \"health_score\": 42, \"model_version\": \"v1\", \"reading_ts\": \"2026-11-13T10:14:55Z\"}}"
+  }
+]

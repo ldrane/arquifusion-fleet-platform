@@ -1,0 +1,8 @@
+[
+  {
+    "Source": "arquifusion.heartbeat",
+    "DetailType": "MachineSilent",
+    "EventBusName": "fleet-events",
+    "Detail": "{\"event_id\": \"01JC8ZK5T7Y2N4Q8R3W6X9A1B2\", \"correlation_id\": \"7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11\", \"occurred_at\": \"2026-11-13T10:15:00Z\", \"version\": 1, \"data\": {\"machine_id\": \"CM-104\", \"last_seen_at\": \"2026-11-13T09:50:00Z\", \"expected_interval_s\": 60}}"
+  }
+]

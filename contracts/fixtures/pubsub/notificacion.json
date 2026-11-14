@@ -1,0 +1,12 @@
+{
+  "notification_id": "ntf-01JC8Z",
+  "correlation_id": "7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11",
+  "incident_id": "INC-01JC8ZK",
+  "target": {
+    "role": "tecnico",
+    "user_id": "u-tec-07"
+  },
+  "severity": "high",
+  "title": "EX-023 requiere intervención",
+  "body": "Vibración 3.1σ sobre su baseline. Causa probable: desgaste de rodamiento."
+}

@@ -1,0 +1,23 @@
+{
+  "selected": "TEC-07",
+  "candidates": [
+    {
+      "tech_id": "TEC-07",
+      "score": 0.91,
+      "eta_min": 12,
+      "breakdown": {
+        "severity": 0.3,
+        "eta": 0.25,
+        "specialty": 0.2,
+        "availability": 0.2,
+        "load": -0.04
+      }
+    },
+    {
+      "tech_id": "TEC-03",
+      "score": 0.74,
+      "eta_min": 25,
+      "breakdown": {}
+    }
+  ]
+}
