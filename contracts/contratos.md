@@ -15,7 +15,7 @@
 | Respuesta error | `{ "error": { "code", "message", "details": [] }, "correlation_id" }` |
 | Paginación | `?limit=` (1-100) y `?cursor=`; siguiente página en `meta.next_cursor`. |
 | Trazabilidad | `X-Correlation-Id` en la request (se genera si falta). Viaja en eventos, Pub/Sub, Firestore y logs. |
-| Versionado | Prefijo `/v1` en las rutas y stage `v1` en API Gateway. Los eventos llevan `version: 1`. |
+| Versionado | Stage `v1` en API Gateway; las rutas **no** llevan prefijo `/v1` (`/me`, `/machines`…), así la URL queda `…/v1/me` (decisión 2026-11-14). Los eventos llevan `version: 1`. |
 | Números | Los `Decimal` de DynamoDB salen como número JSON (int si es entero), nunca como string (#25). |
 
 **Códigos de error**
@@ -59,7 +59,7 @@ Regla: `TABLE_<NOMBRE>` = sufijo de la tabla en mayúsculas con `_` en lugar de 
 
 ### 1.2 CORS (#5)
 
-Toda respuesta de `/v1/*` (éxito **y** error, incluidas las *gateway responses* 4XX/5XX de API Gateway, para que el front pueda leer un 401) lleva:
+Toda respuesta de la API con JWT (éxito **y** error, incluidas las *gateway responses* 4XX/5XX de API Gateway, para que el front pueda leer un 401) lleva:
 
 | Header | Valor |
 |---|---|
@@ -68,7 +68,7 @@ Toda respuesta de `/v1/*` (éxito **y** error, incluidas las *gateway responses*
 | `Access-Control-Allow-Methods` | `GET,POST,PUT,OPTIONS` |
 | `Access-Control-Expose-Headers` | `X-Correlation-Id` |
 
-Cada recurso de `/v1/*` tiene método `OPTIONS` (integración MOCK, sin Lambda, sin auth) que devuelve 200 con los mismos headers. Lo arma `arquifusion_shared.response._resp`; nadie agrega headers CORS a mano.
+Cada recurso con JWT tiene método `OPTIONS` (integración MOCK, sin Lambda, sin auth) que devuelve 200 con los mismos headers. Lo arma `arquifusion_shared.response._resp`; nadie agrega headers CORS a mano.
 
 ## 2. Endpoints (26 operaciones, 3 familias)
 
@@ -78,37 +78,37 @@ Lambdas: `api-lectura` (dueña C, `services/query/api_lectura`) · `api-comandos
 | Método y ruta | Auth | Roles | Lambda | Cubre |
 |---|---|---|---|---|
 | `POST /telemetry` | K | simulador | — (APIGW → SQS) | RF-01 |
-| `GET /v1/me` | J | todos | api-lectura | RNF-08 |
-| `POST /v1/auth/firebase-token` | J | todos | **api-lectura (C)** | RF-16, MH-SEC-07 |
-| `GET /v1/machines` | J | todos | api-lectura | RF-05 |
-| `GET /v1/machines/{id}` | J | todos | api-lectura | RF-02, RNF-13 |
-| `GET /v1/machines/{id}/telemetry` | J | T M S A G | api-lectura | RF-02.3 |
-| `GET /v1/machines/{id}/timeline` | J | T M S A G | api-lectura | RF-11.4 |
-| `GET /v1/incidents` | J | todos | api-lectura | RF-11 |
-| `GET /v1/incidents/{id}` | J | todos | api-lectura | RF-11, RF-12 |
-| `POST /v1/incidents/{id}/ack` | J | T M | api-comandos | RF-06.4, RF-10.4 |
-| `POST /v1/incidents/{id}/assign` | J | M S A | api-comandos | RF-06.4 |
-| `POST /v1/incidents/{id}/resolve` | J | T M | api-comandos | RF-11.1 |
-| `GET /v1/technicians` | J | M S A | api-lectura | RF-05.3, RF-06.1 |
-| `PUT /v1/technicians/me/status` | J | T | api-comandos | RF-06.1 |
-| `GET /v1/inventory` | J | M S A | api-lectura | RF-04.2, RF-04.6 |
-| `GET /v1/parts/ranking` | J | M S A | api-lectura | RF-04.3 |
-| `GET /v1/parts/forecast` | J | M A | api-lectura | RF-04.4 |
-| `GET /v1/maintenance/plan` | J | M S A | api-lectura | RF-03 |
-| `GET /v1/analytics/fuel` | J | S A G | api-lectura | RF-07 |
-| `GET /v1/analytics/productivity` | J | S A G | api-lectura | RF-08 |
-| `GET /v1/analytics/kpis` | J | S A G | api-lectura | RF-11.4 |
-| `GET /v1/reports/latest` | J | A G S | api-lectura | RF-10.3, RF-13.3 |
-| `GET /v1/ml/model` | J | A M | api-lectura | MH-AI-04 |
-| `POST /v1/ml/retrain` | J | A | api-comandos | RF-13.2 |
-| `POST /v1/assistant/chat` | J | T M S A G | ia-gemini | RF-14 |
+| `GET /me` | J | todos | api-lectura | RNF-08 |
+| `POST /auth/firebase-token` | J | todos | **api-lectura (C)** | RF-16, MH-SEC-07 |
+| `GET /machines` | J | todos | api-lectura | RF-05 |
+| `GET /machines/{id}` | J | todos | api-lectura | RF-02, RNF-13 |
+| `GET /machines/{id}/telemetry` | J | T M S A G | api-lectura | RF-02.3 |
+| `GET /machines/{id}/timeline` | J | T M S A G | api-lectura | RF-11.4 |
+| `GET /incidents` | J | todos | api-lectura | RF-11 |
+| `GET /incidents/{id}` | J | todos | api-lectura | RF-11, RF-12 |
+| `POST /incidents/{id}/ack` | J | T M | api-comandos | RF-06.4, RF-10.4 |
+| `POST /incidents/{id}/assign` | J | M S A | api-comandos | RF-06.4 |
+| `POST /incidents/{id}/resolve` | J | T M | api-comandos | RF-11.1 |
+| `GET /technicians` | J | M S A | api-lectura | RF-05.3, RF-06.1 |
+| `PUT /technicians/me/status` | J | T | api-comandos | RF-06.1 |
+| `GET /inventory` | J | M S A | api-lectura | RF-04.2, RF-04.6 |
+| `GET /parts/ranking` | J | M S A | api-lectura | RF-04.3 |
+| `GET /parts/forecast` | J | M A | api-lectura | RF-04.4 |
+| `GET /maintenance/plan` | J | M S A | api-lectura | RF-03 |
+| `GET /analytics/fuel` | J | S A G | api-lectura | RF-07 |
+| `GET /analytics/productivity` | J | S A G | api-lectura | RF-08 |
+| `GET /analytics/kpis` | J | S A G | api-lectura | RF-11.4 |
+| `GET /reports/latest` | J | A G S | api-lectura | RF-10.3, RF-13.3 |
+| `GET /ml/model` | J | A M | api-lectura | MH-AI-04 |
+| `POST /ml/retrain` | J | A | api-comandos | RF-13.2 |
+| `POST /assistant/chat` | J | T M S A G | ia-gemini | RF-14 |
 | `POST /bridge/events` | K | GCP | api-comandos | RF-16, MH-MC-02 |
 
-`POST /v1/auth/firebase-token` vive en `api-lectura` (decisión 2026-11-14): firma el custom token con la service account de Firebase leída de Secrets Manager (`FIREBASE_SECRET_NAME`; la firma es local, no necesita salir a Internet, pero sí alcanzar Secrets Manager: fuera de VPC o con VPC endpoint).
+`POST /auth/firebase-token` vive en `api-lectura` (decisión 2026-11-14): firma el custom token con la service account de Firebase leída de Secrets Manager (`FIREBASE_SECRET_NAME`; la firma es local, no necesita salir a Internet, pero sí alcanzar Secrets Manager: fuera de VPC o con VPC endpoint).
 
 Lo que **no** es endpoint, a propósito: chat del incidente, mapa en tiempo real y adjuntos (van por Firestore y Cloud Storage con el SDK), asignación automática y notificaciones (las hace Step Functions).
 
-**URL base:** `https://{apiId}.execute-api.us-east-1.amazonaws.com/v1` (stage `v1`). Las rutas ya incluyen `/v1`, así que la URL completa queda `…/v1/v1/me`. El front configura `VITE_API_URL` con la URL base (incluye el stage).
+**URL base:** `https://{apiId}.execute-api.us-east-1.amazonaws.com/v1` (stage `v1`). Las rutas **no** llevan `/v1` (el recurso de API Gateway es `/me`, `/machines/{machine_id}`, …), así que la URL completa queda `…/v1/me`. El front configura `VITE_API_URL` con la URL base (incluye el stage). En el evento proxy, `resource` = `/machines/{machine_id}` (lo que enrutan las Lambdas) y `requestContext.path` = `/v1/machines/EX-023`. Los parámetros de ruta se llaman como en el OpenAPI (`{machine_id}`, `{incident_id}`).
 
 ### 2.1 Identidad del usuario (Cognito → Lambda → Firebase) (#8)
 
@@ -121,7 +121,7 @@ Lo que **no** es endpoint, a propósito: chat del incidente, mapa en tiempo real
 
 - Atributos custom del User Pool (B, `infra/base`): `custom:zone` y `custom:technician_id` (string, mutables, legibles por el app client). Los usuarios demo `u-tec-XX` se crean con `custom:technician_id = TEC-XX` y `custom:zone` = zona del técnico en el seed.
 - Nadie deriva el técnico desde `cognito:username` → `technicians.user_id`: se usa el claim. (`technicians.user_id` se mantiene para ir del técnico al usuario, por ejemplo para notificar.)
-- **Custom token de Firebase** (`POST /v1/auth/firebase-token`): `uid` = `cognito:username`; claims `role` (rol resuelto), `zone` (`null` si es global), `technician_id` (solo técnicos; `null` en otro caso).
+- **Custom token de Firebase** (`POST /auth/firebase-token`): `uid` = `cognito:username`; claims `role` (rol resuelto), `zone` (`null` si es global), `technician_id` (solo técnicos; `null` en otro caso).
 - Fixtures: `fixtures/api/get_me.event.json` (técnico TEC-07, GET) y `fixtures/api/technician_status.event.json` (técnico TEC-07, PUT).
 
 ## 3. Eventos (EventBridge, bus `arquifusion-{stage}-fleet-events`)
@@ -173,10 +173,10 @@ Se mantiene el puente: la Lambda *notificar* (B) publica por REST al topic **`no
 | `incidents/{id}/messages/{msg_id}` | técnico, mantenimiento, supervisor | participantes | Chat del incidente. Campos: `author_id`, `role`, `text`, `quick_action?`, `attachment_path?`, `created_at`, `correlation_id` |
 | `incidents/{id}/actions/{event_id}` | móvil del técnico | Cloud Function | Acciones (aceptar, resolver). La Cloud Function las reenvía a `POST /bridge/events` |
 | `technicians/{tech_id}` | Lambda replicar | M S A (según zona) y el propio técnico | Ubicación y disponibilidad. `location.zone` **siempre** presente (= `technicians.zone`, #11) |
-| `users/{uid}` | `api-lectura` (Admin SDK, en `POST /v1/auth/firebase-token`) | `notify_bridge` (Admin SDK); el propio usuario | Perfil para push: `user_id`, `role`, `zone`, `technician_id?`, `fcm_tokens[]`, `updated_at` |
+| `users/{uid}` | `api-lectura` (Admin SDK, en `POST /auth/firebase-token`) | `notify_bridge` (Admin SDK); el propio usuario | Perfil para push: `user_id`, `role`, `zone`, `technician_id?`, `fcm_tokens[]`, `updated_at` |
 
 - `uid` = `cognito:username` (`u-tec-07`).
-- **Token FCM:** el front obtiene el token con `getToken()` (requiere service worker `firebase-messaging-sw.js`) y lo envía en el body de `POST /v1/auth/firebase-token` (`{ "fcm_token": "..." }`). `api-lectura` hace `arrayUnion` en `users/{uid}.fcm_tokens` y actualiza `role`/`zone`/`technician_id`. Los clientes no escriben `users/` directo (las Security Rules lo niegan); solo pueden leer su propio documento.
+- **Token FCM:** el front obtiene el token con `getToken()` (requiere service worker `firebase-messaging-sw.js`) y lo envía en el body de `POST /auth/firebase-token` (`{ "fcm_token": "..." }`). `api-lectura` hace `arrayUnion` en `users/{uid}.fcm_tokens` y actualiza `role`/`zone`/`technician_id`. Los clientes no escriben `users/` directo (las Security Rules lo niegan); solo pueden leer su propio documento.
 - Las Security Rules usan los claims `role`, `zone` y `technician_id` del custom token (§2.1).
 - Tokens secretos (`ack_token`, `resolve_token`, `execution_arn`) nunca se replican.
 
@@ -185,13 +185,13 @@ Se mantiene el puente: la Lambda *notificar* (B) publica por REST al topic **`no
 1. Simulador → `POST /telemetry` (lote ≤100, cada 60 s) → SQS → Lambda procesar.
 2. Anomalía → evento **AnomalyDetected** → Step Functions `GestionIncidente`.
 3. Step Functions crea el incidente (`detected`), pide el diagnóstico a `ia-gemini` con `candidate_parts` (§8), deriva `required_specialty` (§8.2), calcula el técnico (`scoring`), lo asigna (`assigned`), notifica (§10: SNS email + Pub/Sub → FCM) y espera el `ack_token`.
-4. Técnico acepta: web `POST /v1/incidents/{id}/ack`, o móvil escribe en Firestore → Cloud Function → `POST /bridge/events`. Ambos terminan en `SendTaskSuccess` → `in_progress`.
-5. Chat en Firestore. Al terminar: `POST /v1/incidents/{id}/resolve` (segundo token) → `resolved` → resumen IA → registro en `maintenance-records` → `closed`.
-6. Supervisor: `GET /v1/machines` e `/incidents`; mapa y chat en vivo por Firestore.
+4. Técnico acepta: web `POST /incidents/{id}/ack`, o móvil escribe en Firestore → Cloud Function → `POST /bridge/events`. Ambos terminan en `SendTaskSuccess` → `in_progress`.
+5. Chat en Firestore. Al terminar: `POST /incidents/{id}/resolve` (segundo token) → `resolved` → resumen IA → registro en `maintenance-records` → `closed`.
+6. Supervisor: `GET /machines` e `/incidents`; mapa y chat en vivo por Firestore.
 
 ## 7. Ajustes a tener para el diagrama de arquitectura
 
-1. **Flecha API Gateway → `ia-gemini`** para `POST /v1/assistant/chat`. Debe quedar **fuera de la VPC** (sale a Gemini y la VPC no tiene NAT).
+1. **Flecha API Gateway → `ia-gemini`** para `POST /assistant/chat`. Debe quedar **fuera de la VPC** (sale a Gemini y la VPC no tiene NAT).
 2. **`api-comandos`** (antes `api-ack`): ack, assign, resolve, `technicians/me/status`, `ml/retrain` y `/bridge/events`. Fuera de la VPC (llama a Step Functions). `firebase-token` pasó a `api-lectura` (§2).
 3. **Dos task tokens por incidente**: `ack_token` y `resolve_token`, guardados en el ítem META de DynamoDB.
 4. **Quitar `WS /live`** de `requerimientos.md §5.5`. El tiempo real va por Firestore.
@@ -209,7 +209,7 @@ Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model"
 | `common_cause` | `zone`, `incidents[]` (máquinas, factores, ventana) | `probable_common_cause`, `evidence[]`, `confidence` |
 | `summarize_chat` | `incident_id`, `messages[]` (§5) | `summary`, `root_cause`, `actions_taken[]`, `parts_replaced[]` |
 | `executive_report` | `figures` (KPIs de `AnalisisDiario`) | `summary_text`, `prompt_version` |
-| `assistant_chat` | (vía API Gateway, body de `POST /v1/assistant/chat`) | respuesta de `POST /v1/assistant/chat` |
+| `assistant_chat` | (vía API Gateway, body de `POST /assistant/chat`) | respuesta de `POST /assistant/chat` |
 
 **`candidate_parts[]`** = `[{ "component_id", "name", "specialty" }]`. Lo arma la SFN (B): `GetItem catalog pk=MODEL#<model>` → `component_ids[]` → `BatchGetItem catalog pk=COMPONENT#<id>` → `{component_id, name, specialty}`. Para `CAT-336` son 21 componentes (incluye `CMP-014`). Fixtures: `fixtures/ia/diagnose_request.json` / `diagnose_response.json`.
 
@@ -265,7 +265,7 @@ Todos los workers referencian los recursos de `infra/base` **por nombre** (no po
 |---|---|---|
 | Tablas DynamoDB | `{p}-machines`, `{p}-machine-state`, `{p}-idempotency`, `{p}-anomalies`, `{p}-incidents`, `{p}-technicians`, `{p}-inventory`, `{p}-catalog`, `{p}-warehouses`, `{p}-notification-rules`, `{p}-audit-events`, `{p}-maintenance-records`, `{p}-insights` | Ver `dynamodb.md` (claves y GSIs) |
 | Bus EventBridge | `{p}-fleet-events` | `AnomalyDetected`, `MachineSilent`, `IncidentStateChanged` |
-| API REST | `{p}-api`, stage `v1` | A agrega `POST /telemetry` (API key); B cablea `/v1/*` (Cognito) y `POST /v1/assistant/chat` → `ia-gemini` |
+| API REST | `{p}-api`, stage `v1` | A agrega `POST /telemetry` (API key); B cablea las rutas JWT (Cognito) y `POST /assistant/chat` → `ia-gemini` |
 | SNS | `{p}-alerts-{rol}` (6 roles, email) · **`{p}-platform-alarms`** (alarmas de DLQ, errores y throttling de Lambdas; suscripción email del equipo) | notificar (B) · CloudWatch Alarms (A, B) |
 | Secretos | `arquifusion/{stage}/gemini/api-key` (A) · `arquifusion/{stage}/gcp/service-account` (replicar, notificar → Pub/Sub, firebase-token) · `arquifusion/{stage}/bridge-gcp` (API key de `/bridge/*`) | |
 | Rol | `LabRole` | Todo |
@@ -275,7 +275,7 @@ Todos los workers referencian los recursos de `infra/base` **por nombre** (no po
 | Parámetro | Valor |
 |---|---|
 | `/arquifusion/{stage}/lambda/ia-gemini/arn` | ARN de `ia-gemini` (B lo usa en la SFN y en la ruta del asistente) |
-| `/arquifusion/{stage}/sfn/reentrenamiento/arn` | ARN de la SFN (B lo usa en `POST /v1/ml/retrain`) |
+| `/arquifusion/{stage}/sfn/reentrenamiento/arn` | ARN de la SFN (B lo usa en `POST /ml/retrain`) |
 | `/arquifusion/{stage}/model/active_version` | Versión activa del modelo |
 | `/arquifusion/{stage}/thresholds/{model}` | Umbrales de la capa 1 por modelo (JSON), derivados de `MODEL#<model>.nominal` (#2) |
 
@@ -307,7 +307,7 @@ Todos los workers referencian los recursos de `infra/base` **por nombre** (no po
 
 **Mantenimiento (`{p}-maintenance-records`, #3):** ítem = `record_id` (`MR-<ULID>`), `machine_id`, `zone`, `type` (`preventive` | `corrective`), `performed_at` (ISO 8601), `technician_id`, `incident_id?`, `operating_hours`, `components[]` = `[{ "component_id", "quantity" }]`, `cost_usd`, `notes?`. La SFN escribe uno `corrective` al cerrar el incidente (con `components_replaced` y `cost_usd` del `ResolveRequest`). A lo lee con `Scan` (`analytics_common/records.py`); C lo consulta por máquina (`Query pk = machine_id`) para el timeline.
 
-**Insights (`{p}-insights`, #3/#26):** `pk` = `kind` (lista en `services/ml/arquifusion_ml/insights.py`), `sk` = `LATEST` (lo que lee C) o `YYYY-MM-DD` (histórico). `data` es **exactamente** el `data` de la respuesta del endpoint en `openapi.yaml`; para arreglos, C filtra por `zone` sobre cada fila. Atributos extra: `generated_at`, `correlation_id`. Como `kpis#7d`/`kpis#30d` son un objeto (no se puede filtrar por fila), A escribe **además** un ítem por zona: `sk = LATEST#<zone>` (y `YYYY-MM-DD#<zone>`); `sk = LATEST` sigue siendo el agregado de toda la flota (`ALL`). `GET /v1/analytics/kpis?zone=norte` lee `LATEST#norte`.
+**Insights (`{p}-insights`, #3/#26):** `pk` = `kind` (lista en `services/ml/arquifusion_ml/insights.py`), `sk` = `LATEST` (lo que lee C) o `YYYY-MM-DD` (histórico). `data` es **exactamente** el `data` de la respuesta del endpoint en `openapi.yaml`; para arreglos, C filtra por `zone` sobre cada fila. Atributos extra: `generated_at`, `correlation_id`. Como `kpis#7d`/`kpis#30d` son un objeto (no se puede filtrar por fila), A escribe **además** un ítem por zona: `sk = LATEST#<zone>` (y `YYYY-MM-DD#<zone>`); `sk = LATEST` sigue siendo el agregado de toda la flota (`ALL`). `GET /analytics/kpis?zone=norte` lee `LATEST#norte`.
 
 **Almacenes (`{p}-warehouses`, #19):** ítem = `warehouse_id`, `name`, `zone`, `location{lat, lon, zone}`. 4 almacenes, uno por zona (WH-04 = oeste). La SFN lo usa para la rama stock (distancia almacén → máquina) y A para el pronóstico por zona. `inventory` mantiene `zone` y `warehouse_name` redundantes.
 

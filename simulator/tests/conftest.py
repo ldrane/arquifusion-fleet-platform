@@ -12,7 +12,7 @@ OPENAPI = Path(__file__).resolve().parents[2] / "contracts/openapi.yaml"
 
 @pytest.fixture(scope="session")
 def fleet():
-    return build_fleet(42)
+    return build_fleet()
 
 
 @pytest.fixture(scope="session")

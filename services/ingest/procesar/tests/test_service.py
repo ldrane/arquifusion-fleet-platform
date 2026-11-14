@@ -59,7 +59,12 @@ def test_degradation_emits_one_anomaly_event(processor, aws, reading, sqs, setti
     assert {f["variable"] for f in data["top_factors"]} >= {"temperature_c", "vibration_mm_s"}
     assert data["model_version"] == "baseline-only"
     anomalies = aws["ddb"].Table(settings.table_anomalies).scan()["Items"]
-    assert len(anomalies) == 3 and anomalies[0]["gsi1pk"] == "norte#2026-11-13"
+    assert len(anomalies) == 3
+    for item in anomalies:
+        assert item["zone"] == "norte" and item["sk"].startswith(item["detected_at"] + "#")
+        assert item["detected_at"].startswith("2026-11-13T") and item["anomaly_id"]
+        assert "gsi1pk" not in item and "gsi1sk" not in item
+    assert data["reading_ts"] in {a["detected_at"] for a in anomalies}
 
 
 def test_open_incident_blocks_anomaly_event(processor, aws, reading, sqs, settings):
@@ -115,3 +120,32 @@ def test_ml_failure_falls_back_to_rules_and_stats(aws, thresholds, reading, sqs,
 
     result = Processor(settings, aws["repo"], thresholds, BrokenModel(), clock=lambda: now).handle(sqs([reading(0)]))
     assert result == {"batchItemFailures": []}
+
+
+def test_seed_fields_are_never_overwritten(processor, aws, reading, sqs, settings):
+    """#1: una lectura con modelo/zona/tipo distintos no cambia los campos maestros del seed."""
+    table = aws["ddb"].Table(settings.table_machines)
+    before = table.get_item(Key={"pk": "OP-01#EX-023", "sk": "META"})["Item"]
+    rogue = reading(0, model="AF-EX350", type="loader", location={"lat": -14.4, "lon": -71.95, "zone": "este"})
+    processor.handle(sqs([rogue]))
+
+    after = table.get_item(Key={"pk": "OP-01#EX-023", "sk": "META"})["Item"]
+    for field in ("model", "type", "zone", "home_location", "expected_interval_s", "operation_id", "seed_version"):
+        assert after[field] == before[field], field
+    assert after["last_seen_at"] == rogue["timestamp"] and after["location"]["zone"] == "norte"
+    assert aws["firehose"].records[0]["zone"] == "norte"
+
+
+def test_unknown_machine_is_discarded_without_ghost(processor, aws, reading, sqs, settings):
+    ghost = reading(0, machine_id="ZZ-999")
+    result = processor.handle(sqs([ghost, reading(1)]))
+
+    assert result == {"batchItemFailures": []}
+    table = aws["ddb"].Table(settings.table_machines)
+    assert "Item" not in table.get_item(Key={"pk": "OP-01#ZZ-999", "sk": "META"})
+    assert [r["machine_id"] for r in aws["firehose"].records] == ["EX-023"]
+
+
+def test_update_machine_requires_existing_item(aws, settings):
+    assert aws["repo"].update_machine("OP-01#ZZ-999", {"status": "operational", "last_seen_at": "2026-11-13T00:00:00Z"}) is False
+    assert "Item" not in aws["ddb"].Table(settings.table_machines).get_item(Key={"pk": "OP-01#ZZ-999", "sk": "META"})

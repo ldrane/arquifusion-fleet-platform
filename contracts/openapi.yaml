@@ -7,7 +7,7 @@ info:
 
     Tres familias de rutas, tres mecanismos de autenticación:
     - `/telemetry` → API key (simulador de flota)
-    - `/v1/*`      → JWT de Cognito (web y móvil; RBAC por grupo `cognito:groups`)
+    - resto (`/me`, `/machines`, `/incidents/*`, …) → JWT de Cognito (web y móvil; RBAC por grupo `cognito:groups`)
     - `/bridge/*`  → API key (Cloud Function de GCP → AWS)
 
     Reglas generales (aplican a todo):
@@ -18,7 +18,7 @@ info:
     - `x-roles` en cada operación = grupos de Cognito autorizados (RBAC dentro de la Lambda).
     - `x-lambda` = Lambda que atiende la ruta (nombres del diagrama de arquitectura).
     - El tiempo real NO va por esta API: lo pone Firestore (ver contratos.md §5).
-    - CORS (contratos.md §1.2): toda respuesta de `/v1/*` (también errores y gateway responses) lleva
+    - CORS (contratos.md §1.2): toda respuesta de la API (también errores y gateway responses) lleva
       `Access-Control-Allow-Origin: $CORS_ORIGIN`, `Access-Control-Allow-Headers: Authorization,Content-Type,X-Correlation-Id,X-Api-Key`,
       `Access-Control-Allow-Methods: GET,POST,PUT,OPTIONS` y `Access-Control-Expose-Headers: X-Correlation-Id`. Cada recurso tiene `OPTIONS` (MOCK).
     - Identidad (contratos.md §2.1): `cognito:username` = user_id, `cognito:groups` = rol, `custom:zone`, y `custom:technician_id` (solo técnicos).
@@ -29,7 +29,7 @@ servers:
   - url: https://{apiId}.execute-api.us-east-1.amazonaws.com/{stage}
     variables:
       apiId: {default: xxxxxxxxxx}
-      stage: {default: v1, enum: [v1], description: 'Stage único de API Gateway. Las rutas ya llevan /v1, así que la URL queda …/v1/v1/me (contratos.md §2)'}
+      stage: {default: v1, enum: [v1], description: 'Stage único de API Gateway. Las rutas NO llevan prefijo /v1: el stage ya lo pone, así que la URL queda …/v1/me (contratos.md §2)'}
 tags:
   - {name: Ingesta}
   - {name: Flota}
@@ -86,7 +86,7 @@ paths:
         '401': {$ref: '#/components/responses/Unauthenticated'}
         '429': {$ref: '#/components/responses/RateLimited'}
 
-  /v1/me:
+  /me:
     get:
       tags: [Sesión]
       summary: Perfil del usuario autenticado (rol, zona)
@@ -100,7 +100,7 @@ paths:
               schema: {$ref: '#/components/schemas/MeResponse'}
         '401': {$ref: '#/components/responses/Unauthenticated'}
 
-  /v1/auth/firebase-token:
+  /auth/firebase-token:
     post:
       tags: [Sesión]
       summary: Canjea el JWT de Cognito por un custom token de Firebase (para Firestore y FCM)
@@ -135,7 +135,7 @@ paths:
                       expires_in: {type: integer, example: 3600}
         '401': {$ref: '#/components/responses/Unauthenticated'}
 
-  /v1/machines:
+  /machines:
     get:
       tags: [Flota]
       summary: Lista de máquinas con estado actual (alimenta el mapa)
@@ -161,7 +161,7 @@ paths:
                       data: {type: array, items: {$ref: '#/components/schemas/Machine'}}
         '401': {$ref: '#/components/responses/Unauthenticated'}
 
-  /v1/machines/{machine_id}:
+  /machines/{machine_id}:
     get:
       tags: [Flota]
       summary: Detalle de la máquina (health, probabilidad de falla, RUL, variables que explican la alerta)
@@ -180,7 +180,7 @@ paths:
                   data: {$ref: '#/components/schemas/MachineDetail'}
         '404': {$ref: '#/components/responses/NotFound'}
 
-  /v1/machines/{machine_id}/telemetry:
+  /machines/{machine_id}/telemetry:
     get:
       tags: [Flota]
       summary: Serie temporal agregada (1 min o 1 h) de una máquina
@@ -212,7 +212,7 @@ paths:
                         health_score: {type: number}
         '400': {$ref: '#/components/responses/ValidationError'}
 
-  /v1/machines/{machine_id}/timeline:
+  /machines/{machine_id}/timeline:
     get:
       tags: [Flota]
       summary: Línea de tiempo de la máquina (incidentes, mantenimientos) y KPIs MTBF / MTTR / disponibilidad
@@ -247,7 +247,7 @@ paths:
                           mttr_hours: {type: number}
                           availability_pct: {type: number}
 
-  /v1/incidents:
+  /incidents:
     get:
       tags: [Incidentes]
       summary: Cola de incidentes (ordenada por severidad y antigüedad)
@@ -273,7 +273,7 @@ paths:
                     properties:
                       data: {type: array, items: {$ref: '#/components/schemas/Incident'}}
 
-  /v1/incidents/{incident_id}:
+  /incidents/{incident_id}:
     get:
       tags: [Incidentes]
       summary: Detalle del incidente (diagnóstico IA, técnico, hijos si es padre)
@@ -292,7 +292,7 @@ paths:
                   data: {$ref: '#/components/schemas/Incident'}
         '404': {$ref: '#/components/responses/NotFound'}
 
-  /v1/incidents/{incident_id}/ack:
+  /incidents/{incident_id}/ack:
     post:
       tags: [Incidentes]
       summary: El técnico acepta o rechaza el incidente (reanuda Step Functions)
@@ -328,7 +328,7 @@ paths:
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
 
-  /v1/incidents/{incident_id}/assign:
+  /incidents/{incident_id}/assign:
     post:
       tags: [Incidentes]
       summary: Asignación o reasignación manual (responsable de mantenimiento)
@@ -362,7 +362,7 @@ paths:
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
 
-  /v1/incidents/{incident_id}/resolve:
+  /incidents/{incident_id}/resolve:
     post:
       tags: [Incidentes]
       summary: 'Marca el incidente como resuelto (reanuda Step Functions: resumen IA y cierre)'
@@ -393,7 +393,7 @@ paths:
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
 
-  /v1/technicians:
+  /technicians:
     get:
       tags: [Incidentes]
       summary: Técnicos con disponibilidad, carga y ubicación (y ETA si se pasa machine_id)
@@ -413,7 +413,7 @@ paths:
                 properties:
                   data: {type: array, items: {$ref: '#/components/schemas/Technician'}}
 
-  /v1/technicians/me/status:
+  /technicians/me/status:
     put:
       tags: [Incidentes]
       summary: El técnico actualiza su disponibilidad y su ubicación (alimenta el scoring)
@@ -441,7 +441,7 @@ paths:
                 properties:
                   data: {$ref: '#/components/schemas/Technician'}
 
-  /v1/inventory:
+  /inventory:
     get:
       tags: [Mantenimiento y repuestos]
       summary: Inventario por almacén con alertas de stock
@@ -460,7 +460,7 @@ paths:
                 properties:
                   data: {type: array, items: {$ref: '#/components/schemas/InventoryItem'}}
 
-  /v1/parts/ranking:
+  /parts/ranking:
     get:
       tags: [Mantenimiento y repuestos]
       summary: Ranking de componentes más demandados
@@ -484,7 +484,7 @@ paths:
                         units_used_90d: {type: integer}
                         irregular_consumption: {type: boolean}
 
-  /v1/parts/forecast:
+  /parts/forecast:
     get:
       tags: [Mantenimiento y repuestos]
       summary: Pronóstico de demanda de repuestos por almacén y stock mínimo/máximo recomendado
@@ -514,7 +514,7 @@ paths:
                         recommended_max: {type: integer}
                         shortage_for_planned_maintenance: {type: boolean}
 
-  /v1/maintenance/plan:
+  /maintenance/plan:
     get:
       tags: [Mantenimiento y repuestos]
       summary: Calendario de mantenimiento preventivo priorizado por condición
@@ -543,7 +543,7 @@ paths:
                         flag: {type: string, enum: [overdue, unnecessary, on_track]}
                         reason: {type: string}
 
-  /v1/analytics/fuel:
+  /analytics/fuel:
     get:
       tags: [Analítica]
       summary: Consumo de combustible normalizado, comparado con pares e historial
@@ -574,7 +574,7 @@ paths:
                         progressive_increase: {type: boolean}
                         probable_causes: {type: array, items: {type: string}}
 
-  /v1/analytics/productivity:
+  /analytics/productivity:
     get:
       tags: [Analítica]
       summary: Utilización por máquina y matriz productividad × costo
@@ -604,7 +604,7 @@ paths:
                         quadrant: {type: string, enum: [high_prod_low_cost, high_prod_high_cost, low_prod_low_cost, low_prod_high_cost]}
                         redistribution_suggestion: {type: string, nullable: true}
 
-  /v1/analytics/kpis:
+  /analytics/kpis:
     get:
       tags: [Analítica]
       summary: KPIs agregados de la flota
@@ -632,7 +632,7 @@ paths:
                       fleet_utilization_pct: {type: number}
                       fuel_cost_per_ton_usd: {type: number}
 
-  /v1/reports/latest:
+  /reports/latest:
     get:
       tags: [Analítica]
       summary: Último resumen gerencial generado por el workflow AnalisisDiario (texto IA + cifras)
@@ -656,7 +656,7 @@ paths:
                       prompt_version: {type: string}
                       figures: {type: object, additionalProperties: true}
 
-  /v1/ml/model:
+  /ml/model:
     get:
       tags: [IA]
       summary: Versión activa del modelo y sus métricas (precision, recall, anticipación)
@@ -680,7 +680,7 @@ paths:
                       mean_lead_time_hours: {type: number}
                       promoted: {type: boolean}
 
-  /v1/ml/retrain:
+  /ml/retrain:
     post:
       tags: [IA]
       summary: Lanza manualmente el workflow Reentrenamiento
@@ -700,7 +700,7 @@ paths:
                       execution_arn: {type: string}
         '403': {$ref: '#/components/responses/Forbidden'}
 
-  /v1/assistant/chat:
+  /assistant/chat:
     post:
       tags: [IA]
       summary: Asistente IA con tool-calling sobre datos reales (nunca SQL libre)
@@ -741,7 +741,7 @@ paths:
       summary: Eventos GCP → AWS (la Cloud Function reenvía acciones hechas en Firestore)
       description: |
         El móvil escribe en Firestore (acepta, resuelve, cambia estado). Una Cloud Function (trigger onWrite)
-        reenvía esa acción aquí. La Lambda `api-comandos` ejecuta la misma lógica que los endpoints `/v1/incidents/*`.
+        reenvía esa acción aquí. La Lambda `api-comandos` ejecuta la misma lógica que los endpoints `/incidents/*`.
         Idempotente por `event_id` (id del documento de Firestore).
       security: [{ApiKeyBridge: []}]
       x-lambda: api-comandos
@@ -1036,7 +1036,7 @@ components:
             user_id: {type: string}
             role: {$ref: '#/components/schemas/Role'}
         data:
-          description: Mismo cuerpo que el endpoint /v1 equivalente (AckRequest, ResolveRequest o el de technicians/me/status)
+          description: Mismo cuerpo que el endpoint JWT equivalente (AckRequest, ResolveRequest o el de technicians/me/status)
           type: object
           additionalProperties: true
         occurred_at: {type: string, format: date-time}

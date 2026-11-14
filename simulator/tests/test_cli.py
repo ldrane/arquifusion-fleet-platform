@@ -39,6 +39,14 @@ def test_stream_requires_credentials_without_dry_run(monkeypatch):
         main(["stream", "--duration", "1"])
 
 
+def test_default_rate_follows_expected_interval(tmp_path):
+    out = tmp_path / "b.jsonl"
+    main(["stream", "--duration", "3", "--dry-run", "--out", str(out)])
+    lines = [json.loads(line) for line in out.read_text().splitlines()]
+    timestamps = sorted({r["timestamp"] for b in lines for r in b["readings"]})
+    assert len(timestamps) == 3  # 1 lectura por máquina por minuto (expected_interval_s = 60)
+
+
 def test_history_accepts_days_suffix():
     args = build_parser().parse_args(["history", "--days", "90d"])
     assert args.days == 90
@@ -47,4 +55,4 @@ def test_history_accepts_days_suffix():
 def test_fleet_export(tmp_path):
     out = tmp_path / "fleet.json"
     main(["fleet", "--out", str(out)])
-    assert len(json.loads(out.read_text())) == 84
+    assert len(json.loads(out.read_text())) == 100

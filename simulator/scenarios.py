@@ -1,5 +1,9 @@
 """Escenarios inyectables del simulador (requerimientos §5.6, RF-02, RF-07, RF-08, RF-09, RF-12).
 
+Los objetivos por defecto salen de la flota del seed (hallazgos #1 y #27): `degradacion` ataca EX-023
+(CAT-336, norte; la demo del golden path, diagnóstico CMP-014) y los demás escenarios eligen máquinas
+deterministas que existen en el seed y respetan su zona.
+
 Un escenario transforma la lectura normal de las máquinas afectadas. El efecto depende de las horas
 transcurridas desde que empezó el escenario (ya multiplicadas por el `speedup` en modo stream).
 """
@@ -68,6 +72,21 @@ def contaminated_fuel(hours: float) -> Effect:
     )
 
 
+def pressure_spike(hours: float) -> Effect:
+    """Pico de presión hidráulica (válvula de control irregular). Especialidad `hidraulica`."""
+    return Effect(mul={"pressure_bar": 1.22}, add={"temperature_c": 5.0}, label="presion")
+
+
+def electrical_fault(hours: float) -> Effect:
+    """Falla eléctrica intermitente (alternador): caída de RPM. Especialidad `electrica`."""
+    return Effect(mul={"rpm": 0.78}, add={"temperature_c": 4.0}, label="electrico")
+
+
+def tire_vibration(hours: float) -> Effect:
+    """Vibración por neumático desbalanceado: más vibración, menos velocidad. Especialidad `neumaticos`."""
+    return Effect(mul={"vibration_mm_s": 1.9, "speed_kmh": 0.7}, label="neumaticos")
+
+
 def idle(hours: float) -> Effect:
     """Máquina ociosa: encendida sin producir (RF-08)."""
     return Effect(
@@ -92,17 +111,42 @@ class Scenario:
     default_targets: Callable[[list[MachineSpec]], list[MachineSpec]]
 
 
-def _first_of_type(machine_type: str) -> Callable[[list[MachineSpec]], list[MachineSpec]]:
-    return lambda fleet: [m for m in fleet if m.machine_type == machine_type][:1]
+DEMO_MACHINE_ID = "EX-023"  # máquina del golden path (seed, OpenAPI y fixtures)
+GROUP_ZONE = "norte"
+GROUP_SIZE = 6
+
+
+def _machine(machine_id: str) -> Callable[[list[MachineSpec]], list[MachineSpec]]:
+    return lambda fleet: [m for m in fleet if m.machine_id == machine_id]
+
+
+def _first(
+    machine_types: tuple[str, ...], zone: str | None = None
+) -> Callable[[list[MachineSpec]], list[MachineSpec]]:
+    """Primera máquina (por ID) de esos tipos y, si se indica, de esa zona; nunca la de la demo."""
+
+    def pick(fleet: list[MachineSpec]) -> list[MachineSpec]:
+        return [
+            m
+            for m in fleet
+            if m.machine_type in machine_types and (zone is None or m.zone == zone) and m.machine_id != DEMO_MACHINE_ID
+        ][:1]
+
+    return pick
 
 
 def _zone(zone: str) -> Callable[[list[MachineSpec]], list[MachineSpec]]:
-    return lambda fleet: [m for m in fleet if m.zone == zone][:6]
+    """Hasta GROUP_SIZE máquinas de una misma zona del seed (sin la de la demo, que tiene su propio incidente)."""
+    return lambda fleet: [m for m in fleet if m.zone == zone and m.machine_id != DEMO_MACHINE_ID][:GROUP_SIZE]
 
 
 def _idle_or_overused(spec: MachineSpec, hours: float) -> Effect:
     # Determinista: IDs pares quedan ociosas, impares sobreexplotadas.
     return idle(hours) if spec.number % 2 == 0 else overused(hours)
+
+
+def _first_n_loaders(fleet: list[MachineSpec]) -> list[MachineSpec]:
+    return [m for m in fleet if m.machine_type == "loader"][:4]
 
 
 SCENARIOS: dict[str, Scenario] = {
@@ -113,31 +157,49 @@ SCENARIOS: dict[str, Scenario] = {
             "degradacion",
             "Temperatura, vibración y combustible suben progresivamente",
             lambda spec, h: degradation(h),
-            _first_of_type("excavator"),
+            _machine(DEMO_MACHINE_ID),
         ),
         Scenario(
             "falla_subita",
             "Salto brusco de temperatura y vibración",
             lambda spec, h: sudden_failure(h),
-            _first_of_type("mining_truck"),
+            _first(("mining_truck",), "sur"),
         ),
         Scenario(
             "combustible",
             "Consumo de combustible anómalo con carga normal",
             lambda spec, h: fuel_anomaly(h),
-            _first_of_type("bulldozer"),
+            _first(("bulldozer",), "este"),
         ),
         Scenario(
             "grupal_zona",
             "Combustible contaminado en varias máquinas de una zona",
             lambda spec, h: contaminated_fuel(h),
-            _zone("norte"),
+            _zone(GROUP_ZONE),
+        ),
+        Scenario(
+            "presion",
+            "Pico de presión hidráulica",
+            lambda spec, h: pressure_spike(h),
+            _first(("excavator", "loader", "bulldozer", "drill"), "sur"),
+        ),
+        Scenario(
+            "electrico",
+            "Falla eléctrica intermitente: caída de RPM",
+            lambda spec, h: electrical_fault(h),
+            _first(("loader",), "oeste"),
+        ),
+        Scenario(
+            "neumaticos",
+            "Vibración por neumático en camión",
+            lambda spec, h: tire_vibration(h),
+            _first(("mining_truck",), "oeste"),
         ),
         Scenario(
             "ociosa",
             "Máquinas ociosas (IDs pares) y sobreexplotadas (IDs impares)",
             _idle_or_overused,
-            lambda fleet: [m for m in fleet if m.machine_type == "loader"][:4],
+            _first_n_loaders,
         ),
     )
 }

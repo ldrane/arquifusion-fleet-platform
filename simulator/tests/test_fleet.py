@@ -1,12 +1,35 @@
+import json
 import re
+from pathlib import Path
 
-from simulator.fleet import MACHINE_TYPES, ZONES, build_fleet, select, to_dict
+from simulator.fleet import MACHINE_TYPES, SEED_DIR, ZONES, build_fleet, select, to_dict
+
+SEED_MACHINES = json.loads((Path(SEED_DIR) / "machines.json").read_text())
 
 
 def test_fleet_size_types_and_zones(fleet):
-    assert 60 <= len(fleet) <= 100
-    assert {m.machine_type for m in fleet} == {t.name for t in MACHINE_TYPES}
+    assert len(fleet) == 100
+    assert {m.machine_type for m in fleet} == set(MACHINE_TYPES)
     assert {m.zone for m in fleet} == set(ZONES)
+
+
+def test_fleet_matches_seed_exactly(fleet):
+    """#1: IDs, modelo, tipo, zona, coordenadas, horómetro y expected_interval_s son los del seed."""
+    by_id = {m.machine_id: m for m in fleet}
+    assert set(by_id) == {m["machine_id"] for m in SEED_MACHINES}
+    for seed in SEED_MACHINES:
+        spec = by_id[seed["machine_id"]]
+        assert (spec.model, spec.machine_type, spec.zone) == (seed["model"], seed["type"], seed["zone"])
+        assert (spec.home_lat, spec.home_lon) == (seed["home_location"]["lat"], seed["home_location"]["lon"])
+        assert spec.initial_operating_hours == seed["operating_hours"]
+        assert spec.expected_interval_s == seed["expected_interval_s"] == 60
+
+
+def test_baselines_are_model_nominal(fleet):
+    models = {m["model_id"]: m for m in json.loads((Path(SEED_DIR) / "machine_models.json").read_text())}
+    for spec in fleet:
+        nominal = models[spec.model]["nominal"]
+        assert {v: (b.mean, b.sd) for v, b in spec.baselines.items()} == {v: tuple(x) for v, x in nominal.items()}
 
 
 def test_ids_are_unique_and_match_contract(fleet, schemas):
@@ -17,12 +40,11 @@ def test_ids_are_unique_and_match_contract(fleet, schemas):
 
 
 def test_machine_types_match_openapi_enum(schemas):
-    assert {t.name for t in MACHINE_TYPES} == set(schemas["MachineType"]["enum"])
+    assert set(MACHINE_TYPES) == set(schemas["MachineType"]["enum"])
 
 
 def test_fleet_is_deterministic():
-    assert build_fleet(7) == build_fleet(7)
-    assert build_fleet(7) != build_fleet(8)
+    assert build_fleet() == build_fleet()
 
 
 def test_select_by_machine_and_zone(fleet):
@@ -33,8 +55,9 @@ def test_select_by_machine_and_zone(fleet):
 
 def test_to_dict_is_machine_shaped(fleet):
     d = to_dict(fleet[0])
-    assert set(d) == {"machine_id", "type", "model", "location", "operating_hours"}
+    assert set(d) == {"machine_id", "type", "model", "location", "operating_hours", "expected_interval_s"}
 
 
-def test_demo_machine_from_contract_fixtures_exists(fleet):
-    assert "EX-023" in {m.machine_id for m in fleet}
+def test_demo_machine_matches_golden_path(fleet):
+    ex023 = next(m for m in fleet if m.machine_id == "EX-023")
+    assert (ex023.model, ex023.zone) == ("CAT-336", "norte")

@@ -3,6 +3,7 @@
 import copy
 import json
 import random
+from decimal import Decimal
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -76,6 +77,22 @@ def _create_tables(ddb):
         ddb.create_table(TableName=name, KeySchema=keys, AttributeDefinitions=attrs, BillingMode="PAY_PER_REQUEST")
 
 
+def seed_machine_items() -> list[dict]:
+    """Ítems de `machines` como los carga `scripts/seed.py`: pk/sk + campos de dominio, sin los `None`."""
+    items = []
+    for m in json.loads((FIXTURES / "seed" / "machines.json").read_text(), parse_float=Decimal):
+        item = {k: v for k, v in m.items() if v is not None}
+        item.update(pk=f"{m['operation_id']}#{m['machine_id']}", sk="META")
+        items.append(item)
+    return items
+
+
+def seed_machines(ddb) -> None:
+    with ddb.Table(SETTINGS.table_machines).batch_writer() as batch:
+        for item in seed_machine_items():
+            batch.put_item(Item=item)
+
+
 @pytest.fixture
 def aws():
     """DynamoDB (moto) + Firehose y EventBridge falsos, listos para construir un Processor."""
@@ -84,12 +101,13 @@ def aws():
         _create_tables(ddb)
         firehose, events = FakeFirehose(), FakeEvents()
         repo = Repository(SETTINGS, ddb, firehose, events)
+        seed_machines(ddb)
         yield {"ddb": ddb, "firehose": firehose, "events": events, "repo": repo}
 
 
 @pytest.fixture
 def thresholds():
-    return ThresholdProvider(lambda machine_type: None)
+    return ThresholdProvider(lambda model: None)
 
 
 @pytest.fixture
@@ -98,15 +116,15 @@ def base_reading() -> dict:
 
 
 def make_reading(base: dict, minutes: int, **overrides) -> dict:
-    """Lectura normal con ruido pequeño, `minutes` después de NOW - 10 h."""
+    """Lectura nominal de EX-023 (CAT-336 del seed) con ruido pequeño, `minutes` después de NOW - 10 h."""
     rnd = random.Random(minutes)
     r = copy.deepcopy(base)
     r.update(
         timestamp=(NOW - timedelta(hours=10) + timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        temperature_c=85 + rnd.uniform(-1, 1),
+        temperature_c=88 + rnd.uniform(-1, 1),
         vibration_mm_s=4 + rnd.uniform(-0.2, 0.2),
-        pressure_bar=210 + rnd.uniform(-3, 3),
-        fuel_rate_lph=35 + rnd.uniform(-0.5, 0.5),
+        pressure_bar=300 + rnd.uniform(-3, 3),
+        fuel_rate_lph=38 + rnd.uniform(-0.5, 0.5),
         rpm=1800 + rnd.uniform(-20, 20),
         state="operating",
         sim_scenario=None,

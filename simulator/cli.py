@@ -25,7 +25,10 @@ def _days(value: str) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m simulator", description="Simulador de flota ArquiFusion")
-    parser.add_argument("--seed", type=int, default=42, help="semilla de la flota y del ruido (default 42)")
+    parser.add_argument("--seed", type=int, default=42, help="semilla del ruido de las lecturas (default 42)")
+    parser.add_argument(
+        "--seed-dir", type=Path, default=None, help="carpeta de seeds (default contracts/fixtures/seed)"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     stream = sub.add_parser("stream", help="envía telemetría en vivo a POST /telemetry")
@@ -34,7 +37,12 @@ def build_parser() -> argparse.ArgumentParser:
     stream.add_argument("--scenario", choices=sorted(SCENARIOS), default="normal")
     stream.add_argument("--machine", action="append", help="máquina afectada (repetible), p. ej. EX-001")
     stream.add_argument("--zone", choices=sorted(ZONES), help="zona afectada por el escenario")
-    stream.add_argument("--rate", type=float, default=1.0, help="lecturas por máquina por minuto (default 1)")
+    stream.add_argument(
+        "--rate",
+        type=float,
+        default=None,
+        help="lecturas por máquina por minuto (default: 60 / expected_interval_s del seed = 1)",
+    )
     stream.add_argument("--duration", type=float, default=0, help="minutos a simular; 0 = sin fin")
     stream.add_argument(
         "--speedup", type=float, default=60.0, help="aceleración del escenario (default 60: 1 min real = 1 h simulada)"
@@ -49,7 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     history.add_argument("--operation-id", default="OP-01")
     history.add_argument("--upload", metavar="S3_URI", help="sube el resultado a s3://bucket[/prefijo]")
 
-    fleet = sub.add_parser("fleet", help="exporta la flota (para seeds de la Persona C)")
+    fleet = sub.add_parser("fleet", help="exporta la flota que simula (cargada de los seeds)")
     fleet.add_argument("--out", type=Path, help="archivo JSON de salida (default: stdout)")
     return parser
 
@@ -68,7 +76,9 @@ def run_stream(args, fleet) -> None:
         raise SystemExit("--dry-run requiere --duration (el reloj simulado no espera)")
     scenario = SCENARIOS[args.scenario]
     targets = resolve_targets(fleet, scenario, args.machine, args.zone)
-    interval_s = 60.0 / args.rate
+    # Por defecto se envía al ritmo que espera heartbeat (expected_interval_s del seed, contratos.md §3).
+    rate = args.rate or 60.0 / min(m.expected_interval_s for m in fleet)
+    interval_s = 60.0 / rate
     # En --dry-run el reloj es simulado: los ticks se generan de inmediato, sin esperar en tiempo real.
     started_at = datetime.now(UTC)
     sim = FleetSimulator(
@@ -81,7 +91,7 @@ def run_stream(args, fleet) -> None:
     )
     sender = None if args.dry_run else TelemetrySender(args.api_url, args.api_key)
     out = args.out.open("w") if args.out else sys.stdout
-    total_ticks = int(args.duration * args.rate) if args.duration else None
+    total_ticks = int(args.duration * rate) if args.duration else None
     print(f"Escenario {scenario.name} sobre {[m.machine_id for m in targets]} cada {interval_s:.0f} s", file=sys.stderr)
     tick = 0
     try:
@@ -127,4 +137,4 @@ COMMANDS = {"stream": run_stream, "history": run_history, "fleet": run_fleet}
 
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
-    COMMANDS[args.command](args, build_fleet(args.seed))
+    COMMANDS[args.command](args, build_fleet(args.seed_dir))
