@@ -13,3 +13,15 @@ output "table_names" {
     audit_events       = aws_dynamodb_table.audit_events.name
   }
 }
+
+output "event_bus_name" {
+  value = aws_cloudwatch_event_bus.fleet.name
+}
+
+output "event_bus_arn" {
+  value = aws_cloudwatch_event_bus.fleet.arn
+}
+
+output "sns_topic_arns" {
+  value = { for role, t in aws_sns_topic.alerts : role => t.arn }
+}
