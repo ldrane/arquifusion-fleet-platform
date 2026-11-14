@@ -1,0 +1,596 @@
+[
+  {
+    "model_id": "CAT-336",
+    "brand": "Caterpillar",
+    "type": "excavator",
+    "payload_t": 2.5,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        88,
+        3
+      ],
+      "vibration_mm_s": [
+        4.0,
+        0.6
+      ],
+      "pressure_bar": [
+        300,
+        15
+      ],
+      "fuel_rate_lph": [
+        38,
+        4
+      ],
+      "load_pct": [
+        70,
+        10
+      ],
+      "speed_kmh": [
+        3,
+        1.5
+      ],
+      "rpm": [
+        1800,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-010",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023"
+    ]
+  },
+  {
+    "model_id": "KOM-PC2000",
+    "brand": "Komatsu",
+    "type": "excavator",
+    "payload_t": 12.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        90,
+        3
+      ],
+      "vibration_mm_s": [
+        4.5,
+        0.6
+      ],
+      "pressure_bar": [
+        320,
+        15
+      ],
+      "fuel_rate_lph": [
+        110,
+        8
+      ],
+      "load_pct": [
+        72,
+        10
+      ],
+      "speed_kmh": [
+        2.5,
+        1.2
+      ],
+      "rpm": [
+        1800,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-010",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023"
+    ]
+  },
+  {
+    "model_id": "CAT-793F",
+    "brand": "Caterpillar",
+    "type": "mining_truck",
+    "payload_t": 227.0,
+    "maintenance_interval_h": 500,
+    "nominal": {
+      "temperature_c": [
+        92,
+        3
+      ],
+      "vibration_mm_s": [
+        3.5,
+        0.5
+      ],
+      "pressure_bar": [
+        180,
+        10
+      ],
+      "fuel_rate_lph": [
+        170,
+        12
+      ],
+      "load_pct": [
+        75,
+        15
+      ],
+      "speed_kmh": [
+        30,
+        8
+      ],
+      "rpm": [
+        1700,
+        90
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-011",
+      "CMP-012",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-021",
+      "CMP-025"
+    ]
+  },
+  {
+    "model_id": "KOM-930E",
+    "brand": "Komatsu",
+    "type": "mining_truck",
+    "payload_t": 290.0,
+    "maintenance_interval_h": 500,
+    "nominal": {
+      "temperature_c": [
+        93,
+        3
+      ],
+      "vibration_mm_s": [
+        3.6,
+        0.5
+      ],
+      "pressure_bar": [
+        185,
+        10
+      ],
+      "fuel_rate_lph": [
+        190,
+        14
+      ],
+      "load_pct": [
+        75,
+        15
+      ],
+      "speed_kmh": [
+        28,
+        8
+      ],
+      "rpm": [
+        1750,
+        90
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-011",
+      "CMP-012",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-021",
+      "CMP-025"
+    ]
+  },
+  {
+    "model_id": "CAT-994K",
+    "brand": "Caterpillar",
+    "type": "loader",
+    "payload_t": 40.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        90,
+        3
+      ],
+      "vibration_mm_s": [
+        4.2,
+        0.6
+      ],
+      "pressure_bar": [
+        280,
+        15
+      ],
+      "fuel_rate_lph": [
+        160,
+        10
+      ],
+      "load_pct": [
+        70,
+        12
+      ],
+      "speed_kmh": [
+        10,
+        4
+      ],
+      "rpm": [
+        1850,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-022",
+      "CMP-025"
+    ]
+  },
+  {
+    "model_id": "KOM-WA900",
+    "brand": "Komatsu",
+    "type": "loader",
+    "payload_t": 23.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        89,
+        3
+      ],
+      "vibration_mm_s": [
+        4.1,
+        0.6
+      ],
+      "pressure_bar": [
+        270,
+        15
+      ],
+      "fuel_rate_lph": [
+        120,
+        9
+      ],
+      "load_pct": [
+        70,
+        12
+      ],
+      "speed_kmh": [
+        10,
+        4
+      ],
+      "rpm": [
+        1800,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-022",
+      "CMP-025"
+    ]
+  },
+  {
+    "model_id": "CAT-D10T",
+    "brand": "Caterpillar",
+    "type": "bulldozer",
+    "payload_t": 0.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        91,
+        3
+      ],
+      "vibration_mm_s": [
+        5.0,
+        0.7
+      ],
+      "pressure_bar": [
+        250,
+        12
+      ],
+      "fuel_rate_lph": [
+        70,
+        6
+      ],
+      "load_pct": [
+        68,
+        12
+      ],
+      "speed_kmh": [
+        6,
+        2
+      ],
+      "rpm": [
+        1900,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023"
+    ]
+  },
+  {
+    "model_id": "KOM-D375A",
+    "brand": "Komatsu",
+    "type": "bulldozer",
+    "payload_t": 0.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        91,
+        3
+      ],
+      "vibration_mm_s": [
+        5.2,
+        0.7
+      ],
+      "pressure_bar": [
+        255,
+        12
+      ],
+      "fuel_rate_lph": [
+        75,
+        6
+      ],
+      "load_pct": [
+        68,
+        12
+      ],
+      "speed_kmh": [
+        6,
+        2
+      ],
+      "rpm": [
+        1900,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023"
+    ]
+  },
+  {
+    "model_id": "EPI-PV271",
+    "brand": "Epiroc",
+    "type": "drill",
+    "payload_t": 0.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        87,
+        3
+      ],
+      "vibration_mm_s": [
+        6.0,
+        0.8
+      ],
+      "pressure_bar": [
+        350,
+        20
+      ],
+      "fuel_rate_lph": [
+        90,
+        7
+      ],
+      "load_pct": [
+        65,
+        12
+      ],
+      "speed_kmh": [
+        1.5,
+        0.8
+      ],
+      "rpm": [
+        1800,
+        70
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023",
+      "CMP-024"
+    ]
+  },
+  {
+    "model_id": "SAN-DR412i",
+    "brand": "Sandvik",
+    "type": "drill",
+    "payload_t": 0.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        86,
+        3
+      ],
+      "vibration_mm_s": [
+        5.8,
+        0.8
+      ],
+      "pressure_bar": [
+        340,
+        20
+      ],
+      "fuel_rate_lph": [
+        85,
+        7
+      ],
+      "load_pct": [
+        65,
+        12
+      ],
+      "speed_kmh": [
+        1.5,
+        0.8
+      ],
+      "rpm": [
+        1800,
+        70
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023",
+      "CMP-024"
+    ]
+  }
+]

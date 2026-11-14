@@ -77,3 +77,8 @@ data/
 
 # Artefactos de build
 build/
+
+# Persona C
+*sa-key*.json
+out.json
+tfplan

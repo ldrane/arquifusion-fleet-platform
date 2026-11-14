@@ -1,0 +1,32 @@
+[
+  {
+    "warehouse_id": "WH-01",
+    "name": "Almacén Norte",
+    "zone": "norte",
+    "location": {
+      "lat": -11.915,
+      "lon": -76.395,
+      "zone": "norte"
+    }
+  },
+  {
+    "warehouse_id": "WH-02",
+    "name": "Almacén Sur",
+    "zone": "sur",
+    "location": {
+      "lat": -11.985,
+      "lon": -76.405,
+      "zone": "sur"
+    }
+  },
+  {
+    "warehouse_id": "WH-03",
+    "name": "Almacén Este",
+    "zone": "este",
+    "location": {
+      "lat": -11.948,
+      "lon": -76.36,
+      "zone": "este"
+    }
+  }
+]

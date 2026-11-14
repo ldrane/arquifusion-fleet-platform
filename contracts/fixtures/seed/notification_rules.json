@@ -1,0 +1,198 @@
+[
+  {
+    "event_type": "incident.detected",
+    "role": "tecnico",
+    "severity_min": "medium",
+    "channels": [
+      "push",
+      "email"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 10,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.detected",
+    "role": "operador",
+    "severity_min": "high",
+    "channels": [
+      "push"
+    ],
+    "content_profile": "operational",
+    "throttle_minutes": 10,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.detected",
+    "role": "mantenimiento",
+    "severity_min": "medium",
+    "channels": [
+      "email",
+      "dashboard"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 15,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.detected",
+    "role": "supervisor",
+    "severity_min": "high",
+    "channels": [
+      "email",
+      "dashboard"
+    ],
+    "content_profile": "operational",
+    "throttle_minutes": 15,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.detected",
+    "role": "gerencia",
+    "severity_min": "critical",
+    "channels": [
+      "email"
+    ],
+    "content_profile": "executive",
+    "throttle_minutes": 60,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.escalated",
+    "role": "tecnico",
+    "severity_min": "medium",
+    "channels": [
+      "push"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 5,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.escalated",
+    "role": "mantenimiento",
+    "severity_min": "low",
+    "channels": [
+      "email",
+      "push"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 5,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.escalated",
+    "role": "supervisor",
+    "severity_min": "high",
+    "channels": [
+      "email"
+    ],
+    "content_profile": "operational",
+    "throttle_minutes": 15,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.closed",
+    "role": "mantenimiento",
+    "severity_min": "info",
+    "channels": [
+      "dashboard"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "incident.closed",
+    "role": "gerencia",
+    "severity_min": "critical",
+    "channels": [
+      "email"
+    ],
+    "content_profile": "executive",
+    "throttle_minutes": 60,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "machine.silent",
+    "role": "mantenimiento",
+    "severity_min": "low",
+    "channels": [
+      "dashboard"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 30,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "machine.silent",
+    "role": "supervisor",
+    "severity_min": "medium",
+    "channels": [
+      "dashboard"
+    ],
+    "content_profile": "operational",
+    "throttle_minutes": 30,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "parts.shortage",
+    "role": "mantenimiento",
+    "severity_min": "info",
+    "channels": [
+      "email"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 60,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "parts.shortage",
+    "role": "admin",
+    "severity_min": "info",
+    "channels": [
+      "email"
+    ],
+    "content_profile": "executive",
+    "throttle_minutes": 240,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "report.daily",
+    "role": "admin",
+    "severity_min": "info",
+    "channels": [
+      "email"
+    ],
+    "content_profile": "executive",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "event_type": "report.daily",
+    "role": "gerencia",
+    "severity_min": "info",
+    "channels": [
+      "email"
+    ],
+    "content_profile": "executive",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 1
+  }
+]

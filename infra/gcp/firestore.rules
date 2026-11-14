@@ -1,0 +1,96 @@
+rules_version = '2';
+
+// ArquiFusion — Security Rules de Firestore (dueña: C). Ver contratos.md §5.
+// Los claims vienen del custom token de POST /v1/auth/firebase-token:
+//   role          operador | tecnico | mantenimiento | supervisor | admin | gerencia
+//   zone          norte | sur | este | oeste ; null o "*" = todas las zonas
+//   technician_id solo para role=tecnico (ej. TEC-07)   <- claim aditivo propuesto por C
+// La Lambda replicar escribe con la service account (Admin SDK), que NO pasa por estas reglas.
+// Los clientes nunca escriben machines/incidents/technicians: son réplica de DynamoDB.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function claims() { return request.auth.token; }
+    function role() { return claims().get('role', ''); }
+    function zone() { return claims().get('zone', null); }
+    function hasRole(roles) { return signedIn() && role() in roles; }
+    function inZone(z) { return zone() == null || zone() == '*' || zone() == z; }
+    function anyRole() { return ['operador', 'tecnico', 'mantenimiento', 'supervisor', 'admin', 'gerencia']; }
+
+    // ---------------------------------------------------------------- mapa en vivo
+    // Las consultas de cliente deben filtrar por location.zone si el usuario tiene zona.
+    match /machines/{machineId} {
+      allow read: if hasRole(anyRole()) && inZone(resource.data.location.zone);
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------- técnicos
+    match /technicians/{techId} {
+      allow read: if (hasRole(['mantenimiento', 'supervisor', 'admin']) && inZone(resource.data.location.zone))
+                  || (hasRole(['tecnico']) && resource.data.technician_id == claims().get('technician_id', ''));
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------- cola de incidentes
+    match /incidents/{incidentId} {
+      function incident() {
+        return get(/databases/$(database)/documents/incidents/$(incidentId)).data;
+      }
+      function canSeeIncident() { return hasRole(anyRole()) && inZone(incident().zone); }
+      function isOpen() { return incident().status != 'closed'; }
+      // El técnico solo actúa sobre incidentes asignados a él; mantenimiento y supervisor, sobre los de su zona.
+      function canActOnIncident() {
+        return canSeeIncident()
+          && (role() != 'tecnico' || incident().assigned_technician_id == claims().get('technician_id', ''));
+      }
+
+      allow read: if hasRole(anyRole()) && inZone(resource.data.zone);
+      allow write: if false;
+
+      // Chat del incidente (append-only: no se edita ni se borra)
+      match /messages/{msgId} {
+        function validMessage() {
+          let m = request.resource.data;
+          return m.keys().hasAll(['author_id', 'role', 'text', 'created_at', 'correlation_id'])
+            && m.keys().hasOnly(['author_id', 'role', 'text', 'quick_action', 'attachment_path', 'created_at', 'correlation_id'])
+            && m.author_id == request.auth.uid
+            && m.role == role()
+            && m.text is string && m.text.size() <= 2000
+            && m.created_at == request.time
+            && m.correlation_id is string;
+        }
+
+        allow read: if canSeeIncident();
+        allow create: if hasRole(['tecnico', 'mantenimiento', 'supervisor'])
+                      && canActOnIncident() && isOpen() && validMessage();
+        allow update, delete: if false;
+      }
+
+      // Acciones del móvil -> Cloud Function (B) -> POST /bridge/events. El id del doc es el event_id.
+      match /actions/{eventId} {
+        function validAction() {
+          let a = request.resource.data;
+          return a.keys().hasAll(['type', 'incident_id', 'actor', 'occurred_at', 'correlation_id'])
+            && a.keys().hasOnly(['type', 'incident_id', 'actor', 'data', 'occurred_at', 'correlation_id'])
+            && a.type in ['incident.ack', 'incident.resolve']
+            && a.incident_id == incidentId
+            && a.actor.user_id == request.auth.uid
+            && a.actor.role == role()
+            && a.occurred_at == request.time
+            && a.correlation_id is string;
+        }
+
+        allow create: if hasRole(['tecnico', 'mantenimiento']) && canActOnIncident() && isOpen() && validAction();
+        allow read: if signedIn() && resource.data.actor.user_id == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
+    // ---------------------------------------------------------------- todo lo demás: denegado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

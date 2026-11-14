@@ -1,0 +1,240 @@
+[
+  {
+    "technician_id": "TEC-01",
+    "user_id": "u-tec-01",
+    "name": "Ana Huamán",
+    "zone": "norte",
+    "specialties": [
+      "motor",
+      "electrica"
+    ],
+    "location": {
+      "lat": -11.917171,
+      "lon": -76.396707,
+      "zone": "norte"
+    },
+    "home_warehouse_id": "WH-01",
+    "available": true,
+    "shift": "day",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-02",
+    "user_id": "u-tec-02",
+    "name": "Luis Quispe",
+    "zone": "sur",
+    "specialties": [
+      "hidraulica",
+      "motor"
+    ],
+    "location": {
+      "lat": -11.982905,
+      "lon": -76.404147,
+      "zone": "sur"
+    },
+    "home_warehouse_id": "WH-02",
+    "available": true,
+    "shift": "day",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-03",
+    "user_id": "u-tec-03",
+    "name": "Rosa Condori",
+    "zone": "este",
+    "specialties": [
+      "electrica",
+      "neumaticos"
+    ],
+    "location": {
+      "lat": -11.943954,
+      "lon": -76.359498,
+      "zone": "este"
+    },
+    "home_warehouse_id": "WH-03",
+    "available": true,
+    "shift": "day",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-04",
+    "user_id": "u-tec-04",
+    "name": "Carlos Mamani",
+    "zone": "oeste",
+    "specialties": [
+      "motor",
+      "hidraulica"
+    ],
+    "location": {
+      "lat": -11.947256,
+      "lon": -76.439816,
+      "zone": "oeste"
+    },
+    "home_warehouse_id": "WH-01",
+    "available": true,
+    "shift": "day",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-05",
+    "user_id": "u-tec-05",
+    "name": "María Ccori",
+    "zone": "norte",
+    "specialties": [
+      "neumaticos",
+      "hidraulica"
+    ],
+    "location": {
+      "lat": -11.91307,
+      "lon": -76.408559,
+      "zone": "norte"
+    },
+    "home_warehouse_id": "WH-01",
+    "available": true,
+    "shift": "night",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-06",
+    "user_id": "u-tec-06",
+    "name": "Jorge Flores",
+    "zone": "sur",
+    "specialties": [
+      "electrica"
+    ],
+    "location": {
+      "lat": -11.976187,
+      "lon": -76.396468,
+      "zone": "sur"
+    },
+    "home_warehouse_id": "WH-02",
+    "available": true,
+    "shift": "night",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-07",
+    "user_id": "u-tec-07",
+    "name": "Pedro Rojas",
+    "zone": "norte",
+    "specialties": [
+      "motor",
+      "hidraulica"
+    ],
+    "location": {
+      "lat": -11.918979,
+      "lon": -76.394212,
+      "zone": "norte"
+    },
+    "home_warehouse_id": "WH-01",
+    "available": true,
+    "shift": "day",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-08",
+    "user_id": "u-tec-08",
+    "name": "Lucía Vargas",
+    "zone": "este",
+    "specialties": [
+      "hidraulica",
+      "motor"
+    ],
+    "location": {
+      "lat": -11.943308,
+      "lon": -76.35515,
+      "zone": "este"
+    },
+    "home_warehouse_id": "WH-03",
+    "available": true,
+    "shift": "night",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-09",
+    "user_id": "u-tec-09",
+    "name": "Miguel Chávez",
+    "zone": "oeste",
+    "specialties": [
+      "neumaticos",
+      "electrica"
+    ],
+    "location": {
+      "lat": -11.939034,
+      "lon": -76.439709,
+      "zone": "oeste"
+    },
+    "home_warehouse_id": "WH-01",
+    "available": true,
+    "shift": "night",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-10",
+    "user_id": "u-tec-10",
+    "name": "Sofía Ramos",
+    "zone": "sur",
+    "specialties": [
+      "neumaticos",
+      "motor"
+    ],
+    "location": {
+      "lat": -11.97171,
+      "lon": -76.39216,
+      "zone": "sur"
+    },
+    "home_warehouse_id": "WH-02",
+    "available": true,
+    "shift": "day",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-11",
+    "user_id": "u-tec-11",
+    "name": "Diego Torres",
+    "zone": "este",
+    "specialties": [
+      "motor"
+    ],
+    "location": {
+      "lat": -11.950404,
+      "lon": -76.374964,
+      "zone": "este"
+    },
+    "home_warehouse_id": "WH-03",
+    "available": true,
+    "shift": "day",
+    "current_load": 0,
+    "seed_version": 1
+  },
+  {
+    "technician_id": "TEC-12",
+    "user_id": "u-tec-12",
+    "name": "Elena Paredes",
+    "zone": "oeste",
+    "specialties": [
+      "hidraulica",
+      "electrica"
+    ],
+    "location": {
+      "lat": -11.955318,
+      "lon": -76.438272,
+      "zone": "oeste"
+    },
+    "home_warehouse_id": "WH-01",
+    "available": true,
+    "shift": "day",
+    "current_load": 0,
+    "seed_version": 1
+  }
+]
