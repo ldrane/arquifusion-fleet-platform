@@ -1,0 +1,29 @@
+{
+  "resource": "/v1/me",
+  "path": "/v1/me",
+  "httpMethod": "GET",
+  "headers": {
+    "Authorization": "eyJ...id-token",
+    "X-Correlation-Id": "7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "requestContext": {
+    "resourcePath": "/v1/me",
+    "httpMethod": "GET",
+    "stage": "dev",
+    "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+    "authorizer": {
+      "claims": {
+        "sub": "8f2c1a7e-1111-2222-3333-444455556666",
+        "cognito:username": "u-tec-07",
+        "cognito:groups": "tecnico",
+        "email": "tec07@demo.arquifusion.local",
+        "custom:zone": "norte",
+        "token_use": "id"
+      }
+    }
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

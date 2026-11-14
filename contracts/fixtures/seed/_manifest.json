@@ -1,0 +1,26 @@
+{
+  "seed_version": 1,
+  "reference_date": "2026-11-14",
+  "counts": {
+    "machines": 100,
+    "machine_models": 10,
+    "technicians": 12,
+    "catalog": 25,
+    "inventory": 75,
+    "notification_rules": 16,
+    "warehouses": 3
+  },
+  "machine_id_prefixes": {
+    "excavator": "EX",
+    "mining_truck": "CM",
+    "loader": "CF",
+    "bulldozer": "BD",
+    "drill": "PF"
+  },
+  "zones": [
+    "norte",
+    "sur",
+    "este",
+    "oeste"
+  ]
+}
