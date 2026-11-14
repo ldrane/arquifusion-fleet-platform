@@ -11,4 +11,3 @@ Si cambia un contrato: primero `contratos.md` / `openapi.yaml`, luego el fixture
 | `internal/` | `scoring-tecnicos`, `correlacion-zona` | B (SFN) → B |
 | `api/` | Cuerpos REST de ejemplo | Simulador / front → API |
 
-> Revisar que los nombres de campo de `api/telemetry_batch.json` coincidan con el schema de `openapi.yaml` (fuente de verdad).

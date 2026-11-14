@@ -2,18 +2,20 @@
   "readings": [
     {
       "machine_id": "EX-023",
-      "operation_id": "OP-01",
+      "model": "EX-350",
+      "type": "excavator",
       "timestamp": "2026-11-13T10:14:55Z",
-      "lat": -12.05,
-      "lon": -77.04,
+      "location": { "lat": -12.0464, "lon": -77.0428, "zone": "norte" },
+      "operating_hours": 10342,
       "temperature_c": 98.4,
       "vibration_mm_s": 7.2,
       "pressure_bar": 210,
       "fuel_rate_lph": 38.5,
-      "load_t": 22,
+      "load_pct": 85,
       "speed_kmh": 6,
       "rpm": 1850,
-      "engine_hours": 10342
+      "state": "operating",
+      "sim_scenario": "degradacion"
     }
   ]
 }
