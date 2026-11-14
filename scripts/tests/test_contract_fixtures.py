@@ -2,6 +2,7 @@
 
 Correr: python -m pytest scripts/tests -q
 """
+
 import json
 import math
 import sys
@@ -82,9 +83,10 @@ def test_diagnose_response_solo_sugiere_candidatos_y_trae_prompt_version():
 # --------------------------------------------------------------------------- scoring
 def _eta(a: dict, b: dict) -> int:  # misma fórmula que frontend/src/lib/geo.ts
     r = math.radians
-    h = math.sin(r(b["lat"] - a["lat"]) / 2) ** 2 + math.cos(r(a["lat"])) * math.cos(r(b["lat"])) * math.sin(
-        r(b["lon"] - a["lon"]) / 2
-    ) ** 2
+    h = (
+        math.sin(r(b["lat"] - a["lat"]) / 2) ** 2
+        + math.cos(r(a["lat"])) * math.cos(r(b["lat"])) * math.sin(r(b["lon"] - a["lon"]) / 2) ** 2
+    )
     return max(1, round(2 * 6371 * math.asin(math.sqrt(h)) / 25 * 60 + 2))
 
 
@@ -158,8 +160,15 @@ def test_notificacion_pubsub_apunta_a_un_usuario_real():
 # --------------------------------------------------------------------------- seeds (#14, #19, #21)
 def test_reglas_cubren_la_tabla_de_transiciones():
     expected = {
-        "incident.detected", "incident.assigned", "incident.in_progress", "incident.escalated",
-        "incident.resolved", "incident.closed", "machine.silent", "parts.shortage", "report.daily",
+        "incident.detected",
+        "incident.assigned",
+        "incident.in_progress",
+        "incident.escalated",
+        "incident.resolved",
+        "incident.closed",
+        "machine.silent",
+        "parts.shortage",
+        "report.daily",
     }
     assert set(seed_data.NOTIFICATION_EVENT_TYPES) == expected
     assigned = [r for r in DATA["notification_rules"] if r["event_type"] == "incident.assigned"]

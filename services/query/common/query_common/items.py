@@ -3,10 +3,12 @@
 La API (api_lectura) y la réplica de Firestore (replicar) usan las MISMAS proyecciones,
 así el front recibe el mismo esquema por REST y por `onSnapshot`.
 Reglas:
-- Nunca salen `pk`, `sk`, `entity` ni los secretos `ack_token`, `resolve_token`, `execution_arn` (dynamodb.md, Reglas 2).
+- Nunca salen `pk`, `sk`, `entity` ni los secretos `ack_token`, `resolve_token`,
+  `execution_arn` (dynamodb.md, Reglas 2).
 - Los `Decimal` salen como número JSON: int si es entero, float si no (#25).
 - Los campos que el seed omite (None) salen como `null` para respetar el shape del front (`frontend/src/api/types.ts`).
 """
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -19,21 +21,58 @@ SEVERITY_RANK = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 
 # --------------------------------------------------------------------------- campos por schema
 MACHINE_FIELDS = (
-    "machine_id", "model", "type", "location", "status", "severity", "health_score", "last_seen_at",
+    "machine_id",
+    "model",
+    "type",
+    "location",
+    "status",
+    "severity",
+    "health_score",
+    "last_seen_at",
     "open_incident_id",  # en Machine del front (types.ts) y en Firestore: el mapa marca las máquinas con incidente
 )
 MACHINE_DETAIL_FIELDS = MACHINE_FIELDS + (
-    "failure_probability", "rul_hours", "operating_hours", "last_maintenance_at", "next_maintenance_at",
-    "latest_reading", "top_factors", "model_version",
+    "failure_probability",
+    "rul_hours",
+    "operating_hours",
+    "last_maintenance_at",
+    "next_maintenance_at",
+    "latest_reading",
+    "top_factors",
+    "model_version",
 )
 INCIDENT_FIELDS = (
-    "incident_id", "parent_incident_id", "child_incident_ids", "machine_id", "machine_ids", "zone", "severity",
-    "status", "escalated", "is_recurrence", "assigned_technician_id", "technician_score", "ai_diagnosis",
-    "resolution_summary", "detected_at", "assigned_at", "accepted_at", "resolved_at", "downtime_minutes",
-    "components_replaced", "cost_usd", "chat_channel_id",
+    "incident_id",
+    "parent_incident_id",
+    "child_incident_ids",
+    "machine_id",
+    "machine_ids",
+    "zone",
+    "severity",
+    "status",
+    "escalated",
+    "is_recurrence",
+    "assigned_technician_id",
+    "technician_score",
+    "ai_diagnosis",
+    "resolution_summary",
+    "detected_at",
+    "assigned_at",
+    "accepted_at",
+    "resolved_at",
+    "downtime_minutes",
+    "components_replaced",
+    "cost_usd",
+    "chat_channel_id",
 )
 TECHNICIAN_FIELDS = (
-    "technician_id", "name", "specialties", "location", "available", "shift", "current_load",
+    "technician_id",
+    "name",
+    "specialties",
+    "location",
+    "available",
+    "shift",
+    "current_load",
 )
 INVENTORY_FIELDS = ("warehouse_id", "component_id", "name", "stock", "stock_min", "stock_max", "alert")
 
@@ -65,7 +104,10 @@ def _project(item: dict, fields: tuple[str, ...]) -> dict:
 
 
 def _location_with_zone(location: Any, zone: Any) -> dict | None:
-    """`location.zone` siempre presente (#11): si el ítem trae `{lat, lon}` sin zona, se usa el `zone` de primer nivel."""
+    """`location.zone` siempre presente (#11).
+
+    Si el ítem trae `{lat, lon}` sin zona, se usa el `zone` de primer nivel.
+    """
     if not isinstance(location, dict):
         return None
     loc = plain(dict(location))

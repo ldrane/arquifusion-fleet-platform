@@ -12,6 +12,7 @@ Rutas SIN prefijo `/v1`: el stage de API Gateway ya es `v1` (URL final `…/v1/m
 - `run(event, deps)` devuelve `(data, meta)`; el handler arma el envoltorio estándar.
 Los clientes AWS/GCP se inyectan con `Deps` para probar sin AWS (moto) ni GCP (fakes).
 """
+
 from __future__ import annotations
 
 import base64
@@ -19,8 +20,9 @@ import binascii
 import json
 import math
 import os
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import Any, Callable
+from typing import Any
 
 from arquifusion_shared import rbac
 from arquifusion_shared.errors import Forbidden, NotFound, Unauthenticated, UpstreamUnavailable, ValidationError
@@ -31,10 +33,10 @@ ROLE_PRECEDENCE = ("admin", "gerencia", "supervisor", "mantenimiento", "tecnico"
 ALL_ROLES = frozenset(ROLE_PRECEDENCE)
 ALL_ZONES = "*"
 DEFAULT_LIMIT, MAX_LIMIT = 50, 100
-MAX_SCAN_ITEMS = 5000          # tope de seguridad al leer una lista completa
-TIMELINE_WINDOW_DAYS = 90      # MTBF/MTTR/disponibilidad (igual que el demo del front)
+MAX_SCAN_ITEMS = 5000  # tope de seguridad al leer una lista completa
+TIMELINE_WINDOW_DAYS = 90  # MTBF/MTTR/disponibilidad (igual que el demo del front)
 TELEMETRY_MAX_DAYS = 31
-ETA_SPEED_KMH = 25             # frontend/src/lib/geo.ts y scoring (contratos.md §8.3)
+ETA_SPEED_KMH = 25  # frontend/src/lib/geo.ts y scoring (contratos.md §8.3)
 
 ENUMS = {
     "machine_type": {"excavator", "mining_truck", "loader", "bulldozer", "drill"},
@@ -51,7 +53,7 @@ ENUMS = {
 class Deps:
     """Tablas DynamoDB (por nombre de §1.1: `TABLE_<NOMBRE>`) y Firebase, creados bajo demanda y reutilizados."""
 
-    def __init__(self, tables: dict | None = None, firebase: "FirebaseService | None" = None, env: dict | None = None):
+    def __init__(self, tables: dict | None = None, firebase: FirebaseService | None = None, env: dict | None = None):
         self._tables = dict(tables or {})
         self._firebase = firebase
         self.env = env if env is not None else os.environ
@@ -68,7 +70,7 @@ class Deps:
         return self._tables[name]
 
     @property
-    def firebase(self) -> "FirebaseService":
+    def firebase(self) -> FirebaseService:
         if self._firebase is None:
             self._firebase = FirebaseService.from_env(self.env)
         return self._firebase
@@ -88,7 +90,7 @@ class FirebaseService:
         self._now = now
 
     @classmethod
-    def from_env(cls, env) -> "FirebaseService":
+    def from_env(cls, env) -> FirebaseService:
         import boto3
 
         secret = env.get("FIREBASE_SECRET_NAME") or f"arquifusion/{env.get('STAGE', 'dev')}/gcp/service-account"
@@ -209,7 +211,7 @@ def _offset(q: dict) -> int:
 
 def _paginate(rows: list, q: dict) -> tuple[list, dict]:
     limit, start = _limit(q), _offset(q)
-    page = rows[start:start + limit]
+    page = rows[start : start + limit]
     nxt = start + limit
     cursor = base64.urlsafe_b64encode(str(nxt).encode()).decode().rstrip("=") if nxt < len(rows) else None
     return page, {"count": len(page), "next_cursor": cursor}
@@ -315,8 +317,12 @@ def post_firebase_token(event: dict, deps: Deps, user: User):
     meta: dict[str, Any] = {}
     if fcm_token:
         # En users/{uid} la zona global se guarda como "*": notify_bridge filtra `zone in [target.zone, "*"]` (§4).
-        profile = {**claims, "zone": user.zone or ALL_ZONES, "user_id": user.user_id,
-                   "updated_at": _iso(datetime.now(UTC))}
+        profile = {
+            **claims,
+            "zone": user.zone or ALL_ZONES,
+            "user_id": user.user_id,
+            "updated_at": _iso(datetime.now(UTC)),
+        }
         try:
             firebase.register_fcm_token(user.user_id, profile, fcm_token)
             meta["fcm_registered"] = True
@@ -339,8 +345,10 @@ def list_machines(event: dict, deps: Deps, user: User):
     table = deps.table("machines")
     raw = _query(table, "by_zone", "zone", zone) if zone else _scan_meta(table)
     rows = [
-        items.machine(i) for i in raw
-        if i.get("sk", "META") == "META" and i.get("machine_id")
+        items.machine(i)
+        for i in raw
+        if i.get("sk", "META") == "META"
+        and i.get("machine_id")
         and (not mtype or i.get("type") == mtype)
         and (not status or i.get("status") == status)
         and (not severity or i.get("severity") == severity)
@@ -424,46 +432,71 @@ def _at(value: str | None) -> str | None:
 
 
 def get_timeline(event: dict, deps: Deps, user: User, now: datetime | None = None):
-    """Incidentes (by_machine), mantenimientos (`maintenance-records`) y anomalías recientes + MTBF/MTTR/disponibilidad."""
+    """Incidentes (by_machine), mantenimientos (`maintenance-records`) y anomalías recientes.
+
+    Incluye MTBF/MTTR/disponibilidad.
+    """
     machine_id = _path(event, "machine_id")
     _machine_item(deps, user, machine_id)
     now = now or datetime.now(UTC)
     since = _iso(now - timedelta(days=TIMELINE_WINDOW_DAYS))
 
-    incidents = [items.plain(i) for i in _query(deps.table("incidents"), "by_machine", "machine_id", machine_id)
-                 if i.get("sk", "META") == "META"]
+    incidents = [
+        items.plain(i)
+        for i in _query(deps.table("incidents"), "by_machine", "machine_id", machine_id)
+        if i.get("sk", "META") == "META"
+    ]
     records = [items.plain(r) for r in _query(deps.table("maintenance_records"), None, "pk", machine_id)]
     from boto3.dynamodb.conditions import Key
 
-    anomalies = deps.table("anomalies").query(
-        KeyConditionExpression=Key("pk").eq(machine_id) & Key("sk").gte(since),
-        ScanIndexForward=False, Limit=50,
-    ).get("Items", [])
+    anomalies = (
+        deps.table("anomalies")
+        .query(
+            KeyConditionExpression=Key("pk").eq(machine_id) & Key("sk").gte(since),
+            ScanIndexForward=False,
+            Limit=50,
+        )
+        .get("Items", [])
+    )
 
     events = [
-        {"at": i.get("detected_at"), "kind": "incident", "ref_id": i.get("incident_id"), "summary": _incident_summary(i)}
+        {
+            "at": i.get("detected_at"),
+            "kind": "incident",
+            "ref_id": i.get("incident_id"),
+            "summary": _incident_summary(i),
+        }
         for i in incidents
     ]
     for r in records:
         kind = r.get("type") if r.get("type") in ("preventive", "corrective") else "preventive"
         comps = ", ".join(f"{c.get('component_id')} x{c.get('quantity', 1)}" for c in r.get("components") or [])
         label = "Preventivo" if kind == "preventive" else "Correctivo"
-        events.append({
-            "at": _at(r.get("performed_at")), "kind": kind, "ref_id": r.get("record_id") or r.get("sk"),
-            "summary": f"{label}: {comps or r.get('notes') or 'inspección'}",
-        })
+        events.append(
+            {
+                "at": _at(r.get("performed_at")),
+                "kind": kind,
+                "ref_id": r.get("record_id") or r.get("sk"),
+                "summary": f"{label}: {comps or r.get('notes') or 'inspección'}",
+            }
+        )
     for a in (items.plain(x) for x in anomalies):
         factors = ", ".join(f"{f.get('variable')} z={f.get('z_score')}" for f in a.get("top_factors") or [])
-        events.append({
-            "at": a.get("detected_at") or a.get("sk", "").split("#")[0],
-            "kind": "anomaly", "ref_id": a.get("anomaly_id") or a.get("sk"),
-            "summary": f"{str(a.get('severity', '')).upper()} · {factors or 'Anomalía detectada'}",
-        })
+        events.append(
+            {
+                "at": a.get("detected_at") or a.get("sk", "").split("#")[0],
+                "kind": "anomaly",
+                "ref_id": a.get("anomaly_id") or a.get("sk"),
+                "summary": f"{str(a.get('severity', '')).upper()} · {factors or 'Anomalía detectada'}",
+            }
+        )
     events = [e for e in events if e["at"]]
     events.sort(key=lambda e: e["at"], reverse=True)
 
     window_h = TIMELINE_WINDOW_DAYS * 24
-    closed = [i for i in incidents if i.get("status") in ("resolved", "closed") and (i.get("detected_at") or "") >= since]
+    closed = [
+        i for i in incidents if i.get("status") in ("resolved", "closed") and (i.get("detected_at") or "") >= since
+    ]
     downtime_h = sum(_downtime_hours(i) for i in closed)
     n = max(1, len(closed))
     kpis = {
@@ -476,7 +509,10 @@ def get_timeline(event: dict, deps: Deps, user: User, now: datetime | None = Non
 
 # =========================================================================== incidentes
 def _incident_sort_key(i: dict):
-    """Abiertos primero, luego severidad desc; abiertos del más antiguo al más nuevo, cerrados del más nuevo al más antiguo."""
+    """Abiertos primero, luego severidad desc.
+
+    Abiertos del más antiguo al más nuevo; cerrados del más nuevo al más antiguo.
+    """
     closed = i.get("status") == "closed"
     ts = i.get("detected_at") or ""
     ts_key = tuple(-ord(c) for c in ts) if closed else tuple(ord(c) for c in ts)
@@ -497,8 +533,10 @@ def list_incidents(event: dict, deps: Deps, user: User):
     else:
         raw = _scan_meta(table)
     rows = [
-        items.incident(i) for i in raw
-        if i.get("sk", "META") == "META" and i.get("incident_id")
+        items.incident(i)
+        for i in raw
+        if i.get("sk", "META") == "META"
+        and i.get("incident_id")
         and (not zone or i.get("zone") == zone)
         and (not status or i.get("status") == status)
         and (not severity or i.get("severity") == severity)
@@ -565,10 +603,7 @@ def list_inventory(event: dict, deps: Deps, user: User):
         raw = _query(table, None, "pk", q["warehouse_id"])
     else:
         raw = _read_all(table.scan)
-    rows = [
-        items.inventory(i) for i in raw
-        if i.get("component_id") and _visible(user, i.get("zone"))
-    ]
+    rows = [items.inventory(i) for i in raw if i.get("component_id") and _visible(user, i.get("zone"))]
     rows = [r for r in rows if not alert or r["alert"] == alert]
     rows.sort(key=lambda r: (r["warehouse_id"], r["component_id"]))
     return rows, {"count": len(rows)}

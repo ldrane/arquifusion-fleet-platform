@@ -23,10 +23,16 @@ def test_precedencia_de_roles():
 
 
 def test_me_tecnico_desde_fixture():
-    assert service.run(FIXTURE) == ({
-        "user_id": "u-tec-07", "email": "tec07@demo.arquifusion.local", "role": "tecnico", "zone": "norte",
-        "technician_id": "TEC-07",
-    }, {})
+    assert service.run(FIXTURE) == (
+        {
+            "user_id": "u-tec-07",
+            "email": "tec07@demo.arquifusion.local",
+            "role": "tecnico",
+            "zone": "norte",
+            "technician_id": "TEC-07",
+        },
+        {},
+    )
 
 
 def test_rol_global_sin_zona():
@@ -64,7 +70,12 @@ def test_ruta_desconocida_404():
 def test_handler_envelope():
 
     class Ctx:
-        function_name, memory_limit_in_mb, invoked_function_arn, aws_request_id = "api-lectura", 256, "arn:aws:lambda:us-east-1:1:function:x", "req-1"
+        function_name, memory_limit_in_mb, invoked_function_arn, aws_request_id = (
+            "api-lectura",
+            256,
+            "arn:aws:lambda:us-east-1:1:function:x",
+            "req-1",
+        )
 
     resp = handler.handler(FIXTURE, Ctx())
     assert resp["statusCode"] == 200

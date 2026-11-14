@@ -1,7 +1,8 @@
 """notificar (RF-10.1, RF-10.2, RF-10.3, RF-10.5). Contrato: contratos.md §4 y §10.
 
 Entrada (dos formas):
-- Invocación directa desde la SFN: `{event_type, incident_id?, machine_id, zone, severity, technician_id?, correlation_id}`
+- Invocación directa desde la SFN:
+  `{event_type, incident_id?, machine_id, zone, severity, technician_id?, correlation_id}`
   (la usa la SFN para `parts.shortage`; sirve también para `report.daily`).
 - Evento EventBridge `IncidentStateChanged` (regla en infra/incidents): se usa `detail.data` + `detail.correlation_id`.
 
@@ -152,7 +153,11 @@ class Notifier:
             "body": body,
             "deep_link": f"/incidents/{incident_id}" if incident_id else "/",
         }
-        attrs = {"correlation_id": msg.get("correlation_id"), "incident_id": incident_id, "event_type": msg["event_type"]}
+        attrs = {
+            "correlation_id": msg.get("correlation_id"),
+            "incident_id": incident_id,
+            "event_type": msg["event_type"],
+        }
         self.d["pubsub"](payload, attrs)
 
     def _email(self, msg, role, title, body):
@@ -165,7 +170,6 @@ def _default_deps() -> dict:  # pragma: no cover - requiere AWS
     import boto3
     from arquifusion_shared import config
     from boto3.dynamodb.conditions import Key
-
     from gcp_auth import PubSubPublisher
 
     ddb = boto3.resource("dynamodb")

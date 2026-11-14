@@ -33,7 +33,12 @@ def test_cors_por_defecto_asterisco(monkeypatch):
 
 
 def test_decimal_sale_como_numero():
-    data = {"entero": Decimal("42"), "entero_con_punto": Decimal("3.0"), "real": Decimal("0.87"), "lista": [Decimal("1")]}
+    data = {
+        "entero": Decimal("42"),
+        "entero_con_punto": Decimal("3.0"),
+        "real": Decimal("0.87"),
+        "lista": [Decimal("1")],
+    }
     raw = ok(data, "cid")["body"]
     body = json.loads(raw)["data"]
     assert body == {"entero": 42, "entero_con_punto": 3, "real": 0.87, "lista": [1]}

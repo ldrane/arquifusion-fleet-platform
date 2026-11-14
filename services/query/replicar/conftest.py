@@ -2,6 +2,7 @@
 
 También agrega `services/query/common` (query_common) y `services/shared` al path, igual que el zip de la Lambda.
 """
+
 import sys
 from pathlib import Path
 

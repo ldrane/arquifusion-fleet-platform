@@ -78,10 +78,22 @@ def incident(status="assigned", **extra):
 
 
 TECHS = {
-    ("TECH#TEC-07", "META"): {"pk": "TECH#TEC-07", "sk": "META", "technician_id": "TEC-07", "user_id": "u-tec-07",
-                              "zone": "norte", "available": True, "location": {"lat": 1, "lon": 1, "zone": "norte"}},
-    ("TECH#TEC-01", "META"): {"pk": "TECH#TEC-01", "sk": "META", "technician_id": "TEC-01", "user_id": "u-tec-01",
-                              "zone": "norte"},
+    ("TECH#TEC-07", "META"): {
+        "pk": "TECH#TEC-07",
+        "sk": "META",
+        "technician_id": "TEC-07",
+        "user_id": "u-tec-07",
+        "zone": "norte",
+        "available": True,
+        "location": {"lat": 1, "lon": 1, "zone": "norte"},
+    },
+    ("TECH#TEC-01", "META"): {
+        "pk": "TECH#TEC-01",
+        "sk": "META",
+        "technician_id": "TEC-01",
+        "user_id": "u-tec-01",
+        "zone": "norte",
+    },
 }
 
 
@@ -152,8 +164,12 @@ def test_ack_tecnico_no_asignado_403():
 
 
 def test_ack_mantenimiento_de_otra_zona_403():
-    ev = make_event(ACK, groups="mantenimiento", body={"decision": "accept"},
-                    claims={"cognito:username": "u-m", "custom:zone": "sur"})
+    ev = make_event(
+        ACK,
+        groups="mantenimiento",
+        body={"decision": "accept"},
+        claims={"cognito:username": "u-m", "custom:zone": "sur"},
+    )
     assert service.run(ev, make_deps(incident()))["statusCode"] == 403
 
 
@@ -281,14 +297,23 @@ def test_retrain_202():
 
 
 def bridge(body):
-    return {"httpMethod": "POST", "resource": "/bridge/events", "headers": {"x-api-key": "k"},
-            "body": json.dumps(body), "requestContext": {}}
+    return {
+        "httpMethod": "POST",
+        "resource": "/bridge/events",
+        "headers": {"x-api-key": "k"},
+        "body": json.dumps(body),
+        "requestContext": {},
+    }
 
 
 BRIDGE_ACK = {
-    "event_id": "fs-9f3a1", "type": "incident.ack", "incident_id": "INC-1",
-    "actor": {"user_id": "u-tec-07", "role": "tecnico"}, "data": {"decision": "accept"},
-    "occurred_at": "2026-11-13T15:06:10Z", "correlation_id": "cid-b",
+    "event_id": "fs-9f3a1",
+    "type": "incident.ack",
+    "incident_id": "INC-1",
+    "actor": {"user_id": "u-tec-07", "role": "tecnico"},
+    "data": {"decision": "accept"},
+    "occurred_at": "2026-11-13T15:06:10Z",
+    "correlation_id": "cid-b",
 }
 
 

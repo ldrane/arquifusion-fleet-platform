@@ -14,6 +14,7 @@ Uso (desde la raíz del repo; el User Pool y los 6 grupos los crea B en infra/ba
 Idempotente: si el usuario existe, actualiza atributos, contraseña y grupo. La contraseña queda PERMANENTE
 (sin desafío NEW_PASSWORD_REQUIRED) y nunca se imprime. También acepta la variable DEMO_PASSWORD.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,11 +32,41 @@ GLOBAL_ZONE = "*"
 
 # Usuarios no técnicos del runbook (docs/h0-persona-c.md, frontend/src/demo/data.ts DEMO_USERS)
 STAFF = [
-    {"user_id": "u-op-01", "role": "operador", "zone": "norte", "email": "op01@demo.arquifusion.local", "name": "Rosa Quispe"},
-    {"user_id": "u-mant-01", "role": "mantenimiento", "zone": GLOBAL_ZONE, "email": "mant01@demo.arquifusion.local", "name": "Carmen Rojas"},
-    {"user_id": "u-sup-01", "role": "supervisor", "zone": "norte", "email": "sup01@demo.arquifusion.local", "name": "Luis Paredes"},
-    {"user_id": "u-adm-01", "role": "admin", "zone": GLOBAL_ZONE, "email": "adm01@demo.arquifusion.local", "name": "Elena Rostova"},
-    {"user_id": "u-ger-01", "role": "gerencia", "zone": GLOBAL_ZONE, "email": "ger01@demo.arquifusion.local", "name": "Miguel Salazar"},
+    {
+        "user_id": "u-op-01",
+        "role": "operador",
+        "zone": "norte",
+        "email": "op01@demo.arquifusion.local",
+        "name": "Rosa Quispe",
+    },
+    {
+        "user_id": "u-mant-01",
+        "role": "mantenimiento",
+        "zone": GLOBAL_ZONE,
+        "email": "mant01@demo.arquifusion.local",
+        "name": "Carmen Rojas",
+    },
+    {
+        "user_id": "u-sup-01",
+        "role": "supervisor",
+        "zone": "norte",
+        "email": "sup01@demo.arquifusion.local",
+        "name": "Luis Paredes",
+    },
+    {
+        "user_id": "u-adm-01",
+        "role": "admin",
+        "zone": GLOBAL_ZONE,
+        "email": "adm01@demo.arquifusion.local",
+        "name": "Elena Rostova",
+    },
+    {
+        "user_id": "u-ger-01",
+        "role": "gerencia",
+        "zone": GLOBAL_ZONE,
+        "email": "ger01@demo.arquifusion.local",
+        "name": "Miguel Salazar",
+    },
 ]
 
 
@@ -108,12 +139,18 @@ def upsert_user(client, pool_id: str, user: dict, password: str) -> str:
         result = "actualizado"
     except client.exceptions.UserNotFoundException:
         client.admin_create_user(
-            UserPoolId=pool_id, Username=username, UserAttributes=attributes(user),
-            TemporaryPassword=password, MessageAction="SUPPRESS",
+            UserPoolId=pool_id,
+            Username=username,
+            UserAttributes=attributes(user),
+            TemporaryPassword=password,
+            MessageAction="SUPPRESS",
         )
         result = "creado"
     client.admin_set_user_password(UserPoolId=pool_id, Username=username, Password=password, Permanent=True)
-    current = {g["GroupName"] for g in client.admin_list_groups_for_user(UserPoolId=pool_id, Username=username).get("Groups", [])}
+    current = {
+        g["GroupName"]
+        for g in client.admin_list_groups_for_user(UserPoolId=pool_id, Username=username).get("Groups", [])
+    }
     for extra in current - {user["role"]}:
         client.admin_remove_user_from_group(UserPoolId=pool_id, Username=username, GroupName=extra)
     if user["role"] not in current:

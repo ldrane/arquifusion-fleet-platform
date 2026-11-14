@@ -15,14 +15,16 @@ from query_common import gcp, items  # noqa: E402
 KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 SA = {
     "client_email": "aws-integration@arquifusion-g27.iam.gserviceaccount.com",
-    "private_key": KEY.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
-                                     serialization.NoEncryption()).decode(),
+    "private_key": KEY.private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
+    ).decode(),
     "project_id": "arquifusion-g27",
 }
 
 
 class CryptoSigner:
     """Equivalente a google.auth.crypt.RSASigner para el test (RS256 = PKCS1v15 + SHA256)."""
+
     key_id = "kid-1"
 
     def sign(self, message: bytes) -> bytes:
@@ -34,8 +36,13 @@ def _dec(part: str) -> bytes:
 
 
 def test_custom_token_firmado_y_con_claims():
-    tok = gcp.custom_token(SA, "u-tec-07", {"role": "tecnico", "zone": "norte", "technician_id": "TEC-07"},
-                           CryptoSigner(), now=1_700_000_000)
+    tok = gcp.custom_token(
+        SA,
+        "u-tec-07",
+        {"role": "tecnico", "zone": "norte", "technician_id": "TEC-07"},
+        CryptoSigner(),
+        now=1_700_000_000,
+    )
     h, p, s = tok.split(".")
     header, payload = json.loads(_dec(h)), json.loads(_dec(p))
     assert header == {"alg": "RS256", "typ": "JWT", "kid": "kid-1"}
@@ -96,8 +103,15 @@ def test_firestore_error():
 
 def test_items_plain_y_proyecciones():
     assert items.plain({"a": Decimal("3"), "b": Decimal("1.5"), "c": [Decimal("2")]}) == {"a": 3, "b": 1.5, "c": [2]}
-    t = items.technician({"pk": "TECH#TEC-07", "technician_id": "TEC-07", "zone": "norte",
-                          "location": {"lat": Decimal("-11.9"), "lon": Decimal("-76.4")}, "available": True})
+    t = items.technician(
+        {
+            "pk": "TECH#TEC-07",
+            "technician_id": "TEC-07",
+            "zone": "norte",
+            "location": {"lat": Decimal("-11.9"), "lon": Decimal("-76.4")},
+            "available": True,
+        }
+    )
     assert t["location"] == {"lat": -11.9, "lon": -76.4, "zone": "norte"}  # #11
     assert t["specialties"] == [] and t["current_load"] == 0 and "pk" not in t
     inc = items.incident({"incident_id": "I", "machine_id": "EX-023", "ack_token": "s", "status": "assigned"})

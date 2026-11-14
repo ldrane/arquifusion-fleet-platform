@@ -1,5 +1,6 @@
 """Validación estructural de GestionIncidente (sin AWS): JSON válido, placeholders de Terraform,
 transiciones existentes, estados alcanzables, Retry/Timeout en Tasks y eventos del §10."""
+
 import json
 import re
 from pathlib import Path
@@ -9,9 +10,20 @@ RAW = ASL.read_text()
 DEF = json.loads(RAW)
 PLACEHOLDER = re.compile(r"\$\{(\w+)\}")
 EXPECTED_VARS = {
-    "operation_id", "table_machines", "table_incidents", "event_bus_name", "fn_incidente", "fn_scoring",
-    "fn_correlacion", "fn_notificar", "fn_ia_gemini", "ack_timeout_s", "ack_timeout_critical_s",
-    "resolve_timeout_s", "manual_timeout_s", "max_escalations",
+    "operation_id",
+    "table_machines",
+    "table_incidents",
+    "event_bus_name",
+    "fn_incidente",
+    "fn_scoring",
+    "fn_correlacion",
+    "fn_notificar",
+    "fn_ia_gemini",
+    "ack_timeout_s",
+    "ack_timeout_critical_s",
+    "resolve_timeout_s",
+    "manual_timeout_s",
+    "max_escalations",
 }
 
 
@@ -64,8 +76,11 @@ def test_transiciones_y_alcanzabilidad():
 
 def test_esperas_con_task_token_y_timeout():
     s = DEF["States"]
-    for name, token in (("EsperarAceptacion", "ack_token"), ("EsperarResolucion", "resolve_token"),
-                        ("EsperarAsignacionManual", "ack_token")):
+    for name, token in (
+        ("EsperarAceptacion", "ack_token"),
+        ("EsperarResolucion", "resolve_token"),
+        ("EsperarAsignacionManual", "ack_token"),
+    ):
         assert s[name]["Resource"].endswith(".waitForTaskToken")
         assert f"'token_name': '{token}'" in s[name]["Arguments"]["Payload"]
         assert "$states.context.Task.Token" in s[name]["Arguments"]["Payload"]
@@ -80,11 +95,29 @@ def test_emite_todos_los_event_type_de_incidente():
             entry = st["Arguments"]["Entries"][0]
             assert entry["Source"] == "arquifusion.incident" and entry["DetailType"] == "IncidentStateChanged"
             detail = entry["Detail"]
-            for key in ("'incident_id'", "'from'", "'to'", "'event_type'", "'actor'", "'machine_id'", "'zone'",
-                        "'severity'", "'technician_id'", "'correlation_id'", "'version': 1"):
+            for key in (
+                "'incident_id'",
+                "'from'",
+                "'to'",
+                "'event_type'",
+                "'actor'",
+                "'machine_id'",
+                "'zone'",
+                "'severity'",
+                "'technician_id'",
+                "'correlation_id'",
+                "'version': 1",
+            ):
                 assert key in detail
             emitted |= set(re.findall(r"'event_type': '([a-z._]+)'", detail))
             if "$eventTypeDetected" in detail:
                 emitted |= {"incident.detected", "machine.silent"}
-    assert emitted == {"incident.detected", "machine.silent", "incident.assigned", "incident.in_progress",
-                       "incident.resolved", "incident.closed", "incident.escalated"}
+    assert emitted == {
+        "incident.detected",
+        "machine.silent",
+        "incident.assigned",
+        "incident.in_progress",
+        "incident.resolved",
+        "incident.closed",
+        "incident.escalated",
+    }

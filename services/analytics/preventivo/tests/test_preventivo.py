@@ -65,8 +65,20 @@ def test_plan_shape_and_priority():
 
 CATALOG = fleet.Catalog.from_items(
     [
-        {"pk": "MODEL#CAT-336", "sk": "META", "model_id": "CAT-336", "type": "excavator", "maintenance_interval_h": 250},
-        {"pk": "MODEL#CAT-793F", "sk": "META", "model_id": "CAT-793F", "type": "mining_truck", "maintenance_interval_h": 500},
+        {
+            "pk": "MODEL#CAT-336",
+            "sk": "META",
+            "model_id": "CAT-336",
+            "type": "excavator",
+            "maintenance_interval_h": 250,
+        },
+        {
+            "pk": "MODEL#CAT-793F",
+            "sk": "META",
+            "model_id": "CAT-793F",
+            "type": "mining_truck",
+            "maintenance_interval_h": 500,
+        },
     ]
 )
 
@@ -108,7 +120,13 @@ def test_run_writes_insight_and_updates_machines(env):
     ctx = parse_event({"query_execution_id": "q", "correlation_id": "cid", "run_at": "2026-11-14T10:00:00Z"})
 
     env["catalog"].put_item(
-        Item={"pk": "MODEL#CAT-336", "sk": "META", "model_id": "CAT-336", "type": "excavator", "maintenance_interval_h": 250}
+        Item={
+            "pk": "MODEL#CAT-336",
+            "sk": "META",
+            "model_id": "CAT-336",
+            "type": "excavator",
+            "maintenance_interval_h": 250,
+        }
     )
     out = service.run(
         ctx,

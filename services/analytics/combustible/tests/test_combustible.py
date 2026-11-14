@@ -53,14 +53,28 @@ def test_run_writes_both_periods():
 
 def test_peers_are_same_model_or_catalog_nominal():
     """#13: un KOM-PC2000 (110 L/h nominal) no se marca por consumir más que un CAT-336 (38 L/h)."""
-    cat = [r for mid in ("EX-1", "EX-2", "EX-3") for r in series(mid, TODAY, 30, model="CAT-336", avg_fuel_lph_operating=38.0)]
+    cat = [
+        r
+        for mid in ("EX-1", "EX-2", "EX-3")
+        for r in series(mid, TODAY, 30, model="CAT-336", avg_fuel_lph_operating=38.0)
+    ]
     kom = series("EX-4", TODAY, 30, model="KOM-PC2000", avg_fuel_lph_operating=112.0)
     catalog = fleet.Catalog.from_items(
         [
-            {"pk": "MODEL#KOM-PC2000", "model_id": "KOM-PC2000", "type": "excavator", "payload_t": 12.0,
-             "nominal": {"fuel_rate_lph": [110, 8], "rpm": [1800, 80]}},
-            {"pk": "MODEL#CAT-336", "model_id": "CAT-336", "type": "excavator", "payload_t": 2.5,
-             "nominal": {"fuel_rate_lph": [38, 4], "rpm": [1800, 80]}},
+            {
+                "pk": "MODEL#KOM-PC2000",
+                "model_id": "KOM-PC2000",
+                "type": "excavator",
+                "payload_t": 12.0,
+                "nominal": {"fuel_rate_lph": [110, 8], "rpm": [1800, 80]},
+            },
+            {
+                "pk": "MODEL#CAT-336",
+                "model_id": "CAT-336",
+                "type": "excavator",
+                "payload_t": 2.5,
+                "nominal": {"fuel_rate_lph": [38, 4], "rpm": [1800, 80]},
+            },
         ]
     )
     rows = {r["machine_id"]: r for r in service.analyze(daily.from_rows(cat + kom), TODAY, 7, catalog)}

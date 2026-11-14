@@ -317,7 +317,7 @@ Todos los workers referencian los recursos de `infra/base` **por nombre** (no po
 
 **`operation_id`**: `TelemetryReading` no lo trae. `procesar` lo toma de `DEFAULT_OPERATION_ID` (`OP-01`) mientras haya una sola operación.
 
-**Propiedad de `machines`.** `model`, `type`, `zone`, `home_location` y `expected_interval_s` son del seed (C) y **nadie los sobrescribe** (#1). `procesar` escribe solo `status`, `severity`, `health_score`, `last_seen_at`, `top_factors`, `model_version`, `location`, `operating_hours` (con `attribute_exists(pk)`: un ID desconocido no crea máquinas). La SFN de B **no** escribe `status`: el estado del incidente se refleja en `open_incident_id` y en el ítem del incidente.
+**Propiedad de `machines`.** `model`, `type`, `zone`, `home_location` y `expected_interval_s` son del seed (C) y **nadie los sobrescribe** (#1). `procesar` escribe solo `status`, `severity`, `health_score`, `last_seen_at`, `top_factors`, `model_version`, `location`, `operating_hours`, `failure_probability`, `latest_reading` (con `attribute_exists(pk)`: un ID desconocido no crea máquinas). La SFN de B **no** escribe `status`: el estado del incidente se refleja en `open_incident_id` y en el ítem del incidente.
 
 **Atributos que lee la analítica de A** (`AnalisisDiario`):
 

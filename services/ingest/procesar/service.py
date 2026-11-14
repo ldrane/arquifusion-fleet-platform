@@ -170,9 +170,7 @@ class Processor:
 
     @staticmethod
     def _with_seed_identity(reading: dict, seed: dict) -> dict:
-        mismatched = {
-            k: reading.get(k) for k in ("model", "type") if seed.get(k) and reading.get(k) != seed[k]
-        }
+        mismatched = {k: reading.get(k) for k in ("model", "type") if seed.get(k) and reading.get(k) != seed[k]}
         zone = seed.get("zone") or reading["location"].get("zone")
         if reading["location"].get("zone") != zone:
             mismatched["zone"] = reading["location"].get("zone")

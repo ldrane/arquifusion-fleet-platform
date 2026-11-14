@@ -62,7 +62,13 @@ def score_technicians(techs: list[dict], location: dict, severity: str, specialt
         }
         raw = sum(w[k] * (max(0.0, 1 - eta / ETA_CAP_MIN) if k == "eta" else b[k]) for k in w)
         out.append(
-            {"technician_id": t["technician_id"], "name": t.get("name"), "score": _r2(raw), "eta_min": eta, "breakdown": b}
+            {
+                "technician_id": t["technician_id"],
+                "name": t.get("name"),
+                "score": _r2(raw),
+                "eta_min": eta,
+                "breakdown": b,
+            }
         )
     out.sort(key=lambda c: (-c["score"], c["eta_min"]))
     return out

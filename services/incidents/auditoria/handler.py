@@ -2,10 +2,9 @@
 
 Handler delgado: fija el correlation_id (#27) y delega en service.py. La lógica de negocio va en service.py.
 """
+import service
 from arquifusion_shared import correlation
 from arquifusion_shared.observability import logger, tracer
-
-import service
 
 
 @logger.inject_lambda_context

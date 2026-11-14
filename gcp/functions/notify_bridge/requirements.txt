@@ -1,3 +1,4 @@
 functions-framework==3.*
-firebase-admin
-requests
+firebase-admin==6.*
+google-cloud-secret-manager==2.*
+requests==2.*

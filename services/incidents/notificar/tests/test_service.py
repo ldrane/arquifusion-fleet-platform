@@ -74,8 +74,14 @@ def test_incident_assigned_push_al_tecnico_con_shape_del_contrato():
 
 def test_severidad_minima_filtra_reglas():
     deps, sent = make_deps()
-    msg = {"event_type": "incident.detected", "incident_id": "INC-1", "machine_id": "EX-023", "zone": "norte",
-           "severity": "medium", "correlation_id": "c"}
+    msg = {
+        "event_type": "incident.detected",
+        "incident_id": "INC-1",
+        "machine_id": "EX-023",
+        "zone": "norte",
+        "severity": "medium",
+        "correlation_id": "c",
+    }
     out = service.run(msg, deps)
     assert {s["role"] for s in out["sent"]} == {"mantenimiento"}  # operador/supervisor exigen high
     assert sent["throttle"] == [("NTF#incident.detected#mantenimiento#INC-1", 15)]
@@ -83,8 +89,14 @@ def test_severidad_minima_filtra_reglas():
 
 def test_throttle_corta_el_envio():
     deps, sent = make_deps(throttle_ok=False)
-    msg = {"event_type": "incident.detected", "incident_id": "INC-1", "machine_id": "EX-023", "zone": "norte",
-           "severity": "critical", "correlation_id": "c"}
+    msg = {
+        "event_type": "incident.detected",
+        "incident_id": "INC-1",
+        "machine_id": "EX-023",
+        "zone": "norte",
+        "severity": "critical",
+        "correlation_id": "c",
+    }
     out = service.run(msg, deps)
     assert out["sent"] == [] and set(out["throttled"]) == {"operador", "mantenimiento", "supervisor", "gerencia"}
     assert sent["pubsub"] == [] and sent["sns"] == []
@@ -92,16 +104,29 @@ def test_throttle_corta_el_envio():
 
 def test_push_a_rol_sin_user_id():
     deps, sent = make_deps()
-    msg = {"event_type": "incident.in_progress", "incident_id": "INC-1", "machine_id": "EX-023", "zone": "norte",
-           "severity": "high", "correlation_id": "c"}
+    msg = {
+        "event_type": "incident.in_progress",
+        "incident_id": "INC-1",
+        "machine_id": "EX-023",
+        "zone": "norte",
+        "severity": "high",
+        "correlation_id": "c",
+    }
     service.run(msg, deps)
     assert sent["pubsub"][0][0]["target"] == {"role": "operador", "zone": "norte", "user_id": None}
 
 
 def test_escalado_usa_tecnico_del_evento_y_su_throttle():
     deps, sent = make_deps()
-    msg = {"event_type": "incident.escalated", "incident_id": "INC-1", "machine_id": "EX-023", "zone": "norte",
-           "severity": "high", "technician_id": "TEC-01", "correlation_id": "c"}
+    msg = {
+        "event_type": "incident.escalated",
+        "incident_id": "INC-1",
+        "machine_id": "EX-023",
+        "zone": "norte",
+        "severity": "high",
+        "technician_id": "TEC-01",
+        "correlation_id": "c",
+    }
     service.run(msg, deps)
     assert ("NTF#incident.escalated#tecnico#INC-1#TEC-01", 5) in sent["throttle"]
     assert sent["pubsub"][0][0]["target"]["user_id"] == "u-tec-01"
@@ -121,8 +146,11 @@ def test_canal_caido_no_tumba_los_demas():
 @pytest.mark.skipif(subprocess.run(["which", "openssl"], capture_output=True).returncode != 0, reason="sin openssl")
 def test_firma_rs256_verificable(tmp_path):
     key = tmp_path / "k.pem"
-    subprocess.run(["openssl", "genpkey", "-algorithm", "RSA", "-pkeyopt", "rsa_keygen_bits:2048", "-out", str(key)],
-                   check=True, capture_output=True)
+    subprocess.run(
+        ["openssl", "genpkey", "-algorithm", "RSA", "-pkeyopt", "rsa_keygen_bits:2048", "-out", str(key)],
+        check=True,
+        capture_output=True,
+    )
     pub = tmp_path / "p.pem"
     subprocess.run(["openssl", "pkey", "-in", str(key), "-pubout", "-out", str(pub)], check=True, capture_output=True)
     sa = {"client_email": "aws@x.iam.gserviceaccount.com", "private_key": key.read_text(), "private_key_id": "k1"}
@@ -130,8 +158,11 @@ def test_firma_rs256_verificable(tmp_path):
     signing_input, sig = jwt.rsplit(".", 1)
     (tmp_path / "msg").write_bytes(signing_input.encode())
     (tmp_path / "sig").write_bytes(base64.urlsafe_b64decode(sig + "=" * (-len(sig) % 4)))
-    res = subprocess.run(["openssl", "dgst", "-sha256", "-verify", str(pub), "-signature", str(tmp_path / "sig"),
-                          str(tmp_path / "msg")], capture_output=True, text=True)
+    res = subprocess.run(
+        ["openssl", "dgst", "-sha256", "-verify", str(pub), "-signature", str(tmp_path / "sig"), str(tmp_path / "msg")],
+        capture_output=True,
+        text=True,
+    )
     assert "Verified OK" in res.stdout
     claims = json.loads(base64.urlsafe_b64decode(signing_input.split(".")[1] + "=="))
     assert claims["scope"] == gcp_auth.PUBSUB_SCOPE and claims["exp"] - claims["iat"] == 3600

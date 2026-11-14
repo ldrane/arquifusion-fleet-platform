@@ -1,4 +1,5 @@
 """scripts/cognito_users.py contra un Cognito falso en memoria (moto-cognito exige joserfc, que no está en el venv)."""
+
 import sys
 from pathlib import Path
 
@@ -86,7 +87,9 @@ def test_crea_staff_y_tecnicos_con_claims(pool, capsys):
 
 def test_idempotente_y_corrige_grupo(pool):
     client, pool_id = pool
-    cognito_users.main(["--user-pool-id", pool_id, "--password", "Demo-2026!x", "--create-groups", "--only", "u-tec-07"], client=client)
+    cognito_users.main(
+        ["--user-pool-id", pool_id, "--password", "Demo-2026!x", "--create-groups", "--only", "u-tec-07"], client=client
+    )
     client.users["u-tec-07"]["groups"].add("admin")
     cognito_users.main(["--user-pool-id", pool_id, "--password", "Demo-2026!x", "--only", "u-tec-07"], client=client)
     groups = client.admin_list_groups_for_user(UserPoolId=pool_id, Username="u-tec-07")["Groups"]

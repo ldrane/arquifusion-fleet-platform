@@ -120,9 +120,7 @@ def analyze(
                 "vs_peers_pct": vs_peers,
                 "vs_own_history_pct": vs_history,
                 "progressive_increase": progressive,
-                "probable_causes": (
-                    probable_causes(period_stats, peer_rpm, progressive) if flagged else []
-                ),
+                "probable_causes": (probable_causes(period_stats, peer_rpm, progressive) if flagged else []),
             }
         )
     rows.sort(key=lambda r: r["vs_peers_pct"], reverse=True)

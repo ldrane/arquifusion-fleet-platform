@@ -149,5 +149,8 @@ def test_unknown_machine_is_discarded_without_ghost(processor, aws, reading, sqs
 
 
 def test_update_machine_requires_existing_item(aws, settings):
-    assert aws["repo"].update_machine("OP-01#ZZ-999", {"status": "operational", "last_seen_at": "2026-11-13T00:00:00Z"}) is False
+    assert (
+        aws["repo"].update_machine("OP-01#ZZ-999", {"status": "operational", "last_seen_at": "2026-11-13T00:00:00Z"})
+        is False
+    )
     assert "Item" not in aws["ddb"].Table(settings.table_machines).get_item(Key={"pk": "OP-01#ZZ-999", "sk": "META"})

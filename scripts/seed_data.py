@@ -8,6 +8,7 @@ Los consume:
 IDs según contratos.md §1: EX-023, TEC-07, WH-01, CMP-014.
 Si cambias algo aquí, sube SEED_VERSION y vuelve a exportar los fixtures.
 """
+
 from __future__ import annotations
 
 import math
@@ -32,35 +33,195 @@ ZONES = {
 }
 
 WAREHOUSES = [
-    {"warehouse_id": "WH-01", "name": "Almacén Norte", "zone": "norte", "location": {"lat": -11.9150, "lon": -76.3950, "zone": "norte"}},
-    {"warehouse_id": "WH-02", "name": "Almacén Sur", "zone": "sur", "location": {"lat": -11.9850, "lon": -76.4050, "zone": "sur"}},
-    {"warehouse_id": "WH-03", "name": "Almacén Este", "zone": "este", "location": {"lat": -11.9480, "lon": -76.3600, "zone": "este"}},
-    {"warehouse_id": "WH-04", "name": "Almacén Oeste", "zone": "oeste", "location": {"lat": -11.9480, "lon": -76.4400, "zone": "oeste"}},
+    {
+        "warehouse_id": "WH-01",
+        "name": "Almacén Norte",
+        "zone": "norte",
+        "location": {"lat": -11.9150, "lon": -76.3950, "zone": "norte"},
+    },
+    {
+        "warehouse_id": "WH-02",
+        "name": "Almacén Sur",
+        "zone": "sur",
+        "location": {"lat": -11.9850, "lon": -76.4050, "zone": "sur"},
+    },
+    {
+        "warehouse_id": "WH-03",
+        "name": "Almacén Este",
+        "zone": "este",
+        "location": {"lat": -11.9480, "lon": -76.3600, "zone": "este"},
+    },
+    {
+        "warehouse_id": "WH-04",
+        "name": "Almacén Oeste",
+        "zone": "oeste",
+        "location": {"lat": -11.9480, "lon": -76.4400, "zone": "oeste"},
+    },
 ]
 
 # --------------------------------------------------------------------------- modelos
 # nominal = [media, desviación] de operación normal. Lo usa el simulador (A) como baseline.
 MACHINE_MODELS = [
-    {"model_id": "CAT-336", "brand": "Caterpillar", "type": "excavator", "payload_t": 2.5, "maintenance_interval_h": 250,
-     "nominal": {"temperature_c": [88, 3], "vibration_mm_s": [4.0, 0.6], "pressure_bar": [300, 15], "fuel_rate_lph": [38, 4], "load_pct": [70, 10], "speed_kmh": [3, 1.5], "rpm": [1800, 80]}},
-    {"model_id": "KOM-PC2000", "brand": "Komatsu", "type": "excavator", "payload_t": 12.0, "maintenance_interval_h": 250,
-     "nominal": {"temperature_c": [90, 3], "vibration_mm_s": [4.5, 0.6], "pressure_bar": [320, 15], "fuel_rate_lph": [110, 8], "load_pct": [72, 10], "speed_kmh": [2.5, 1.2], "rpm": [1800, 80]}},
-    {"model_id": "CAT-793F", "brand": "Caterpillar", "type": "mining_truck", "payload_t": 227.0, "maintenance_interval_h": 500,
-     "nominal": {"temperature_c": [92, 3], "vibration_mm_s": [3.5, 0.5], "pressure_bar": [180, 10], "fuel_rate_lph": [170, 12], "load_pct": [75, 15], "speed_kmh": [30, 8], "rpm": [1700, 90]}},
-    {"model_id": "KOM-930E", "brand": "Komatsu", "type": "mining_truck", "payload_t": 290.0, "maintenance_interval_h": 500,
-     "nominal": {"temperature_c": [93, 3], "vibration_mm_s": [3.6, 0.5], "pressure_bar": [185, 10], "fuel_rate_lph": [190, 14], "load_pct": [75, 15], "speed_kmh": [28, 8], "rpm": [1750, 90]}},
-    {"model_id": "CAT-994K", "brand": "Caterpillar", "type": "loader", "payload_t": 40.0, "maintenance_interval_h": 250,
-     "nominal": {"temperature_c": [90, 3], "vibration_mm_s": [4.2, 0.6], "pressure_bar": [280, 15], "fuel_rate_lph": [160, 10], "load_pct": [70, 12], "speed_kmh": [10, 4], "rpm": [1850, 80]}},
-    {"model_id": "KOM-WA900", "brand": "Komatsu", "type": "loader", "payload_t": 23.0, "maintenance_interval_h": 250,
-     "nominal": {"temperature_c": [89, 3], "vibration_mm_s": [4.1, 0.6], "pressure_bar": [270, 15], "fuel_rate_lph": [120, 9], "load_pct": [70, 12], "speed_kmh": [10, 4], "rpm": [1800, 80]}},
-    {"model_id": "CAT-D10T", "brand": "Caterpillar", "type": "bulldozer", "payload_t": 0.0, "maintenance_interval_h": 250,
-     "nominal": {"temperature_c": [91, 3], "vibration_mm_s": [5.0, 0.7], "pressure_bar": [250, 12], "fuel_rate_lph": [70, 6], "load_pct": [68, 12], "speed_kmh": [6, 2], "rpm": [1900, 80]}},
-    {"model_id": "KOM-D375A", "brand": "Komatsu", "type": "bulldozer", "payload_t": 0.0, "maintenance_interval_h": 250,
-     "nominal": {"temperature_c": [91, 3], "vibration_mm_s": [5.2, 0.7], "pressure_bar": [255, 12], "fuel_rate_lph": [75, 6], "load_pct": [68, 12], "speed_kmh": [6, 2], "rpm": [1900, 80]}},
-    {"model_id": "EPI-PV271", "brand": "Epiroc", "type": "drill", "payload_t": 0.0, "maintenance_interval_h": 250,
-     "nominal": {"temperature_c": [87, 3], "vibration_mm_s": [6.0, 0.8], "pressure_bar": [350, 20], "fuel_rate_lph": [90, 7], "load_pct": [65, 12], "speed_kmh": [1.5, 0.8], "rpm": [1800, 70]}},
-    {"model_id": "SAN-DR412i", "brand": "Sandvik", "type": "drill", "payload_t": 0.0, "maintenance_interval_h": 250,
-     "nominal": {"temperature_c": [86, 3], "vibration_mm_s": [5.8, 0.8], "pressure_bar": [340, 20], "fuel_rate_lph": [85, 7], "load_pct": [65, 12], "speed_kmh": [1.5, 0.8], "rpm": [1800, 70]}},
+    {
+        "model_id": "CAT-336",
+        "brand": "Caterpillar",
+        "type": "excavator",
+        "payload_t": 2.5,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [88, 3],
+            "vibration_mm_s": [4.0, 0.6],
+            "pressure_bar": [300, 15],
+            "fuel_rate_lph": [38, 4],
+            "load_pct": [70, 10],
+            "speed_kmh": [3, 1.5],
+            "rpm": [1800, 80],
+        },
+    },
+    {
+        "model_id": "KOM-PC2000",
+        "brand": "Komatsu",
+        "type": "excavator",
+        "payload_t": 12.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [90, 3],
+            "vibration_mm_s": [4.5, 0.6],
+            "pressure_bar": [320, 15],
+            "fuel_rate_lph": [110, 8],
+            "load_pct": [72, 10],
+            "speed_kmh": [2.5, 1.2],
+            "rpm": [1800, 80],
+        },
+    },
+    {
+        "model_id": "CAT-793F",
+        "brand": "Caterpillar",
+        "type": "mining_truck",
+        "payload_t": 227.0,
+        "maintenance_interval_h": 500,
+        "nominal": {
+            "temperature_c": [92, 3],
+            "vibration_mm_s": [3.5, 0.5],
+            "pressure_bar": [180, 10],
+            "fuel_rate_lph": [170, 12],
+            "load_pct": [75, 15],
+            "speed_kmh": [30, 8],
+            "rpm": [1700, 90],
+        },
+    },
+    {
+        "model_id": "KOM-930E",
+        "brand": "Komatsu",
+        "type": "mining_truck",
+        "payload_t": 290.0,
+        "maintenance_interval_h": 500,
+        "nominal": {
+            "temperature_c": [93, 3],
+            "vibration_mm_s": [3.6, 0.5],
+            "pressure_bar": [185, 10],
+            "fuel_rate_lph": [190, 14],
+            "load_pct": [75, 15],
+            "speed_kmh": [28, 8],
+            "rpm": [1750, 90],
+        },
+    },
+    {
+        "model_id": "CAT-994K",
+        "brand": "Caterpillar",
+        "type": "loader",
+        "payload_t": 40.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [90, 3],
+            "vibration_mm_s": [4.2, 0.6],
+            "pressure_bar": [280, 15],
+            "fuel_rate_lph": [160, 10],
+            "load_pct": [70, 12],
+            "speed_kmh": [10, 4],
+            "rpm": [1850, 80],
+        },
+    },
+    {
+        "model_id": "KOM-WA900",
+        "brand": "Komatsu",
+        "type": "loader",
+        "payload_t": 23.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [89, 3],
+            "vibration_mm_s": [4.1, 0.6],
+            "pressure_bar": [270, 15],
+            "fuel_rate_lph": [120, 9],
+            "load_pct": [70, 12],
+            "speed_kmh": [10, 4],
+            "rpm": [1800, 80],
+        },
+    },
+    {
+        "model_id": "CAT-D10T",
+        "brand": "Caterpillar",
+        "type": "bulldozer",
+        "payload_t": 0.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [91, 3],
+            "vibration_mm_s": [5.0, 0.7],
+            "pressure_bar": [250, 12],
+            "fuel_rate_lph": [70, 6],
+            "load_pct": [68, 12],
+            "speed_kmh": [6, 2],
+            "rpm": [1900, 80],
+        },
+    },
+    {
+        "model_id": "KOM-D375A",
+        "brand": "Komatsu",
+        "type": "bulldozer",
+        "payload_t": 0.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [91, 3],
+            "vibration_mm_s": [5.2, 0.7],
+            "pressure_bar": [255, 12],
+            "fuel_rate_lph": [75, 6],
+            "load_pct": [68, 12],
+            "speed_kmh": [6, 2],
+            "rpm": [1900, 80],
+        },
+    },
+    {
+        "model_id": "EPI-PV271",
+        "brand": "Epiroc",
+        "type": "drill",
+        "payload_t": 0.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [87, 3],
+            "vibration_mm_s": [6.0, 0.8],
+            "pressure_bar": [350, 20],
+            "fuel_rate_lph": [90, 7],
+            "load_pct": [65, 12],
+            "speed_kmh": [1.5, 0.8],
+            "rpm": [1800, 70],
+        },
+    },
+    {
+        "model_id": "SAN-DR412i",
+        "brand": "Sandvik",
+        "type": "drill",
+        "payload_t": 0.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [86, 3],
+            "vibration_mm_s": [5.8, 0.8],
+            "pressure_bar": [340, 20],
+            "fuel_rate_lph": [85, 7],
+            "load_pct": [65, 12],
+            "speed_kmh": [1.5, 0.8],
+            "rpm": [1800, 70],
+        },
+    },
 ]
 
 # prefijo de ID (patrón ^[A-Z]{2}-[0-9]{3,4}$ del OpenAPI), cantidad y modelos por tipo
@@ -94,11 +255,25 @@ CATALOG = [
     ("CMP-006", "Bomba de agua", "motor", ALL_MODELS, 1200, 10),
     ("CMP-007", "Radiador", "motor", ALL_MODELS, 6500, 30),
     ("CMP-008", "Correa de accesorios", "motor", ALL_MODELS, 85, 3),
-    ("CMP-009", "Bomba hidráulica principal", "hidraulica", _models_of("excavator", "loader", "bulldozer", "drill"), 18500, 35),
+    (
+        "CMP-009",
+        "Bomba hidráulica principal",
+        "hidraulica",
+        _models_of("excavator", "loader", "bulldozer", "drill"),
+        18500,
+        35,
+    ),
     ("CMP-010", "Cilindro hidráulico de brazo", "hidraulica", _models_of("excavator"), 9200, 28),
     ("CMP-011", "Manguera hidráulica de alta presión", "hidraulica", ALL_MODELS, 260, 4),
     ("CMP-012", "Kit de sellos de cilindro hidráulico", "hidraulica", ALL_MODELS, 340, 5),
-    ("CMP-013", "Válvula de control hidráulico", "hidraulica", _models_of("excavator", "loader", "bulldozer", "drill"), 5400, 20),
+    (
+        "CMP-013",
+        "Válvula de control hidráulico",
+        "hidraulica",
+        _models_of("excavator", "loader", "bulldozer", "drill"),
+        5400,
+        20,
+    ),
     ("CMP-014", "Kit de rodamientos de motor", "motor", ALL_MODELS, 1350, 10),
     ("CMP-015", "Alternador", "electrica", ALL_MODELS, 1900, 12),
     ("CMP-016", "Motor de arranque", "electrica", ALL_MODELS, 1600, 12),
@@ -140,7 +315,8 @@ PINNED_TECH_LOCATIONS = {
 # --------------------------------------------------------------------------- notificaciones
 # event_type = tabla "transición -> event_type" de contratos.md §10 (la usa notificar, B).
 # Para event_type incident.*, la regla del rol `tecnico` notifica SOLO al técnico asignado (o al nuevo candidato).
-# channels: push (FCM vía Pub/Sub), email (SNS alerts-{rol}), dashboard (sin envío: ya se ve por la réplica a Firestore).
+# channels: push (FCM vía Pub/Sub), email (SNS alerts-{rol}),
+# dashboard (sin envío: ya se ve por la réplica a Firestore).
 # content_profile: technical (detalle) | operational (seguridad) | executive (impacto) -> lo usa notificar/ia-gemini
 NOTIFICATION_RULES = [
     ("incident.detected", "operador", "high", ["push"], "operational", 10),
@@ -170,9 +346,9 @@ NOTIFICATION_EVENT_TYPES = sorted({r[0] for r in NOTIFICATION_RULES})
 
 # Ajustes de inventario para que la demo tenga alertas visibles: (warehouse, component) -> stock
 INVENTORY_OVERRIDES = {
-    ("WH-01", "CMP-014"): 2,   # justo en el mínimo: el golden path (EX-023, rodamiento) tiene stock
-    ("WH-02", "CMP-021"): 0,   # low_stock: neumático de camión agotado en el sur
-    ("WH-03", "CMP-005"): 0,   # low_stock: turbo agotado en el este
+    ("WH-01", "CMP-014"): 2,  # justo en el mínimo: el golden path (EX-023, rodamiento) tiene stock
+    ("WH-02", "CMP-021"): 0,  # low_stock: neumático de camión agotado en el sur
+    ("WH-03", "CMP-005"): 0,  # low_stock: turbo agotado en el este
     ("WH-01", "CMP-008"): 60,  # overstock
     ("WH-03", "CMP-001"): 90,  # overstock
 }
@@ -216,29 +392,31 @@ def build_machines() -> list[dict]:
             last_maint = REFERENCE_DATE - timedelta(days=days_since)
             # ~16 h de uso diario -> días hasta el próximo mantenimiento por horas
             next_maint = last_maint + timedelta(days=round(interval / 16))
-            machines.append({
-                "machine_id": machine_id,
-                "operation_id": OPERATION_ID,
-                "model": model,
-                "type": plan["type"],
-                "zone": zone,  # duplicado de location.zone para el GSI by_zone
-                "location": _point_in_zone(rng, zone),
-                "home_location": None,  # se completa abajo (igual a location inicial)
-                "status": "operational",
-                "severity": "info",
-                "health_score": rng.randint(84, 99),
-                "last_seen_at": None,  # aún no hay telemetría (heartbeat debe ignorar null)
-                "expected_interval_s": EXPECTED_INTERVAL_S,
-                "operating_hours": round(rng.uniform(1500, 18000), 1),
-                "last_maintenance_at": last_maint.isoformat(),
-                "next_maintenance_at": next_maint.isoformat(),
-                "failure_probability": None,
-                "rul_hours": None,
-                "open_incident_id": None,
-                "top_factors": [],
-                "model_version": None,
-                "seed_version": SEED_VERSION,
-            })
+            machines.append(
+                {
+                    "machine_id": machine_id,
+                    "operation_id": OPERATION_ID,
+                    "model": model,
+                    "type": plan["type"],
+                    "zone": zone,  # duplicado de location.zone para el GSI by_zone
+                    "location": _point_in_zone(rng, zone),
+                    "home_location": None,  # se completa abajo (igual a location inicial)
+                    "status": "operational",
+                    "severity": "info",
+                    "health_score": rng.randint(84, 99),
+                    "last_seen_at": None,  # aún no hay telemetría (heartbeat debe ignorar null)
+                    "expected_interval_s": EXPECTED_INTERVAL_S,
+                    "operating_hours": round(rng.uniform(1500, 18000), 1),
+                    "last_maintenance_at": last_maint.isoformat(),
+                    "next_maintenance_at": next_maint.isoformat(),
+                    "failure_probability": None,
+                    "rul_hours": None,
+                    "open_incident_id": None,
+                    "top_factors": [],
+                    "model_version": None,
+                    "seed_version": SEED_VERSION,
+                }
+            )
     for m in machines:
         m["home_location"] = dict(m["location"])
     return machines
@@ -251,19 +429,21 @@ def build_technicians() -> list[dict]:
         home_wh = next((w for w in WAREHOUSES if w["zone"] == zone), WAREHOUSES[0])
         location = _point_in_zone(rng, zone)  # se consume siempre, para no alterar la secuencia del resto
         location = dict(PINNED_TECH_LOCATIONS.get(tech_id, location))
-        techs.append({
-            "technician_id": tech_id,
-            "user_id": f"u-tec-{tech_id.split('-')[1]}",
-            "name": name,
-            "zone": zone,
-            "specialties": specialties,
-            "location": location,
-            "home_warehouse_id": home_wh["warehouse_id"],
-            "available": True,
-            "shift": shift,
-            "current_load": 0,
-            "seed_version": SEED_VERSION,
-        })
+        techs.append(
+            {
+                "technician_id": tech_id,
+                "user_id": f"u-tec-{tech_id.split('-')[1]}",
+                "name": name,
+                "zone": zone,
+                "specialties": specialties,
+                "location": location,
+                "home_warehouse_id": home_wh["warehouse_id"],
+                "available": True,
+                "shift": shift,
+                "current_load": 0,
+                "seed_version": SEED_VERSION,
+            }
+        )
     return techs
 
 
@@ -307,19 +487,21 @@ def build_inventory() -> list[dict]:
         for cid, name, _spec, _models, cost, _lead in CATALOG:
             smin, smax = _stock_limits(cost)
             stock = INVENTORY_OVERRIDES.get((wh["warehouse_id"], cid), rng.randint(smin, smax))
-            items.append({
-                "warehouse_id": wh["warehouse_id"],  # nombre del OpenAPI (InventoryItem)
-                "location_id": wh["warehouse_id"],   # nombre que lee A (contratos.md §9)
-                "warehouse_name": wh["name"],
-                "zone": wh["zone"],
-                "component_id": cid,
-                "name": name,
-                "stock": stock,
-                "stock_min": smin,
-                "stock_max": smax,
-                "alert": _alert(stock, smin, smax),
-                "seed_version": SEED_VERSION,
-            })
+            items.append(
+                {
+                    "warehouse_id": wh["warehouse_id"],  # nombre del OpenAPI (InventoryItem)
+                    "location_id": wh["warehouse_id"],  # nombre que lee A (contratos.md §9)
+                    "warehouse_name": wh["name"],
+                    "zone": wh["zone"],
+                    "component_id": cid,
+                    "name": name,
+                    "stock": stock,
+                    "stock_min": smin,
+                    "stock_max": smax,
+                    "alert": _alert(stock, smin, smax),
+                    "seed_version": SEED_VERSION,
+                }
+            )
     return items
 
 

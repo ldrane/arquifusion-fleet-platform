@@ -16,6 +16,7 @@ Reglas:
   salud < 5 puntos) se replica como máximo una vez cada `REPLICA_HEARTBEAT_S` (300 s por defecto; 0 = siempre).
 - Si Firestore falla, se lanza la excepción: el event source mapping reintenta con bisect y manda a la DLQ.
 """
+
 from __future__ import annotations
 
 import os
@@ -25,8 +26,9 @@ from typing import Any
 from query_common import gcp, items
 
 HEALTH_DELTA = 5
-NOISY_MACHINE_FIELDS = frozenset({"last_seen_at", "operating_hours", "location", "health_score", "failure_probability",
-                                  "rul_hours", "top_factors"})
+NOISY_MACHINE_FIELDS = frozenset(
+    {"last_seen_at", "operating_hours", "location", "health_score", "failure_probability", "rul_hours", "top_factors"}
+)
 
 
 def _deserializer():
@@ -61,7 +63,9 @@ def _ts(value: Any) -> float | None:
 
 def machine_doc(item: dict) -> dict:
     doc = items.machine(item, detail=True)
-    doc.pop("latest_reading", None)  # la lectura completa se pide por REST (GET /machines/{id}); no se paga en cada write
+    doc.pop(
+        "latest_reading", None
+    )  # la lectura completa se pide por REST (GET /machines/{id}); no se paga en cada write
     return doc
 
 

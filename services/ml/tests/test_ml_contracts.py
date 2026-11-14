@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from arquifusion_ml.features import FEATURES, to_vector
 from arquifusion_ml.insights import LATEST, items
 from arquifusion_ml.lake import LAKE_COLUMNS, flatten_reading, partition_prefix

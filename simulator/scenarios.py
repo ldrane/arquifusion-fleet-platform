@@ -120,9 +120,7 @@ def _machine(machine_id: str) -> Callable[[list[MachineSpec]], list[MachineSpec]
     return lambda fleet: [m for m in fleet if m.machine_id == machine_id]
 
 
-def _first(
-    machine_types: tuple[str, ...], zone: str | None = None
-) -> Callable[[list[MachineSpec]], list[MachineSpec]]:
+def _first(machine_types: tuple[str, ...], zone: str | None = None) -> Callable[[list[MachineSpec]], list[MachineSpec]]:
     """Primera máquina (por ID) de esos tipos y, si se indica, de esa zona; nunca la de la demo."""
 
     def pick(fleet: list[MachineSpec]) -> list[MachineSpec]:

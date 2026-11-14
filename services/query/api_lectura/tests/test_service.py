@@ -1,4 +1,5 @@
 """api_lectura contra DynamoDB simulado (moto) cargado con los seeds reales (contracts/fixtures/seed)."""
+
 import base64
 import copy
 import json
@@ -11,11 +12,16 @@ from moto import mock_aws
 
 HERE = Path(__file__).resolve()
 REPO = HERE.parents[4]
-sys.path[:0] = [str(HERE.parents[1]), str(HERE.parents[2] / "common"), str(REPO / "services" / "shared"), str(REPO / "scripts")]
+sys.path[:0] = [
+    str(HERE.parents[1]),
+    str(HERE.parents[2] / "common"),
+    str(REPO / "services" / "shared"),
+    str(REPO / "scripts"),
+]
 
-import service  # noqa: E402
 import seed  # noqa: E402
 import seed_data  # noqa: E402
+import service  # noqa: E402
 from arquifusion_shared.errors import ApiError  # noqa: E402
 
 BASE_EVENT = json.loads((REPO / "contracts" / "fixtures" / "api" / "get_me.event.json").read_text(encoding="utf-8"))
@@ -45,8 +51,12 @@ def _create(ddb, name, gsis):
     }
     if gsis:
         params["GlobalSecondaryIndexes"] = [
-            {"IndexName": i, "KeySchema": [{"AttributeName": h, "KeyType": "HASH"}, {"AttributeName": r, "KeyType": "RANGE"}],
-             "Projection": {"ProjectionType": "ALL"}} for i, h, r in gsis
+            {
+                "IndexName": i,
+                "KeySchema": [{"AttributeName": h, "KeyType": "HASH"}, {"AttributeName": r, "KeyType": "RANGE"}],
+                "Projection": {"ProjectionType": "ALL"},
+            }
+            for i, h, r in gsis
         ]
     ddb.create_table(**params)
     return boto3.resource("dynamodb", region_name="us-east-1").Table(params["TableName"])
@@ -57,10 +67,21 @@ def _put(table, item):
 
 
 INCIDENT = {
-    "pk": "INC#INC-01", "sk": "META", "incident_id": "INC-01", "machine_id": "EX-023", "machine_ids": ["EX-023"],
-    "zone": "norte", "severity": "high", "status": "assigned", "detected_at": "2026-11-14T10:00:00Z",
-    "assigned_technician_id": "TEC-07", "technician_score": 0.98, "ack_token": "SECRETO", "resolve_token": "SECRETO2",
-    "execution_arn": "arn:x", "ai_diagnosis": {"probable_cause": "Rodamiento", "confidence": 0.8},
+    "pk": "INC#INC-01",
+    "sk": "META",
+    "incident_id": "INC-01",
+    "machine_id": "EX-023",
+    "machine_ids": ["EX-023"],
+    "zone": "norte",
+    "severity": "high",
+    "status": "assigned",
+    "detected_at": "2026-11-14T10:00:00Z",
+    "assigned_technician_id": "TEC-07",
+    "technician_score": 0.98,
+    "ack_token": "SECRETO",
+    "resolve_token": "SECRETO2",
+    "execution_arn": "arn:x",
+    "ai_diagnosis": {"probable_cause": "Rodamiento", "confidence": 0.8},
 }
 
 
@@ -89,40 +110,137 @@ def deps():
             for record in data[dataset]:
                 target.put_item(Item=seed.to_item(dataset, record))
         _put(tables["incidents"], INCIDENT)
-        _put(tables["incidents"], {**INCIDENT, "pk": "INC#INC-02", "incident_id": "INC-02", "severity": "critical",
-                                   "status": "closed", "detected_at": "2026-11-13T08:00:00Z",
-                                   "resolved_at": "2026-11-13T10:00:00Z", "downtime_minutes": 120})
-        _put(tables["incidents"], {**INCIDENT, "pk": "INC#INC-03", "incident_id": "INC-03", "machine_id": "EX-001",
-                                   "machine_ids": ["EX-001"], "zone": "sur", "severity": "critical",
-                                   "detected_at": "2026-11-14T09:00:00Z"})
+        _put(
+            tables["incidents"],
+            {
+                **INCIDENT,
+                "pk": "INC#INC-02",
+                "incident_id": "INC-02",
+                "severity": "critical",
+                "status": "closed",
+                "detected_at": "2026-11-13T08:00:00Z",
+                "resolved_at": "2026-11-13T10:00:00Z",
+                "downtime_minutes": 120,
+            },
+        )
+        _put(
+            tables["incidents"],
+            {
+                **INCIDENT,
+                "pk": "INC#INC-03",
+                "incident_id": "INC-03",
+                "machine_id": "EX-001",
+                "machine_ids": ["EX-001"],
+                "zone": "sur",
+                "severity": "critical",
+                "detected_at": "2026-11-14T09:00:00Z",
+            },
+        )
         # Ítem de historial: NO debe salir en listas (#26)
-        _put(tables["incidents"], {"pk": "INC#INC-01", "sk": "EVT#2026-11-14T10:00:01Z#e1", "entity": "incident_event",
-                                   "event_type": "incident.assigned"})
-        _put(tables["machine_state"], {"pk": "EX-023", "sk": "AGG#1h#2026-11-14T10", "count": 2, "vars": {
-            "temperature_c": {"min": 90, "max": 96.4, "sum": 186.4, "avg": 93.2},
-            "vibration_mm_s": {"min": 7, "max": 7.9, "sum": 14.9, "avg": 7.45}}})
-        _put(tables["machine_state"], {"pk": "EX-023", "sk": "LAST", "reading": {"machine_id": "EX-023", "temperature_c": 96.4}})
-        _put(tables["anomalies"], {"pk": "EX-023", "sk": "2026-11-14T09:59:00Z#a1", "anomaly_id": "a1", "machine_id": "EX-023",
-                                   "zone": "norte", "detected_at": "2026-11-14T09:59:00Z", "severity": "high",
-                                   "top_factors": [{"variable": "vibration_mm_s", "z_score": 3.1, "direction": "high"}]})
-        _put(tables["maintenance_records"], {"pk": "EX-023", "sk": "2026-11-13T10:00:00Z#MR-1", "record_id": "MR-1",
-                                             "machine_id": "EX-023", "type": "corrective", "performed_at": "2026-11-13T10:00:00Z",
-                                             "components": [{"component_id": "CMP-014", "quantity": 1}], "cost_usd": 450})
-        _put(tables["insights"], {"pk": "kpis#7d", "sk": "LATEST", "generated_at": "2026-11-14T06:00:00Z",
-                                  "data": {"availability_pct": 93.5, "mtbf_hours": 120, "open_incidents": 3}})
-        _put(tables["insights"], {"pk": "kpis#7d", "sk": "LATEST#norte", "generated_at": "2026-11-14T06:00:00Z",
-                                  "data": {"availability_pct": 91.0, "mtbf_hours": 100, "open_incidents": 1}})
-        _put(tables["insights"], {"pk": "fuel#7d", "sk": "LATEST", "data": [
-            {"machine_id": "EX-023", "zone": "norte", "lph": 41.2}, {"machine_id": "EX-001", "zone": "sur", "lph": 40}]})
-        _put(tables["insights"], {"pk": "parts_forecast#30", "sk": "LATEST", "data": [
-            {"warehouse_id": "WH-01", "component_id": "CMP-014"}, {"warehouse_id": "WH-02", "component_id": "CMP-021"}]})
+        _put(
+            tables["incidents"],
+            {
+                "pk": "INC#INC-01",
+                "sk": "EVT#2026-11-14T10:00:01Z#e1",
+                "entity": "incident_event",
+                "event_type": "incident.assigned",
+            },
+        )
+        _put(
+            tables["machine_state"],
+            {
+                "pk": "EX-023",
+                "sk": "AGG#1h#2026-11-14T10",
+                "count": 2,
+                "vars": {
+                    "temperature_c": {"min": 90, "max": 96.4, "sum": 186.4, "avg": 93.2},
+                    "vibration_mm_s": {"min": 7, "max": 7.9, "sum": 14.9, "avg": 7.45},
+                },
+            },
+        )
+        _put(
+            tables["machine_state"],
+            {"pk": "EX-023", "sk": "LAST", "reading": {"machine_id": "EX-023", "temperature_c": 96.4}},
+        )
+        _put(
+            tables["anomalies"],
+            {
+                "pk": "EX-023",
+                "sk": "2026-11-14T09:59:00Z#a1",
+                "anomaly_id": "a1",
+                "machine_id": "EX-023",
+                "zone": "norte",
+                "detected_at": "2026-11-14T09:59:00Z",
+                "severity": "high",
+                "top_factors": [{"variable": "vibration_mm_s", "z_score": 3.1, "direction": "high"}],
+            },
+        )
+        _put(
+            tables["maintenance_records"],
+            {
+                "pk": "EX-023",
+                "sk": "2026-11-13T10:00:00Z#MR-1",
+                "record_id": "MR-1",
+                "machine_id": "EX-023",
+                "type": "corrective",
+                "performed_at": "2026-11-13T10:00:00Z",
+                "components": [{"component_id": "CMP-014", "quantity": 1}],
+                "cost_usd": 450,
+            },
+        )
+        _put(
+            tables["insights"],
+            {
+                "pk": "kpis#7d",
+                "sk": "LATEST",
+                "generated_at": "2026-11-14T06:00:00Z",
+                "data": {"availability_pct": 93.5, "mtbf_hours": 120, "open_incidents": 3},
+            },
+        )
+        _put(
+            tables["insights"],
+            {
+                "pk": "kpis#7d",
+                "sk": "LATEST#norte",
+                "generated_at": "2026-11-14T06:00:00Z",
+                "data": {"availability_pct": 91.0, "mtbf_hours": 100, "open_incidents": 1},
+            },
+        )
+        _put(
+            tables["insights"],
+            {
+                "pk": "fuel#7d",
+                "sk": "LATEST",
+                "data": [
+                    {"machine_id": "EX-023", "zone": "norte", "lph": 41.2},
+                    {"machine_id": "EX-001", "zone": "sur", "lph": 40},
+                ],
+            },
+        )
+        _put(
+            tables["insights"],
+            {
+                "pk": "parts_forecast#30",
+                "sk": "LATEST",
+                "data": [
+                    {"warehouse_id": "WH-01", "component_id": "CMP-014"},
+                    {"warehouse_id": "WH-02", "component_id": "CMP-021"},
+                ],
+            },
+        )
         yield service.Deps(tables=tables, firebase=FakeFirebase(), env={"DEFAULT_OPERATION_ID": "OP-01"})
 
 
 def ev(method, resource, *, groups="tecnico", zone="norte", tech="TEC-07", path=None, qs=None, body=None):
     e = copy.deepcopy(BASE_EVENT)
-    e.update(httpMethod=method, resource=resource, path=resource, pathParameters=path, queryStringParameters=qs,
-             body=json.dumps(body) if body is not None else None)
+    e.update(
+        httpMethod=method,
+        resource=resource,
+        path=resource,
+        pathParameters=path,
+        queryStringParameters=qs,
+        body=json.dumps(body) if body is not None else None,
+    )
     claims = e["requestContext"]["authorizer"]["claims"]
     claims["cognito:groups"] = groups
     claims["custom:zone"] = zone
@@ -142,8 +260,13 @@ def err(deps, e):
 # --------------------------------------------------------------------------- sesión
 def test_me_incluye_technician_id(deps):
     data, _ = service.run(ev("GET", "/me"), deps)
-    assert data == {"user_id": "u-tec-07", "email": "tec07@demo.arquifusion.local", "role": "tecnico",
-                    "zone": "norte", "technician_id": "TEC-07"}
+    assert data == {
+        "user_id": "u-tec-07",
+        "email": "tec07@demo.arquifusion.local",
+        "role": "tecnico",
+        "zone": "norte",
+        "technician_id": "TEC-07",
+    }
 
 
 def test_me_no_tecnico_sin_technician_id(deps):
@@ -164,7 +287,9 @@ def test_firebase_token_global_sin_body(deps):
     data, meta = service.run(ev("POST", "/auth/firebase-token", groups="gerencia", zone="*", tech=None), deps)
     assert deps.firebase.minted[-1][1] == {"role": "gerencia", "zone": None, "technician_id": None}
     assert deps.firebase.registered == [] and meta == {}
-    service.run(ev("POST", "/auth/firebase-token", groups="gerencia", zone="*", tech=None, body={"fcm_token": "g"}), deps)
+    service.run(
+        ev("POST", "/auth/firebase-token", groups="gerencia", zone="*", tech=None, body={"fcm_token": "g"}), deps
+    )
     assert deps.firebase.registered[-1][1]["zone"] == "*"  # notify_bridge: zone in [z, "*"]
 
 
@@ -183,8 +308,17 @@ def test_machines_zona_del_usuario_y_paginacion(deps):
     data, meta = service.run(ev("GET", "/machines", qs={"limit": "10"}), deps)
     assert len(data) == 10 and meta["next_cursor"]
     assert {m["location"]["zone"] for m in data} == {"norte"}
-    assert set(data[0]) == {"machine_id", "model", "type", "location", "status", "severity", "health_score",
-                            "last_seen_at", "open_incident_id"}
+    assert set(data[0]) == {
+        "machine_id",
+        "model",
+        "type",
+        "location",
+        "status",
+        "severity",
+        "health_score",
+        "last_seen_at",
+        "open_incident_id",
+    }
     seen = [m["machine_id"] for m in data]
     cursor = meta["next_cursor"]
     while cursor:
@@ -196,7 +330,9 @@ def test_machines_zona_del_usuario_y_paginacion(deps):
 
 
 def test_machines_global_filtros(deps):
-    data, _ = service.run(ev("GET", "/machines", groups="admin", zone="*", qs={"type": "excavator", "limit": "100"}), deps)
+    data, _ = service.run(
+        ev("GET", "/machines", groups="admin", zone="*", qs={"type": "excavator", "limit": "100"}), deps
+    )
     assert data and {m["type"] for m in data} == {"excavator"}
     assert len({m["location"]["zone"] for m in data}) > 1
 
@@ -224,13 +360,24 @@ def test_telemetry(deps):
     qs = {"from": "2026-11-14T08:00:00Z", "to": "2026-11-14T12:00:00Z", "resolution": "1m"}
     data, meta = service.run(ev("GET", "/machines/{machine_id}/telemetry", path={"machine_id": "EX-023"}, qs=qs), deps)
     assert meta["resolution"] == "1h"
-    assert data == [{"bucket_start": "2026-11-14T10:00:00Z", "temperature_c": {"min": 90, "avg": 93.2, "max": 96.4},
-                     "vibration_mm_s": {"min": 7, "avg": 7.45, "max": 7.9},
-                     "pressure_bar": {"min": None, "avg": None, "max": None},
-                     "fuel_rate_lph": {"min": None, "avg": None, "max": None}, "health_score": None}]
+    assert data == [
+        {
+            "bucket_start": "2026-11-14T10:00:00Z",
+            "temperature_c": {"min": 90, "avg": 93.2, "max": 96.4},
+            "vibration_mm_s": {"min": 7, "avg": 7.45, "max": 7.9},
+            "pressure_bar": {"min": None, "avg": None, "max": None},
+            "fuel_rate_lph": {"min": None, "avg": None, "max": None},
+            "health_score": None,
+        }
+    ]
     bad = {"from": "2026-11-14T12:00:00Z", "to": "2026-11-14T08:00:00Z"}
-    assert err(deps, ev("GET", "/machines/{machine_id}/telemetry", path={"machine_id": "EX-023"}, qs=bad)) == (400, "VALIDATION_ERROR")
-    assert err(deps, ev("GET", "/machines/{machine_id}/telemetry", groups="operador", path={"machine_id": "EX-023"}, qs=qs)) == (403, "FORBIDDEN")
+    assert err(deps, ev("GET", "/machines/{machine_id}/telemetry", path={"machine_id": "EX-023"}, qs=bad)) == (
+        400,
+        "VALIDATION_ERROR",
+    )
+    assert err(
+        deps, ev("GET", "/machines/{machine_id}/telemetry", groups="operador", path={"machine_id": "EX-023"}, qs=qs)
+    ) == (403, "FORBIDDEN")
 
 
 def test_timeline(deps, monkeypatch):
@@ -271,7 +418,9 @@ def test_incident_detalle_y_otra_zona(deps):
 # --------------------------------------------------------------------------- técnicos, inventario, insights
 def test_technicians_eta_y_rbac(deps):
     assert err(deps, ev("GET", "/technicians")) == (403, "FORBIDDEN")
-    data, _ = service.run(ev("GET", "/technicians", groups="supervisor", qs={"machine_id": "EX-023", "specialty": "motor"}), deps)
+    data, _ = service.run(
+        ev("GET", "/technicians", groups="supervisor", qs={"machine_id": "EX-023", "specialty": "motor"}), deps
+    )
     assert data and all(t["location"]["zone"] == "norte" and "motor" in t["specialties"] for t in data)
     assert data[0]["technician_id"] == "TEC-07" and isinstance(data[0]["eta_minutes"], int)
 

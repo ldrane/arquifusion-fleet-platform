@@ -68,8 +68,11 @@ def normal_values(spec: MachineSpec, state: str, rng: np.random.Generator) -> di
     z = {v: _z(rng) for v in VARIABLES}
     # El consumo acompaña a la carga (fuel_per_load estable) sin cambiar su distribución marginal nominal.
     z["fuel_rate_lph"] = float(
-        np.clip(FUEL_LOAD_CORR * z["load_pct"] + np.sqrt(1 - FUEL_LOAD_CORR**2) * z["fuel_rate_lph"],
-                -NOMINAL_MAX_Z, NOMINAL_MAX_Z)
+        np.clip(
+            FUEL_LOAD_CORR * z["load_pct"] + np.sqrt(1 - FUEL_LOAD_CORR**2) * z["fuel_rate_lph"],
+            -NOMINAL_MAX_Z,
+            NOMINAL_MAX_Z,
+        )
     )
     values = {v: b[v].mean + z[v] * b[v].sd for v in VARIABLES}
     if state == "idle":

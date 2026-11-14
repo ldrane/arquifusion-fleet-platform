@@ -1,8 +1,7 @@
 """Heartbeat: marca silenciosas y emite MachineSilent una sola vez por silencio (OBS-09)."""
 
-from datetime import UTC, datetime
-
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import boto3

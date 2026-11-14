@@ -60,8 +60,7 @@ def kpis(
     readings = sum(s.readings for s in period)
     fuel_l = sum((s.fuel_lph or 0.0) * s.hours_operated for s in period)
     tons = sum(
-        (s.avg_load_pct or 0.0) / 100 * catalog.capacity_tph(s.model, s.machine_type) * s.hours_operated
-        for s in period
+        (s.avg_load_pct or 0.0) / 100 * catalog.capacity_tph(s.model, s.machine_type) * s.hours_operated for s in period
     )
     return {
         "availability_pct": round(max(0.0, 100 * (1 - downtime_h / (fleet_size * days * 24))), 2),

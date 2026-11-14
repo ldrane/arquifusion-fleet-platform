@@ -3,11 +3,11 @@
 Handler delgado: correlation_id, logging y envoltorio estándar. La lógica va en service.py,
 que devuelve `(data, meta)` (meta lleva `next_cursor` en las listas paginadas).
 """
+
+import service
 from arquifusion_shared import correlation, response
 from arquifusion_shared.errors import ApiError
 from arquifusion_shared.observability import logger, tracer
-
-import service
 
 
 @logger.inject_lambda_context(clear_state=True)

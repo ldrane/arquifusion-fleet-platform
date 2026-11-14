@@ -22,13 +22,18 @@ def _table(ddb, name, gsis=(), sk=True):
     kwargs = {
         "TableName": f"{P}-{name}",
         "BillingMode": "PAY_PER_REQUEST",
-        "KeySchema": [{"AttributeName": "pk", "KeyType": "HASH"}] + ([{"AttributeName": "sk", "KeyType": "RANGE"}] if sk else []),
+        "KeySchema": [{"AttributeName": "pk", "KeyType": "HASH"}]
+        + ([{"AttributeName": "sk", "KeyType": "RANGE"}] if sk else []),
         "AttributeDefinitions": [{"AttributeName": a, "AttributeType": "S"} for a in sorted(attrs)],
     }
     if gsis:
         kwargs["GlobalSecondaryIndexes"] = [
-            {"IndexName": n, "KeySchema": [{"AttributeName": h, "KeyType": "HASH"}, {"AttributeName": r, "KeyType": "RANGE"}],
-             "Projection": {"ProjectionType": "ALL"}} for n, h, r in gsis
+            {
+                "IndexName": n,
+                "KeySchema": [{"AttributeName": h, "KeyType": "HASH"}, {"AttributeName": r, "KeyType": "RANGE"}],
+                "Projection": {"ProjectionType": "ALL"},
+            }
+            for n, h, r in gsis
         ]
     ddb.create_table(**kwargs)
     return ddb.Table(f"{P}-{name}")
@@ -51,8 +56,13 @@ def tables(monkeypatch):
             "resource": ddb,
         }
         m = next(x for x in load("seed/machines.json") if x["machine_id"] == "EX-023")
-        t["machines"].put_item(Item={k: v for k, v in {**m, "pk": "OP-01#EX-023", "sk": "META",
-                                                        "open_incident_id": "INC-01JC8ZK"}.items() if v is not None})
+        t["machines"].put_item(
+            Item={
+                k: v
+                for k, v in {**m, "pk": "OP-01#EX-023", "sk": "META", "open_incident_id": "INC-01JC8ZK"}.items()
+                if v is not None
+            }
+        )
         for c in load("seed/catalog.json"):
             t["catalog"].put_item(Item={**c, "pk": f"COMPONENT#{c['component_id']}", "sk": "META"})
         for mm in load("seed/machine_models.json"):
@@ -61,12 +71,27 @@ def tables(monkeypatch):
             t["inventory"].put_item(Item={**i, "pk": i["location_id"], "sk": i["component_id"]})
         for tech in load("seed/technicians.json"):
             t["technicians"].put_item(Item={**tech, "pk": f"TECH#{tech['technician_id']}", "sk": "META"})
-        t["machine_state"].put_item(Item={"pk": "EX-023", "sk": "LAST", "reading": {"temperature_c": Decimal("98.4"),
-                                                                                    "vibration_mm_s": Decimal("7.2")}})
-        t["incidents"].put_item(Item={"pk": "INC#INC-01JC8ZK", "sk": "META", "incident_id": "INC-01JC8ZK",
-                                      "machine_id": "EX-023", "machine_ids": ["EX-023"], "zone": "norte",
-                                      "severity": "high", "status": "detected", "detected_at": "2026-11-13T10:15:00Z",
-                                      "source": "anomaly"})
+        t["machine_state"].put_item(
+            Item={
+                "pk": "EX-023",
+                "sk": "LAST",
+                "reading": {"temperature_c": Decimal("98.4"), "vibration_mm_s": Decimal("7.2")},
+            }
+        )
+        t["incidents"].put_item(
+            Item={
+                "pk": "INC#INC-01JC8ZK",
+                "sk": "META",
+                "incident_id": "INC-01JC8ZK",
+                "machine_id": "EX-023",
+                "machine_ids": ["EX-023"],
+                "zone": "norte",
+                "severity": "high",
+                "status": "detected",
+                "detected_at": "2026-11-13T10:15:00Z",
+                "source": "anomaly",
+            }
+        )
         yield t
 
 
@@ -80,7 +105,15 @@ def ev(action, **kw):
 
 def test_contexto_arma_payload_de_diagnose(tables):
     req = load("ia/diagnose_request.json")["payload"]
-    out = service.run(ev("contexto", severity="high", health_score=42, top_factors=json.loads(json.dumps(req["top_factors"], default=float))), tables)
+    out = service.run(
+        ev(
+            "contexto",
+            severity="high",
+            health_score=42,
+            top_factors=json.loads(json.dumps(req["top_factors"], default=float)),
+        ),
+        tables,
+    )
     p = out["diagnose_payload"]
     assert p["model"] == "CAT-336" and p["machine_type"] == "excavator"
     assert p["candidate_parts"] == json.loads(json.dumps(req["candidate_parts"]))
@@ -102,8 +135,18 @@ def test_golden_path_completo(tables):
     diag = json.loads((FIX / "ia/diagnose_response.json").read_text())
     factors = json.loads(json.dumps(req["top_factors"], default=float))
     cparts = json.loads(json.dumps(req["candidate_parts"]))
-    out = service.run(ev("enriquecer", source="anomaly", top_factors=factors, diagnosis=diag, candidate_parts=cparts,
-                         correlation={"parent_incident_id": None, "machines": ["EX-023"]}, model_version="v1"), tables)
+    out = service.run(
+        ev(
+            "enriquecer",
+            source="anomaly",
+            top_factors=factors,
+            diagnosis=diag,
+            candidate_parts=cparts,
+            correlation={"parent_incident_id": None, "machines": ["EX-023"]},
+            model_version="v1",
+        ),
+        tables,
+    )
     assert out["required_specialty"] == "motor" and out["part_id"] == "CMP-014" and out["shortage"] is False
     item = meta(tables)
     assert item["ai_diagnosis"]["parts_suggested"] == ["CMP-014"] and item["required_specialty"] == "motor"
@@ -120,19 +163,33 @@ def test_golden_path_completo(tables):
     service.run(ev("guardar_token", token_name="ack_token", token="T-ACK", statuses=["assigned"]), tables)
     assert meta(tables)["ack_token"] == "T-ACK"
     # la SFN acepta con UpdateItem directo
-    tables["incidents"].update_item(Key={"pk": "INC#INC-01JC8ZK", "sk": "META"},
-                                    UpdateExpression="SET #s = :p REMOVE ack_token",
-                                    ExpressionAttributeNames={"#s": "status"}, ExpressionAttributeValues={":p": "in_progress"})
+    tables["incidents"].update_item(
+        Key={"pk": "INC#INC-01JC8ZK", "sk": "META"},
+        UpdateExpression="SET #s = :p REMOVE ack_token",
+        ExpressionAttributeNames={"#s": "status"},
+        ExpressionAttributeValues={":p": "in_progress"},
+    )
     service.run(ev("guardar_token", token_name="resolve_token", token="T-RES", statuses=["in_progress"]), tables)
 
-    out = service.run(ev("resolver", resolution={"resolution_notes": "Cambio de rodamientos",
-                                                 "components_replaced": ["CMP-014"], "cost_usd": 820.5}), tables)
+    out = service.run(
+        ev(
+            "resolver",
+            resolution={
+                "resolution_notes": "Cambio de rodamientos",
+                "components_replaced": ["CMP-014"],
+                "cost_usd": 820.5,
+            },
+        ),
+        tables,
+    )
     assert out["downtime_minutes"] >= 0
     item = meta(tables)
     assert item["status"] == "resolved" and "resolve_token" not in item and item["cost_usd"] == Decimal("820.5")
 
     stock_before = tables["inventory"].get_item(Key={"pk": "WH-01", "sk": "CMP-014"})["Item"]["stock"]
-    out = service.run(ev("cerrar", summary={"result": {"summary": "Rodamientos reemplazados", "root_cause": "desgaste"}}), tables)
+    out = service.run(
+        ev("cerrar", summary={"result": {"summary": "Rodamientos reemplazados", "root_cause": "desgaste"}}), tables
+    )
     item = meta(tables)
     assert item["status"] == "closed" and item["resolution_summary"] == "Rodamientos reemplazados"
     rec = tables["maintenance_records"].scan()["Items"][0]
@@ -150,8 +207,10 @@ def test_reasignacion_mueve_la_carga(tables):
     service.run(ev("asignar", technician_id="TEC-07", scoring={"candidates": []}), tables)
     out = service.run(ev("asignar", technician_id="TEC-01", actor={"type": "user"}), tables)
     assert out["from"] == "assigned" and out["previous_technician_id"] == "TEC-07"
-    loads = {t: tables["technicians"].get_item(Key={"pk": f"TECH#{t}", "sk": "META"})["Item"]["current_load"]
-             for t in ("TEC-07", "TEC-01")}
+    loads = {
+        t: tables["technicians"].get_item(Key={"pk": f"TECH#{t}", "sk": "META"})["Item"]["current_load"]
+        for t in ("TEC-07", "TEC-01")
+    }
     assert loads == {"TEC-07": 0, "TEC-01": 1}
     assert "technician_score" not in meta(tables)
 

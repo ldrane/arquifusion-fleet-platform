@@ -55,5 +55,8 @@ def ok(data, correlation_id: str, meta: dict | None = None, status: int = 200) -
 
 
 def error(err: ApiError, correlation_id: str) -> dict:
-    body = {"error": {"code": err.code, "message": err.message, "details": err.details}, "correlation_id": correlation_id}
+    body = {
+        "error": {"code": err.code, "message": err.message, "details": err.details},
+        "correlation_id": correlation_id,
+    }
     return _resp(err.status, body, correlation_id)

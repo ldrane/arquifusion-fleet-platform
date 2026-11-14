@@ -1,11 +1,14 @@
 import pytest
-
 from arquifusion_shared import config, correlation, rbac
 from arquifusion_shared.errors import Forbidden
 
 
 def ev(groups="tecnico", **claims):
-    return {"httpMethod": "GET", "headers": {}, "requestContext": {"authorizer": {"claims": {"cognito:groups": groups, **claims}}}}
+    return {
+        "httpMethod": "GET",
+        "headers": {},
+        "requestContext": {"authorizer": {"claims": {"cognito:groups": groups, **claims}}},
+    }
 
 
 def test_rol_por_precedencia():

@@ -8,19 +8,21 @@ Por qué no `firebase-admin`: arrastra grpc + google-cloud-firestore (~60 MB des
 Aquí solo hace falta `google-auth` (puro Python, ~1 MB con `rsa`/`pyasn1`), que llega por la layer de C
 (`scripts/build_query_layer.sh`). Todo lo de red se inyecta para probar sin GCP.
 """
+
 from __future__ import annotations
 
 import base64
 import json
 import time
+from collections.abc import Callable, Iterable
 from datetime import datetime
-from typing import Any, Callable, Iterable, Protocol
+from typing import Any, Protocol
 
 FIREBASE_AUDIENCE = "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit"
 FIRESTORE_SCOPE = "https://www.googleapis.com/auth/datastore"
 FIRESTORE_API = "https://firestore.googleapis.com/v1"
 MAX_WRITES_PER_COMMIT = 500  # límite de Firestore
-CUSTOM_TOKEN_TTL_S = 3600     # máximo permitido por Firebase
+CUSTOM_TOKEN_TTL_S = 3600  # máximo permitido por Firebase
 
 
 class Signer(Protocol):
@@ -31,7 +33,10 @@ class Signer(Protocol):
 
 # --------------------------------------------------------------------------- service account
 def load_service_account(secret_name: str, secrets_client) -> dict:
-    """Lee el JSON de la llave desde Secrets Manager. Falla con ValueError si el secreto está vacío o no es una llave."""
+    """Lee el JSON de la llave desde Secrets Manager.
+
+    Falla con ValueError si el secreto está vacío o no es una llave.
+    """
     raw = secrets_client.get_secret_value(SecretId=secret_name).get("SecretString") or ""
     try:
         info = json.loads(raw)
@@ -55,7 +60,10 @@ def _b64(data: bytes) -> str:
 
 
 def custom_token(sa_info: dict, uid: str, claims: dict, signer: Signer, now: int | None = None) -> str:
-    """Custom token de Firebase (formato de la doc de Firebase Auth "create custom tokens using a third-party JWT library")."""
+    """Custom token de Firebase.
+
+    Formato de la doc de Firebase Auth "create custom tokens using a third-party JWT library".
+    """
     if not uid or len(uid) > 128:
         raise ValueError("uid inválido para Firebase (1-128 caracteres)")
     iat = int(now if now is not None else time.time())
@@ -71,7 +79,10 @@ def custom_token(sa_info: dict, uid: str, claims: dict, signer: Signer, now: int
         "uid": uid,
         "claims": claims,
     }
-    signing_input = f"{_b64(json.dumps(header, separators=(',', ':')).encode())}.{_b64(json.dumps(payload, separators=(',', ':')).encode())}"
+    compact = (",", ":")
+    head_b64 = _b64(json.dumps(header, separators=compact).encode())
+    body_b64 = _b64(json.dumps(payload, separators=compact).encode())
+    signing_input = f"{head_b64}.{body_b64}"
     return f"{signing_input}.{_b64(signer.sign(signing_input.encode('ascii')))}"
 
 
@@ -103,7 +114,7 @@ def to_fields(doc: dict) -> dict:
 
 def from_value(v: dict) -> Any:
     """Inverso de `to_value` (lo usan los tests y la depuración)."""
-    (kind, x), = v.items()
+    ((kind, x),) = v.items()
     if kind == "nullValue":
         return None
     if kind == "integerValue":
@@ -156,7 +167,7 @@ class Firestore:
         """Envía en lotes de 500 (cada lote es atómico). Devuelve cuántos writes se aplicaron."""
         done = 0
         for i in range(0, len(writes), MAX_WRITES_PER_COMMIT):
-            chunk = writes[i:i + MAX_WRITES_PER_COMMIT]
+            chunk = writes[i : i + MAX_WRITES_PER_COMMIT]
             status, body = self._transport("POST", f"{FIRESTORE_API}/{self.root}:commit", {"writes": chunk})
             if status >= 300:
                 raise FirestoreError(status, body)
