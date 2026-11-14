@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Despliega la infraestructura AWS en orden (infra/README.md): bootstrap tfstate -> base -> ingest -> incidents/query -> frontend.
+# Despliega la infraestructura AWS en orden (infra/README.md): bootstrap tfstate -> base -> ingest -> incidents/query.
+# frontend no va por defecto: el Learner Lab deniega CloudFront. Front: scripts/deploy_frontend.sh (Firebase Hosting).
 # GCP va aparte (necesita gcloud y gcp_project_id): terraform -chdir=infra/gcp apply -var stage=$STAGE -var gcp_project_id=<id>
 #   (sin facturación por defecto: gcp_billing=false; ver infra/gcp/README.md)
 # Uso: STAGE=dev scripts/deploy_infra.sh [stack ...]   (sin argumentos = todos los de AWS)
@@ -10,7 +11,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REGION="${AWS_REGION:-us-east-1}"
 ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 BUCKET="arquifusion-tfstate-$ACCOUNT"
-STACKS=("${@:-base ingest incidents query frontend}")
+STACKS=("${@:-base ingest incidents query}")
 read -r -a STACKS <<<"${STACKS[*]}"
 
 log() { printf '\n[deploy %s] %s\n' "$(date +%H:%M:%S)" "$*" >&2; }
@@ -52,6 +53,22 @@ for s in "${STACKS[@]}"; do
     # shellcheck disable=SC2086
     terraform -chdir="$ROOT/infra/$s" state rm $legacy >/dev/null
   fi
+  # ingest: las Lambdas procesar/retrain son imágenes de ECR. Se crea primero el repo y se suben las imágenes
+  # (docker o podman). SKIP_IMAGES=1 para no reconstruirlas si ya están.
+  if [[ "$s" == ingest && "${SKIP_IMAGES:-0}" != 1 ]]; then
+    terraform -chdir="$ROOT/infra/ingest" apply -input=false -var "stage=$STAGE" -target=aws_ecr_repository.ml \
+      ${!extra_var:-} -auto-approve >/dev/null
+    REPO="$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/arquifusion-$STAGE-ml"
+    TAG="${IMAGE_TAG:-latest}"
+    log "Imágenes ECR -> $REPO (procesar-$TAG, retrain-$TAG)"
+    aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${REPO%%/*}" >/dev/null
+    docker build -q --platform linux/amd64 --provenance=false -f "$ROOT/services/ingest/procesar/Dockerfile" \
+      -t "$REPO:procesar-$TAG" "$ROOT" >/dev/null
+    docker build -q --platform linux/amd64 --provenance=false -f "$ROOT/services/analytics/retrain/Dockerfile" \
+      -t "$REPO:retrain-$TAG" "$ROOT" >/dev/null
+    docker push -q "$REPO:procesar-$TAG" >/dev/null
+    docker push -q "$REPO:retrain-$TAG" >/dev/null
+  fi
   # shellcheck disable=SC2086
   terraform -chdir="$ROOT/infra/$s" apply -input=false -var "stage=$STAGE" ${!extra_var:-} "${APPROVE[@]}"
 done
@@ -68,4 +85,4 @@ if [[ " ${STACKS[*]} " == *" ingest "* && -n "${GEMINI_API_KEY:-}" ]]; then
   aws secretsmanager put-secret-value --region "$REGION" --secret-id "arquifusion/$STAGE/gemini/api-key" \
     --secret-string "$GEMINI_API_KEY" >/dev/null
 fi
-log "OK. Siguientes: seed.py, cognito_users.py, infra/gcp, smoke_golden_path.sh"
+log "OK. Siguientes: seed.py, cognito_users.py, deploy_frontend.sh, infra/gcp, smoke_golden_path.sh"
