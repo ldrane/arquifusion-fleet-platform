@@ -223,3 +223,55 @@ def test_token_con_estado_incorrecto_falla(tables):
 def test_accion_desconocida(tables):
     with pytest.raises(ValueError):
         service.run({"action": "borrar"}, tables)
+
+
+def _resolved(tables):
+    service.run(ev("asignar", technician_id="TEC-07", scoring={"candidates": []}), tables)
+    tables["incidents"].update_item(
+        Key={"pk": "INC#INC-01JC8ZK", "sk": "META"},
+        UpdateExpression="SET #s = :p",
+        ExpressionAttributeNames={"#s": "status"},
+        ExpressionAttributeValues={":p": "in_progress"},
+    )
+    service.run(ev("resolver", resolution={"resolution_notes": "ok", "components_replaced": ["CMP-014"]}), tables)
+
+
+def test_cerrar_reintento_no_duplica_registro_ni_descuento(tables):
+    """G-06: un Retry de la SFN tras fallo parcial no duplica maintenance-records ni descuenta dos veces."""
+    _resolved(tables)
+    stock = lambda: tables["inventory"].get_item(Key={"pk": "WH-01", "sk": "CMP-014"})["Item"]["stock"]  # noqa: E731
+    before = stock()
+    service.run(ev("cerrar", summary={}), tables)
+    assert stock() == before - 1
+    # simula fallo tras el descuento: el incidente vuelve a `resolved` y la SFN reintenta
+    tables["incidents"].update_item(
+        Key={"pk": "INC#INC-01JC8ZK", "sk": "META"},
+        UpdateExpression="SET #s = :r",
+        ExpressionAttributeNames={"#s": "status"},
+        ExpressionAttributeValues={":r": "resolved"},
+    )
+    out = service.run(ev("cerrar", summary={}), tables)
+    assert out["from"] == "resolved"
+    assert len(tables["maintenance_records"].scan()["Items"]) == 1
+    assert stock() == before - 1
+    assert meta(tables)["status"] == "closed" and meta(tables)["inventory_discounted"] is True
+
+
+def test_abandonar_marca_borra_token_y_libera_despues(tables):
+    service.run(ev("asignar", technician_id="TEC-07", scoring={"candidates": []}), tables)
+    service.run(ev("guardar_token", token_name="ack_token", token="T", statuses=["assigned"]), tables)
+    out = service.run(ev("abandonar", reason="manual_timeout"), tables)
+    item = meta(tables)
+    assert out["from"] == "assigned" and out["abandoned"] is True and out["released"] is True
+    assert item["status"] == "abandoned" and "ack_token" not in item and item["abandon_reason"] == "manual_timeout"
+    assert "open_incident_id" not in tables["machines"].get_item(Key={"pk": "OP-01#EX-023", "sk": "META"})["Item"]
+    tech = tables["technicians"].get_item(Key={"pk": "TECH#TEC-07", "sk": "META"})["Item"]
+    assert tech["current_load"] == 0
+    assert service.run(ev("abandonar"), tables)["from"] == "abandoned"  # reintento idempotente
+
+
+def test_abandonar_incidente_cerrado_falla(tables):
+    _resolved(tables)
+    service.run(ev("cerrar", summary={}), tables)
+    with pytest.raises(service.ConditionFailed):
+        service.run(ev("abandonar"), tables)

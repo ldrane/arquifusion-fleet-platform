@@ -32,13 +32,14 @@
         "ack": null,
         "resolution": null,
         "summary": null,
-        "ackTimeout": "{% $states.input.detail.data.severity = 'critical' ? ${ack_timeout_critical_s} : ${ack_timeout_s} %}"
+        "ackTimeout": "{% $states.input.detail.data.severity = 'critical' ? ${ack_timeout_critical_s} : ${ack_timeout_s} %}",
+        "resolveEscalations": 0
       },
       "Next": "ReclamarMaquina"
     },
     "ReclamarMaquina": {
       "Type": "Task",
-      "Comment": "Dedup (RF-10.5, §9): fija open_incident_id solo si la máquina no tiene otro incidente abierto",
+      "Comment": "Dedup (RF-10.5, §9): fija open_incident_id solo si la máquina existe y no tiene otro incidente abierto. Si la condición falla se verifica cuál de los dos casos fue (F-32)",
       "Resource": "arn:aws:states:::dynamodb:updateItem",
       "Arguments": {
         "TableName": "${table_machines}",
@@ -78,14 +79,14 @@
           "ErrorEquals": [
             "DynamoDB.ConditionalCheckFailedException"
           ],
-          "Next": "Deduplicado"
+          "Next": "VerificarMaquina"
         }
       ],
       "Next": "CrearIncidente"
     },
     "Deduplicado": {
       "Type": "Succeed",
-      "Comment": "La máquina ya tiene un incidente abierto (o no existe)"
+      "Comment": "La máquina ya tiene un incidente abierto (dedup legítimo)"
     },
     "CrearIncidente": {
       "Type": "Task",
@@ -331,7 +332,7 @@
                 }
               ],
               "TimeoutSeconds": 30,
-              "Output": "{% {'correlation': $states.result.Payload, 'common_cause': null, 'correlation_id': $states.input.correlation_id, 'zone': $states.input.zone} %}",
+              "Output": "{% {'correlation': $states.result.Payload, 'common_cause': null, 'incident_id': $states.input.incident_id, 'correlation_id': $states.input.correlation_id, 'zone': $states.input.zone} %}",
               "Catch": [
                 {
                   "ErrorEquals": [
@@ -348,10 +349,78 @@
               "Choices": [
                 {
                   "Condition": "{% $count($states.input.correlation.machines) >= 3 %}",
-                  "Next": "CausaComun"
+                  "Next": "ContextoMaquinas"
                 }
               ],
               "Default": "CorrelacionLista"
+            },
+            "ContextoMaquinas": {
+              "Type": "Map",
+              "Comment": "G-01: contexto (tipo, modelo, última lectura) de cada máquina correlacionada, en paralelo; enriquece el prompt de causa común. Lista vacía/null → no itera",
+              "Items": "{% $type($states.input.correlation.machines) = 'array' ? $states.input.correlation.machines : [] %}",
+              "ItemSelector": {
+                "machine_id": "{% $states.context.Map.Item.Value %}",
+                "incident_id": "{% $states.input.incident_id %}",
+                "zone": "{% $states.input.zone %}"
+              },
+              "MaxConcurrency": 5,
+              "ItemProcessor": {
+                "ProcessorConfig": {
+                  "Mode": "INLINE"
+                },
+                "StartAt": "ContextoMaquina",
+                "States": {
+                  "ContextoMaquina": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::lambda:invoke",
+                    "Arguments": {
+                      "FunctionName": "${fn_incidente}",
+                      "Payload": "{% {'action': 'contexto', 'incident_id': $states.input.incident_id, 'machine_id': $states.input.machine_id, 'zone': $states.input.zone} %}"
+                    },
+                    "Retry": [
+                      {
+                        "ErrorEquals": [
+                          "Lambda.ServiceException",
+                          "Lambda.AWSLambdaException",
+                          "Lambda.SdkClientException",
+                          "Lambda.TooManyRequestsException"
+                        ],
+                        "IntervalSeconds": 2,
+                        "MaxAttempts": 3,
+                        "BackoffRate": 2.0,
+                        "JitterStrategy": "FULL"
+                      }
+                    ],
+                    "TimeoutSeconds": 30,
+                    "Output": "{% {'machine_id': $states.input.machine_id, 'machine_type': $states.result.Payload.diagnose_payload.machine_type, 'model': $states.result.Payload.diagnose_payload.model, 'latest_reading': $states.result.Payload.diagnose_payload.latest_reading} %}",
+                    "Catch": [
+                      {
+                        "ErrorEquals": [
+                          "States.ALL"
+                        ],
+                        "Output": "{% {'machine_id': $states.input.machine_id} %}",
+                        "Next": "ContextoMaquinaListo"
+                      }
+                    ],
+                    "Next": "ContextoMaquinaListo"
+                  },
+                  "ContextoMaquinaListo": {
+                    "Type": "Pass",
+                    "End": true
+                  }
+                }
+              },
+              "Output": "{% $merge([$states.input, {'machine_contexts': $states.result}]) %}",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Output": "{% $merge([$states.input, {'machine_contexts': []}]) %}",
+                  "Next": "CausaComun"
+                }
+              ],
+              "Next": "CausaComun"
             },
             "CausaComun": {
               "Type": "Task",
@@ -359,7 +428,7 @@
               "Resource": "arn:aws:states:::lambda:invoke",
               "Arguments": {
                 "FunctionName": "${fn_ia_gemini}",
-                "Payload": "{% {'task': 'common_cause', 'correlation_id': $states.input.correlation_id, 'payload': {'zone': $states.input.zone, 'incidents': [$map($states.input.correlation.machines, function($m) { {'machine_id': $m} })]}} %}"
+                "Payload": "{% {'task': 'common_cause', 'correlation_id': $states.input.correlation_id, 'payload': {'zone': $states.input.zone, 'incidents': [$map($states.input.correlation.machines, function($m) { {'machine_id': $m} })], 'machine_contexts': $states.input.machine_contexts}} %}"
               },
               "Retry": [
                 {
@@ -862,7 +931,8 @@
           "Next": "Puntuar"
         }
       ],
-      "Default": "SinCandidatos"
+      "Default": "SinCandidatos",
+      "Comment": "G-08: `escalations` cuenta timeouts. Con max_escalations=N hay N reasignaciones automáticas (timeouts 1..N); el N+1 pasa a asignación manual. `<=` es intencional, no hay off-by-one"
     },
     "SinCandidatos": {
       "Type": "Task",
@@ -977,9 +1047,15 @@
       "Catch": [
         {
           "ErrorEquals": [
-            "States.ALL"
+            "States.Timeout"
           ],
           "Next": "SinAtencion"
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "LiberarYFallar"
         }
       ],
       "Next": "DecisionManual"
@@ -1000,11 +1076,11 @@
     },
     "SinAtencion": {
       "Type": "Task",
-      "Comment": "Nadie asignó en el plazo: libera la máquina (el incidente queda abierto y escalado)",
+      "Comment": "F-12: nadie asignó en el plazo. Marca el incidente `abandoned` (borra ack_token) y SOLO DESPUÉS libera el lock de la máquina (acción abandonar), luego termina en Fail",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Arguments": {
         "FunctionName": "${fn_incidente}",
-        "Payload": "{% {'action': 'liberar', 'incident_id': $incidentId, 'machine_id': $machineId} %}"
+        "Payload": "{% {'action': 'abandonar', 'incident_id': $incidentId, 'machine_id': $machineId, 'correlation_id': $cid, 'reason': 'manual_timeout'} %}"
       },
       "Retry": [
         {
@@ -1026,13 +1102,15 @@
           "ErrorEquals": [
             "States.ALL"
           ],
-          "Next": "FinSinAtencion"
+          "Next": "Fallo"
         }
       ],
       "Next": "FinSinAtencion"
     },
     "FinSinAtencion": {
-      "Type": "Succeed"
+      "Type": "Fail",
+      "Error": "IncidenteAbandonado",
+      "Cause": "Sin asignación manual dentro de manual_timeout_s: incidente abandoned, máquina liberada"
     },
     "Aceptar": {
       "Type": "Task",
@@ -1158,16 +1236,25 @@
       "Catch": [
         {
           "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "Assign": {
+            "resolveEscalations": "{% $resolveEscalations + 1 %}"
+          },
+          "Next": "TopeResolucion"
+        },
+        {
+          "ErrorEquals": [
             "States.ALL"
           ],
-          "Next": "RecordarResolucion"
+          "Next": "LiberarYFallar"
         }
       ],
       "Next": "Resolver"
     },
     "RecordarResolucion": {
       "Type": "Task",
-      "Comment": "Vence el plazo de resolución: escalated = true y se sigue esperando",
+      "Comment": "Vence el plazo de resolución: escalated = true, emite el evento y se vuelve a esperar (hasta el tope de TopeResolucion)",
       "Resource": "arn:aws:states:::dynamodb:updateItem",
       "Arguments": {
         "TableName": "${table_incidents}",
@@ -1513,6 +1600,114 @@
       "Type": "Fail",
       "Error": "IncidenteFallido",
       "Cause": "Error no recuperable en GestionIncidente"
+    },
+    "VerificarMaquina": {
+      "Type": "Task",
+      "Comment": "F-32: distingue máquina inexistente (error) de duplicado (dedup legítimo)",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "Arguments": {
+        "TableName": "${table_machines}",
+        "Key": {
+          "pk": {
+            "S": "{% '${operation_id}#' & $machineId %}"
+          },
+          "sk": {
+            "S": "META"
+          }
+        },
+        "ConsistentRead": true
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.RequestLimitExceededException",
+            "DynamoDB.ThrottlingException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Assign": {
+        "machineExists": "{% $exists($states.result.Item) %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Deduplicado"
+        }
+      ],
+      "Next": "MaquinaExiste"
+    },
+    "MaquinaExiste": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $machineExists = true %}",
+          "Next": "Deduplicado"
+        }
+      ],
+      "Default": "MaquinaInexistente"
+    },
+    "MaquinaInexistente": {
+      "Type": "Fail",
+      "Error": "MaquinaInexistente",
+      "Cause": "La máquina del evento no existe en la tabla machines; no se crea incidente (F-32)"
+    },
+    "TopeResolucion": {
+      "Type": "Choice",
+      "Comment": "F-13: tope fijo de 3 escalamientos por resolución vencida (3 × resolve_timeout_s); superado → abandoned",
+      "Choices": [
+        {
+          "Condition": "{% $resolveEscalations <= 3 %}",
+          "Next": "RecordarResolucion"
+        }
+      ],
+      "Default": "ResolucionAgotada"
+    },
+    "ResolucionAgotada": {
+      "Type": "Task",
+      "Comment": "F-13: tope de escalamientos de resolución superado: marca abandoned, borra tokens y libera la máquina",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% {'action': 'abandonar', 'incident_id': $incidentId, 'machine_id': $machineId, 'correlation_id': $cid, 'reason': 'resolve_escalations_exceeded'} %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Fallo"
+        }
+      ],
+      "Next": "FinResolucionAgotada"
+    },
+    "FinResolucionAgotada": {
+      "Type": "Fail",
+      "Error": "IncidenteAbandonado",
+      "Cause": "Resolución vencida más de 3 veces sin resolve: incidente abandoned, máquina liberada"
     }
   }
 }

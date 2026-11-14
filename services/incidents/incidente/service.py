@@ -310,7 +310,11 @@ class Incidente:
                 "technician_id": current.get("assigned_technician_id")}
 
     def cerrar(self, ev: dict) -> dict:
-        """resolved → closed: resumen IA, registro `corrective`, descuento de inventario y liberar la máquina."""
+        """resolved → closed: resumen IA, registro `corrective`, descuento de inventario y liberar la máquina.
+
+        Idempotente frente a reintentos de la SFN (G-06): el registro de mantenimiento tiene `sk` determinista
+        (`resolved_at#record_id`) con `attribute_not_exists`, y el descuento de inventario se protege con la marca
+        `inventory_discounted` en el incidente (se aplica como máximo una vez)."""
         current = from_ddb(self.get(ev["incident_id"]))
         if current.get("status") == "closed":  # reintento
             return {"from": "closed", "shortage": False, "low_stock": []}
@@ -322,14 +326,15 @@ class Incidente:
         tech_id = current.get("assigned_technician_id")
         components = current.get("components_replaced") or []
         record_id = f"MR-{ev['incident_id'].removeprefix('INC-')}"
+        performed_at = current.get("resolved_at") or now  # determinista entre reintentos
         record = {
             "pk": machine_id,
-            "sk": f"{now}#{record_id}",
+            "sk": f"{performed_at}#{record_id}",
             "record_id": record_id,
             "machine_id": machine_id,
             "zone": current.get("zone"),
             "type": "corrective",
-            "performed_at": now,
+            "performed_at": performed_at,
             "technician_id": tech_id,
             "incident_id": ev["incident_id"],
             "operating_hours": machine.get("operating_hours"),
@@ -337,20 +342,59 @@ class Incidente:
             "cost_usd": current.get("cost_usd") or 0,
             "notes": text[:1000] or None,
         }
-        self.t["maintenance_records"].put_item(Item=to_ddb(record))
-        low_stock = self._discount(components, tech_id, current.get("zone"))
+        try:
+            self.t["maintenance_records"].put_item(
+                Item=to_ddb(record), ConditionExpression="attribute_not_exists(pk) AND attribute_not_exists(sk)"
+            )
+        except Exception as exc:  # noqa: BLE001
+            if _code(exc) != "ConditionalCheckFailedException":
+                raise  # ya existía: reintento, no se duplica
+        try:  # marca de descuento: solo el primer intento descuenta
+            self._update(
+                ev["incident_id"],
+                "SET inventory_discounted = :t",
+                {":t": True, ":r": "resolved"},
+                "attribute_not_exists(inventory_discounted) AND #st = :r",
+                {"#st": "status"},
+            )
+            low_stock = self._discount(components, tech_id, current.get("zone"))
+        except ConditionFailed:
+            low_stock = list(current.get("low_stock_components") or [])
         self._update(
             ev["incident_id"],
-            "SET #st = :closed, closed_at = :now, resolution_summary = :sum, root_cause = :rc "
-            "REMOVE ack_token, resolve_token",
+            "SET #st = :closed, closed_at = :now, resolution_summary = :sum, root_cause = :rc, "
+            "low_stock_components = :low REMOVE ack_token, resolve_token",
             {":closed": "closed", ":now": now, ":sum": text, ":rc": summary.get("root_cause") or "-",
-             ":r": "resolved"},
+             ":r": "resolved", ":low": low_stock},
             "#st = :r",
             {"#st": "status"},
         )
         self.liberar({"incident_id": ev["incident_id"], "machine_id": machine_id})
         self._adjust_load(tech_id, -1)
         return {"from": "resolved", "record_id": record_id, "low_stock": low_stock, "shortage": bool(low_stock)}
+
+    def abandonar(self, ev: dict) -> dict:
+        """detected/assigned/in_progress → abandoned (terminal, F-12/F-13): nadie atendió en el plazo.
+
+        Orden: primero marca el incidente (borra tokens) y SOLO DESPUÉS libera el lock de la máquina."""
+        current = from_ddb(self.get(ev["incident_id"]))
+        prev = current.get("status")
+        if prev != "abandoned":  # reintento: solo repite la liberación
+            if prev not in OPEN_STATUSES:
+                raise ConditionFailed(f"{ev['incident_id']}: estado {prev} no abandonable")
+            self._update(
+                ev["incident_id"],
+                "SET #st = :ab, abandoned_at = :now, abandon_reason = :why REMOVE ack_token, resolve_token",
+                {":ab": "abandoned", ":now": now_iso(), ":why": ev.get("reason") or "unattended",
+                 **{f":o{i}": s for i, s in enumerate(OPEN_STATUSES)}},
+                "#st IN (:o0, :o1, :o2)",
+                {"#st": "status"},
+            )
+            self._adjust_load(current.get("assigned_technician_id"), -1)
+        released = self.liberar(
+            {"incident_id": ev["incident_id"], "machine_id": ev.get("machine_id") or current["machine_id"]}
+        )
+        return {"from": prev, "abandoned": True, **released}
 
     def _discount(self, components: list[str], tech_id: str | None, zone: str | None) -> list[str]:
         """Descuenta 1 unidad por componente en el almacén de la zona. Devuelve los que quedan bajo `stock_min`."""
@@ -406,7 +450,7 @@ class Incidente:
             raise
 
 
-ACTIONS = ("contexto", "enriquecer", "asignar", "guardar_token", "resolver", "cerrar", "liberar")
+ACTIONS = ("contexto", "enriquecer", "asignar", "guardar_token", "resolver", "cerrar", "abandonar", "liberar")
 
 
 def _default_tables() -> dict:  # pragma: no cover

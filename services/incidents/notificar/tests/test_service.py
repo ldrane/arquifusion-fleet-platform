@@ -187,3 +187,20 @@ def test_publisher_pide_token_y_publica():
     assert json.loads(base64.b64decode(msg["data"])) == {"a": 1}
     assert msg["attributes"] == {"incident_id": "INC-1"}
     assert headers["Authorization"] == "Bearer tok"
+
+
+def test_escalado_sin_candidatos_no_notifica_al_tecnico():
+    """technician_id explícitamente null (EmitirSinCandidatos): se salta la regla `tecnico`."""
+    deps, sent = make_deps()
+    msg = {
+        "event_type": "incident.escalated",
+        "incident_id": "INC-1",
+        "machine_id": "EX-023",
+        "zone": "norte",
+        "severity": "high",
+        "technician_id": None,
+        "correlation_id": "c",
+    }
+    out = service.run(msg, deps)
+    assert all(s["role"] != "tecnico" for s in out["sent"])
+    assert not any("#tecnico#" in k for k, _ in sent["throttle"])
