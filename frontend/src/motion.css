@@ -1,0 +1,362 @@
+/* ======================================================================================================
+   Movimiento y profundidad de ArquiFusion.
+
+   Resortes reales con linear() (rigidez 170, amortiguación 20 → ~630 ms, 2 % de rebote). Cada animación
+   declara primero un cubic-bezier de respaldo: si el navegador no entiende linear(), descarta la segunda
+   declaración y se queda con la primera.
+   ====================================================================================================== */
+:root {
+  --ease-out-apple: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: linear(0, 0.014, 0.051, 0.1047, 0.1697, 0.2416, 0.3168, 0.3926, 0.4669, 0.5379, 0.6045, 0.6661, 0.7221, 0.7724, 0.8169, 0.8558, 0.8895, 0.9182, 0.9423, 0.9623, 0.9786, 0.9916, 1.0018, 1.0096, 1.0152, 1.0192, 1.0217, 1.023, 1.0234, 1.0231, 1.0222, 1.021, 1.0195, 1.0178, 1.016, 1.0142, 1.0125, 1.0108, 1.0093, 1.0078, 1.0065, 1.0053, 1.0043, 1.0034, 1.0026, 1.0019, 1.0014, 1);
+}
+
+/* Profundidad del lienzo: luz cenital muy tenue en vez de un fondo plano */
+body {
+  background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(173, 198, 255, 0.06), transparent 70%);
+  background-attachment: fixed;
+}
+
+@keyframes af-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes af-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes af-metric {
+  from {
+    opacity: 0.2;
+    transform: translateY(6px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Entrada de vista al cambiar de ruta */
+.view-enter {
+  animation: af-view-in 520ms var(--ease-out-apple) both;
+  animation: af-view-in 640ms var(--ease-spring) both;
+}
+/* Hijos que entran en cascada (KPIs, paneles) */
+.stagger > * {
+  animation: af-rise 520ms var(--ease-out-apple) both;
+  animation: af-rise 640ms var(--ease-spring) both;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 250ms;
+}
+.rise {
+  animation: af-rise 520ms var(--ease-out-apple) both;
+  animation: af-rise 640ms var(--ease-spring) both;
+}
+/* Una métrica que cambia "aterriza" con un enfoque breve */
+.metric-tick {
+  display: inline-block;
+  animation: af-metric 420ms var(--ease-out-apple) both;
+}
+/* Resorte para interacciones (hover/press) */
+.spring {
+  transition-timing-function: var(--ease-out-apple);
+  transition-timing-function: var(--ease-spring);
+}
+
+/* ======================================================================================================
+   Vidrio con borde luminoso de 1px en degradado (máscara) y brillo ambiental según criticidad (--tone)
+   ====================================================================================================== */
+.glass {
+  --tone: 173, 198, 255;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(var(--tone), 0.09), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 20px 40px -24px rgba(0, 0, 0, 0.7);
+}
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(140deg, rgba(var(--tone), 0.45), rgba(255, 255, 255, 0.06) 35%, rgba(255, 255, 255, 0.03) 65%, rgba(var(--tone), 0.18));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+  opacity: 0.75;
+  transition: opacity 300ms var(--ease-out-apple);
+}
+.glass-interactive {
+  cursor: pointer;
+  transition:
+    transform 500ms var(--ease-out-apple),
+    box-shadow 500ms var(--ease-out-apple);
+  transition:
+    transform 640ms var(--ease-spring),
+    box-shadow 500ms var(--ease-out-apple);
+}
+.glass-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 28px 56px -24px rgba(var(--tone), 0.28),
+    0 20px 40px -24px rgba(0, 0, 0, 0.7);
+}
+.glass-interactive:hover::before {
+  opacity: 1;
+}
+.glass-interactive:active {
+  transform: translateY(0) scale(0.985);
+}
+.tone-critical {
+  --tone: 229, 72, 77;
+}
+.tone-warn {
+  --tone: 255, 185, 95;
+}
+.tone-info {
+  --tone: 173, 198, 255;
+}
+.tone-good {
+  --tone: 78, 222, 163;
+}
+
+/* Brillo ambiental para KPIs (profundidad sin sombras pesadas) */
+.ambient {
+  /* sin --tone propio: lo pone tone-* (si no, azul por defecto) */
+  background-image:
+    radial-gradient(90% 70% at 100% 0%, rgba(var(--tone, 173, 198, 255), 0.07), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* "Arqui piensa el insight": barras de escaneo que se desvanecen y el texto que se enfoca */
+@keyframes af-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.thinking-bar {
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(var(--tone), 0.25) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: af-shimmer 1.2s linear infinite;
+}
+@keyframes af-fade-away {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes af-focus-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+.insight-thinking {
+  animation: af-fade-away 240ms ease-out both;
+  animation-delay: var(--think, 700ms);
+}
+.insight-reveal {
+  animation: af-focus-in 520ms var(--ease-out-apple) both;
+  animation-delay: var(--think, 700ms);
+}
+
+/* Mensajes del chat: el asistente aparece con resorte, el usuario con un deslizamiento corto */
+@keyframes af-msg-left {
+  from {
+    opacity: 0;
+    transform: translate(-8px, 6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes af-msg-right {
+  from {
+    opacity: 0;
+    transform: translate(8px, 6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.msg-in-left {
+  animation: af-msg-left 480ms var(--ease-out-apple) both;
+  animation: af-msg-left 640ms var(--ease-spring) both;
+}
+.msg-in-right {
+  animation: af-msg-right 420ms var(--ease-out-apple) both;
+}
+
+/* ======================================================================================================
+   Arqui (mascota): reposo = parpadeo + respiración de la lámpara; pensando = escaneo + radar; alerta = latido
+   ====================================================================================================== */
+@keyframes arqui-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes arqui-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes arqui-scan {
+  0%,
+  100% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+@keyframes arqui-ring {
+  from {
+    transform: scale(0.55);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+@keyframes arqui-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+@keyframes arqui-alert {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+.arqui * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.arqui-float {
+  animation: arqui-float 4s ease-in-out infinite;
+}
+.arqui-eyes {
+  animation: arqui-blink 5.5s ease-in-out infinite;
+}
+.arqui-lamp {
+  animation: arqui-breathe 3.2s ease-in-out infinite;
+}
+.arqui[data-state="thinking"] .arqui-scanner {
+  animation: arqui-scan 1.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.arqui[data-state="thinking"] .arqui-lamp {
+  animation-duration: 1.1s;
+}
+.arqui[data-state="alert"] .arqui-lamp {
+  animation: arqui-alert 1.2s ease-in-out infinite;
+}
+.arqui .arqui-ring {
+  transform-box: view-box;
+  transform-origin: 24px 24px;
+  animation: arqui-ring 1.8s var(--ease-out-apple) infinite;
+}
+.arqui .arqui-ring-2 {
+  animation-delay: 0.6s;
+}
+.arqui .arqui-ring-3 {
+  animation-delay: 1.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arqui *,
+  .view-enter,
+  .stagger > *,
+  .rise,
+  .metric-tick,
+  .thinking-bar,
+  .msg-in-left,
+  .msg-in-right {
+    animation: none !important;
+  }
+  .insight-thinking {
+    display: none;
+  }
+  .insight-reveal {
+    animation: none !important;
+    opacity: 1;
+  }
+  .glass-interactive:hover {
+    transform: none;
+  }
+}

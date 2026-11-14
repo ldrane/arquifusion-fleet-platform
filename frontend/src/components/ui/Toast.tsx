@@ -27,7 +27,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={cx(
-              "pointer-events-auto flex items-start gap-2.5 rounded-xl border bg-surface-container-high/95 p-3 text-sm shadow-[0_12px_32px_-8px_rgba(0,0,0,0.7)] backdrop-blur-md",
+              "pointer-events-auto flex items-start gap-2.5 rounded-xl border bg-surface-container-high/95 p-3 text-sm shadow-pop backdrop-blur-md",
               t.tone === "good" ? "border-secondary/40" : t.tone === "bad" ? "border-error/40" : "border-primary/30",
             )}
           >

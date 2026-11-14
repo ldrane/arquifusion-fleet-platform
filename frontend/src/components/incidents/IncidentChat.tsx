@@ -100,7 +100,7 @@ export function IncidentChat({ incident }: { incident: Incident }) {
           const system = m.role === "sistema";
           if (system) {
             return (
-              <div key={m.id} className="flex items-start gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/60 px-3 py-2 text-[11px] text-on-surface-variant">
+              <div key={m.id} className="flex items-start gap-2 rounded-xl border border-hairline bg-surface-container-lowest/60 px-3 py-2 text-[11px] text-on-surface-variant">
                 <Icon name="account_tree" className="mt-0.5 text-[14px] text-primary" />
                 <span className="flex-1">{m.text}</span>
                 <span className="shrink-0 font-mono text-[10px] text-outline">{fmtTime(m.created_at)}</span>
@@ -117,12 +117,12 @@ export function IncidentChat({ incident }: { incident: Incident }) {
               </div>
               <div
                 className={cx(
-                  "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+                  "max-w-[85%] rounded-xl px-3 py-2 text-sm",
                   own ? "rounded-br-sm bg-primary text-on-primary" : "rounded-bl-sm bg-surface-container-high text-on-surface",
                 )}
               >
                 {m.quick_action && (
-                  <span className={cx("mb-0.5 block font-mono text-[10px] uppercase", own ? "text-on-primary/70" : "text-primary")}>{m.quick_action.replace(/_/g, " ")}</span>
+                  <span className={cx("mb-0.5 block text-[10px] uppercase tracking-[0.06em]", own ? "text-on-primary/70" : "text-primary")}>{m.quick_action.replace(/_/g, " ")}</span>
                 )}
                 {m.text}
               </div>
@@ -131,7 +131,7 @@ export function IncidentChat({ incident }: { incident: Incident }) {
         })}
       </div>
       {canWrite ? (
-        <div className="border-t border-outline-variant/20 p-3">
+        <div className="border-t border-hairline p-3">
           <div className="mb-2 flex flex-wrap gap-1.5">
             {QUICK.map((q) => (
               <button
@@ -139,7 +139,7 @@ export function IncidentChat({ incident }: { incident: Incident }) {
                 type="button"
                 disabled={sending}
                 onClick={() => send(q.text, q.key)}
-                className="rounded-full border border-outline-variant/40 px-2.5 py-1 font-mono text-[11px] text-on-surface-variant hover:border-primary hover:text-primary"
+                className="rounded-full border border-hairline px-2.5 py-1 text-[11px] text-on-surface-variant hover:border-primary hover:text-primary"
               >
                 {q.label}
               </button>
@@ -173,7 +173,7 @@ export function IncidentChat({ incident }: { incident: Incident }) {
           </form>
         </div>
       ) : (
-        <p className="border-t border-outline-variant/20 px-4 py-3 text-center text-xs text-on-surface-variant">
+        <p className="border-t border-hairline px-4 py-3 text-center text-xs text-on-surface-variant">
           {incident.status === "closed" ? "Incidente cerrado: el chat queda como registro de solo lectura." : "Tu rol puede leer el chat, pero no escribir (Security Rules)."}
         </p>
       )}

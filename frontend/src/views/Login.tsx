@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { useAuth } from "@/auth/AuthContext";
-import { Logo } from "@/components/layout/Header";
+import { Logo } from "@/components/brand/Logo";
 import { Button, cx, Icon } from "@/components/ui";
 import { hasCognito, isDemo } from "@/config";
 import { DEMO_USERS } from "@/demo/data";
@@ -37,7 +37,7 @@ function DemoLogin() {
             <button
               type="button"
               onClick={() => loginDemo(u.user_id)}
-              className="flex w-full items-start gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-3 text-left transition-all hover:border-primary hover:bg-primary/5"
+              className="flex w-full items-start gap-3 rounded-xl border border-hairline bg-surface-container-lowest p-3 text-left transition-all hover:border-primary hover:bg-primary/5"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Icon name={ROLE_ICON[u.role] ?? "person"} />
@@ -121,15 +121,20 @@ function CognitoLogin() {
 
 export function Login() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className={cx("w-full rounded-2xl border border-outline-variant/40 bg-surface-container-low p-6 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.7)]", isDemo ? "max-w-2xl" : "max-w-md")}>
-        <div className="mb-5 flex items-center gap-3">
-          <Logo />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
+      {/* Retícula de plano muy tenue, desvanecida hacia los bordes */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]"
+      />
+      <div className={cx("relative w-full rounded-2xl bg-surface-container-low/90 p-7 shadow-modal backdrop-blur-xl animate-dialog-in", isDemo ? "max-w-2xl" : "max-w-md")}>
+        <div className="mb-6 flex items-center gap-3">
+          <Logo className="h-9 w-9" />
           <div>
-            <div className="font-mono text-sm font-bold uppercase tracking-wider text-on-surface">ArquiFusion</div>
-            <div className="font-mono text-[11px] uppercase tracking-wider text-outline">Centro Táctico de Mina · OP-01</div>
+            <div className="text-[17px] font-semibold tracking-[-0.02em] text-on-surface">ArquiFusion</div>
+            <div className="text-xs text-outline">Centro táctico de mina · OP-01</div>
           </div>
-          {isDemo && <span className="ml-auto chip bg-tertiary/15 text-tertiary">Modo demo</span>}
+          {isDemo && <span className="chip ml-auto bg-tertiary/[0.12] text-tertiary">Modo demo</span>}
         </div>
         {isDemo ? <DemoLogin /> : <CognitoLogin />}
       </div>

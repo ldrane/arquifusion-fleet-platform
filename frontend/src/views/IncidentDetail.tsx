@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import type { Incident } from "@/api/types";
 import { IncidentActions } from "@/components/incidents/IncidentActions";
 import { IncidentChat } from "@/components/incidents/IncidentChat";
+import { Arqui } from "@/components/brand/Arqui";
 import { cx, ErrorBox, HealthBar, Icon, IncidentStatusBadge, Loading, Panel, SeverityBadge, Stat, StatusDot } from "@/components/ui";
 import { COMPONENT_BY_ID } from "@/demo/data";
 import { fmtDateTime, fmtUsd, minutesBetween, timeAgo, VARIABLE_LABEL } from "@/lib/format";
@@ -28,11 +29,11 @@ function Lifecycle({ i }: { i: Incident }) {
         return (
           <li key={s.key} className="flex flex-col items-center text-center">
             <div className="flex w-full items-center">
-              <span className={cx("h-0.5 flex-1", n === 0 ? "opacity-0" : done ? "bg-primary" : "bg-outline-variant/40")} />
-              <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2", current ? "border-primary bg-primary text-on-primary" : done ? "border-primary bg-primary/15 text-primary" : "border-outline-variant/50 text-outline")}>
+              <span className={cx("h-0.5 flex-1", n === 0 ? "opacity-0" : done ? "bg-primary" : "bg-hairline-strong")} />
+              <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2", current ? "border-primary bg-primary text-on-primary" : done ? "border-primary bg-primary/15 text-primary" : "border-hairline-strong text-outline")}>
                 <Icon name={s.icon} className="text-[18px]" />
               </span>
-              <span className={cx("h-0.5 flex-1", n === steps.length - 1 ? "opacity-0" : n < idx ? "bg-primary" : "bg-outline-variant/40")} />
+              <span className={cx("h-0.5 flex-1", n === steps.length - 1 ? "opacity-0" : n < idx ? "bg-primary" : "bg-hairline-strong")} />
             </div>
             <span className={cx("mt-1.5 font-mono text-[11px] font-semibold", done ? "text-on-surface" : "text-outline")}>{s.label}</span>
             <span className="font-mono text-[10px] text-outline">{s.at && done ? fmtDateTime(s.at) : "—"}</span>
@@ -73,7 +74,7 @@ export function IncidentDetail() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-mono text-headline-md font-bold text-on-surface">{inc.incident_id}</h1>
+              <h1 className="font-mono text-headline-md font-semibold text-on-surface">{inc.incident_id}</h1>
               <SeverityBadge severity={inc.severity} />
               <IncidentStatusBadge status={inc.status} />
               {inc.escalated && <span className="chip bg-error/20 text-error"><Icon name="trending_up" className="text-[14px]" />Escalado</span>}
@@ -100,7 +101,7 @@ export function IncidentDetail() {
 
       <section className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
         <div className="flex flex-col gap-5 xl:col-span-7">
-          <Panel icon="smart_toy" title="Diagnóstico IA" subtitle={d ? `${d.model_version} · ${d.prompt_version}${d.degraded ? " · fallback determinista" : ""}` : "ia-gemini · diagnose"}>
+          <Panel icon={<Arqui state={d ? "idle" : "thinking"} className="h-5 w-5" />} title="Diagnóstico IA" subtitle={d ? `${d.model_version} · ${d.prompt_version}${d.degraded ? " · fallback determinista" : ""}` : "ia-gemini · diagnose"}>
             {!d ? (
               <p className="flex items-center gap-2 text-sm text-on-surface-variant"><span className="h-2 w-2 animate-pulse rounded-full bg-primary" />Generando diagnóstico…</p>
             ) : (
@@ -144,7 +145,7 @@ export function IncidentDetail() {
           )}
 
           <Panel icon="precision_manufacturing" title="Máquinas afectadas" bodyClassName="p-0">
-            <ul className="divide-y divide-outline-variant/15">
+            <ul className="divide-y divide-hairline">
               {machines.map((m) => {
                 const child = children.find((c) => c.machine_ids[0] === m!.machine_id);
                 return (

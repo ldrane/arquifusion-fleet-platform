@@ -35,10 +35,10 @@ function machineIcon(m: Machine, selected: boolean) {
   const html = alert
     ? `<div style="position:relative;width:${size}px;height:${size}px">
          <span class="af-ping" style="position:absolute;inset:0;border-radius:9999px;background:${color};opacity:.35"></span>
-         <span style="position:absolute;inset:0;border-radius:9999px;background:${color};border:2px solid #0f131d;box-shadow:0 0 12px ${color};display:flex;align-items:center;justify-content:center;color:#690005;font:700 12px 'Material Symbols Outlined'">priority_high</span>
+         <span style="position:absolute;inset:0;border-radius:9999px;background:${color};border:2px solid #0b0c10;box-shadow:0 0 12px ${color};display:flex;align-items:center;justify-content:center;color:#690005;font:700 12px 'Material Symbols Outlined'">priority_high</span>
          ${selected ? `<span style="position:absolute;inset:-6px;border:1.5px solid #adc6ff;border-radius:9999px"></span>` : ""}
        </div>`
-    : `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid #0f131d;box-shadow:0 0 6px ${color}${m.status === "silent" ? ";opacity:.7" : ""};${selected ? "outline:2px solid #adc6ff;outline-offset:2px" : ""}"></div>`;
+    : `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid #0b0c10;box-shadow:0 0 6px ${color}${m.status === "silent" ? ";opacity:.7" : ""};${selected ? "outline:2px solid #adc6ff;outline-offset:2px" : ""}"></div>`;
   const icon = L.divIcon({ className: "af-marker", html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
   iconCache.set(key, icon);
   return icon;
@@ -47,14 +47,14 @@ function machineIcon(m: Machine, selected: boolean) {
 const techIcon = (busy: boolean) =>
   L.divIcon({
     className: "af-marker",
-    html: `<div style="width:26px;height:26px;border-radius:8px;background:${busy ? "#ffb95f" : "#adc6ff"};color:#002e6a;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.6);border:2px solid #0f131d;font:400 15px 'Material Symbols Outlined'">engineering</div>`,
+    html: `<div style="width:26px;height:26px;border-radius:8px;background:${busy ? "#ffb95f" : "#adc6ff"};color:#002e6a;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.6);border:2px solid #0b0c10;font:400 15px 'Material Symbols Outlined'">engineering</div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 13],
   });
 
 const warehouseIcon = L.divIcon({
   className: "af-marker",
-  html: `<div style="width:22px;height:22px;border-radius:6px;background:#1c1f2a;color:#c2c6d6;display:flex;align-items:center;justify-content:center;border:1px solid #424754;font:400 14px 'Material Symbols Outlined'">warehouse</div>`,
+  html: `<div style="width:22px;height:22px;border-radius:6px;background:#16181e;color:#a3a8b4;display:flex;align-items:center;justify-content:center;border:1px solid #2e323b;font:400 14px 'Material Symbols Outlined'">warehouse</div>`,
   iconSize: [22, 22],
   iconAnchor: [11, 11],
 });
@@ -80,7 +80,7 @@ export type Basemap = keyof typeof BASEMAPS;
 const zoneLabel = (zone: string, hot: boolean) =>
   L.divIcon({
     className: "af-marker",
-    html: `<div style="transform:translate(-50%,-50%);display:inline-block;white-space:nowrap;padding:2px 8px;border-radius:9999px;background:rgba(10,14,24,.85);border:1px solid ${hot ? "#ffb4ab" : "#424754"};color:${hot ? "#ffb4ab" : "#c2c6d6"};font:600 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase">${zone}</div>`,
+    html: `<div style="transform:translate(-50%,-50%);display:inline-block;white-space:nowrap;padding:2px 8px;border-radius:9999px;background:rgba(10,14,24,.85);border:1px solid ${hot ? "#ffb4ab" : "#2e323b"};color:${hot ? "#ffb4ab" : "#a3a8b4"};font:600 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase">${zone}</div>`,
     iconSize: [0, 0],
   });
 
@@ -96,7 +96,7 @@ function MapControls({ layer, onLayer }: { layer: Basemap; onLayer: (l: Basemap)
   const btn = "flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container";
   return (
     <div className="leaflet-bottom leaflet-right" style={{ pointerEvents: "auto" }}>
-      <div ref={ref} className="leaflet-control mb-7 mr-3 flex items-center gap-1 rounded-full border border-outline-variant/30 bg-surface-container-lowest/90 p-1 shadow-md backdrop-blur-md">
+      <div ref={ref} className="leaflet-control mb-7 mr-3 flex items-center gap-1 rounded-full border border-hairline bg-surface-container-lowest/90 p-1 backdrop-blur-md">
         <button type="button" className={btn} title="Acercar" aria-label="Acercar" onClick={() => map.zoomIn()}>
           <span className="icon text-[18px]">add</span>
         </button>
@@ -188,10 +188,10 @@ export function FleetMap({
             center={z.center}
             radius={z.radius}
             pathOptions={{
-              color: hotZones.has(z.zone) ? "#ffb4ab" : "#8c909f",
+              color: hotZones.has(z.zone) ? "#ffb4ab" : "#6f7582",
               weight: 1.5,
               dashArray: "4 4",
-              fillColor: hotZones.has(z.zone) ? "#93000a" : "#1c1f2a",
+              fillColor: hotZones.has(z.zone) ? "#93000a" : "#16181e",
               fillOpacity: hotZones.has(z.zone) ? 0.14 : 0.1,
             }}
           />
@@ -242,7 +242,7 @@ export function FleetMap({
         {(filter !== "critical" ? technicians : []).map((t) => (
           <Marker key={t.technician_id} position={[t.location.lat, t.location.lon]} icon={techIcon(!t.available)} zIndexOffset={1200}>
             <Tooltip className="af-tooltip" direction="right" offset={[12, 0]}>
-              <b className="font-mono text-xs text-primary">{t.name}</b>
+              <b className="text-xs text-primary">{t.name}</b>
               <div className="text-[11px] text-on-surface-variant">
                 {t.technician_id} · {t.available ? "Disponible" : "Ocupado"} · carga {t.current_load}
               </div>

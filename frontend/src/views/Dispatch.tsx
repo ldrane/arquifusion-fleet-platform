@@ -53,9 +53,9 @@ function TechnicianDesk() {
     <>
       <section className="panel flex flex-wrap items-center justify-between gap-4 p-5">
         <div className="flex items-center gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 font-mono text-lg font-bold text-primary">{initials(self?.name ?? me?.user_id ?? "?")}</span>
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 font-mono text-lg font-semibold text-primary">{initials(self?.name ?? me?.user_id ?? "?")}</span>
           <div>
-            <h1 className="font-mono text-headline-md font-bold text-on-surface">{self?.name ?? me?.user_id}</h1>
+            <h1 className="font-mono text-headline-md font-semibold text-on-surface">{self?.name ?? me?.user_id}</h1>
             <p className="font-mono text-xs text-outline">
               {techId} · {self?.specialties.map((s) => SPECIALTY_LABEL[s]).join(" · ")} · turno {self?.shift === "night" ? "noche" : "día"} · carga {self?.current_load ?? 0}
             </p>
@@ -84,7 +84,7 @@ function TechnicianDesk() {
           ))}
         </div>
         <Panel icon="history" title="Mis últimos cierres" subtitle={`${done.length} incidentes resueltos`} bodyClassName="p-0">
-          <ul className="divide-y divide-outline-variant/15">
+          <ul className="divide-y divide-hairline">
             {done.slice(0, 10).map((i) => (
               <li key={i.incident_id}>
                 <Link to={`/incidentes/${i.incident_id}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-surface-container">
@@ -137,7 +137,7 @@ function DispatchBoard() {
       <section className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
         <Panel className="xl:col-span-7" icon="engineering" title="Técnicos en campo" subtitle="Ubicación, carga y rutas activas" bodyClassName="p-0">
           <FleetMap machines={machines.filter((m) => m.severity !== "info")} technicians={technicians} incidents={incidents} zone={zone} className="h-[360px] w-full" />
-          <div className="flex flex-wrap items-center gap-2 border-y border-outline-variant/20 bg-surface-container px-5 py-2.5">
+          <div className="flex flex-wrap items-center gap-2 border-y border-hairline bg-surface-container px-5 py-2.5">
             <select className="input w-auto py-1.5 text-xs" value={spec} onChange={(e) => setSpec(e.target.value as Specialty | "")} aria-label="Especialidad">
               <option value="">Todas las especialidades</option>
               {Object.entries(SPECIALTY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -147,12 +147,12 @@ function DispatchBoard() {
               Solo disponibles
             </label>
           </div>
-          <ul className="grid grid-cols-1 divide-y divide-outline-variant/15 md:grid-cols-2 md:divide-y-0">
+          <ul className="grid grid-cols-1 divide-y divide-hairline md:grid-cols-2 md:divide-y-0">
             {techs.map((t) => {
               const current = open.find((i) => i.assigned_technician_id === t.technician_id);
               return (
-                <li key={t.technician_id} className="flex items-center gap-3 border-outline-variant/15 px-5 py-3 md:border-b">
-                  <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-mono text-xs font-bold", t.available ? "bg-primary/15 text-primary" : "bg-tertiary/15 text-tertiary")}>
+                <li key={t.technician_id} className="flex items-center gap-3 border-hairline px-5 py-3 md:border-b">
+                  <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-mono text-xs font-semibold", t.available ? "bg-primary/15 text-primary" : "bg-tertiary/15 text-tertiary")}>
                     {initials(t.name)}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -170,7 +170,7 @@ function DispatchBoard() {
                   </span>
                   <span className="text-right">
                     <Badge tone={t.available ? "good" : "warn"}>{t.available ? "Libre" : "Ocupado"}</Badge>
-                    <span className="mt-1 block font-mono text-[11px] text-outline">carga {t.current_load}</span>
+                    <span className="mt-1 block text-[11px] text-outline">carga {t.current_load}</span>
                   </span>
                 </li>
               );
@@ -183,11 +183,11 @@ function DispatchBoard() {
           {pending.length === 0 ? (
             <Empty icon="done_all" title="Nada pendiente de asignar" />
           ) : (
-            <ul className="divide-y divide-outline-variant/15">
+            <ul className="divide-y divide-hairline">
               {pending.map((i) => (
                 <li key={i.incident_id} className="flex flex-col gap-2 px-5 py-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Link to={`/incidentes/${i.incident_id}`} className="font-mono text-sm font-bold text-on-surface hover:text-primary">
+                    <Link to={`/incidentes/${i.incident_id}`} className="font-mono text-sm font-semibold text-on-surface hover:text-primary">
                       {i.incident_id} · {i.machine_ids.length > 1 ? `${i.machine_ids.length} máquinas` : i.machine_ids[0]}
                     </Link>
                     <span className="flex items-center gap-1.5">

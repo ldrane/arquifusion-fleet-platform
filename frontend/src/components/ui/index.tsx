@@ -15,10 +15,10 @@ export function Icon({ name, className, fill }: { name: string; className?: stri
 
 // ------------------------------------------------------------------ severidad y estado
 const SEV_STYLE: Record<Severity, { chip: string; dot: string; text: string; border: string; icon: string }> = {
-  critical: { chip: "bg-error text-on-error", dot: "bg-error", text: "text-error", border: "border-l-error", icon: "error" },
-  high: { chip: "bg-error-container text-on-error-container", dot: "bg-error/80", text: "text-error", border: "border-l-error/70", icon: "warning" },
-  medium: { chip: "bg-tertiary-container/30 text-tertiary", dot: "bg-tertiary", text: "text-tertiary", border: "border-l-tertiary", icon: "report" },
-  low: { chip: "bg-primary/15 text-primary", dot: "bg-primary", text: "text-primary", border: "border-l-primary", icon: "info" },
+  critical: { chip: "bg-danger text-white", dot: "bg-error", text: "text-error", border: "border-l-error", icon: "error" },
+  high: { chip: "bg-error/[0.12] text-error", dot: "bg-error/80", text: "text-error", border: "border-l-error/70", icon: "warning" },
+  medium: { chip: "bg-tertiary/[0.12] text-tertiary", dot: "bg-tertiary", text: "text-tertiary", border: "border-l-tertiary", icon: "report" },
+  low: { chip: "bg-primary/[0.12] text-primary", dot: "bg-primary", text: "text-primary", border: "border-l-primary", icon: "info" },
   info: { chip: "bg-secondary/10 text-secondary", dot: "bg-secondary", text: "text-secondary", border: "border-l-secondary", icon: "check_circle" },
 };
 
@@ -58,10 +58,10 @@ export function StatusDot({ status, label = true }: { status: MachineStatus; lab
 
 const INC_STATUS_STYLE: Record<IncidentStatus, string> = {
   detected: "bg-error/15 text-error",
-  assigned: "bg-tertiary-container/30 text-tertiary",
+  assigned: "bg-tertiary/[0.12] text-tertiary",
   in_progress: "bg-primary/15 text-primary",
   resolved: "bg-secondary/15 text-secondary",
-  closed: "bg-surface-container-highest text-on-surface-variant",
+  closed: "bg-white/[0.05] text-on-surface-variant",
 };
 const INC_STATUS_ICON: Record<IncidentStatus, string> = {
   detected: "notification_important",
@@ -108,7 +108,8 @@ export function Panel({
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
-  icon?: string;
+  /** Nombre de Material Symbol o un nodo (p. ej. la mascota Arqui) */
+  icon?: string | ReactNode;
   iconTone?: "primary" | "error" | "tertiary" | "secondary";
   actions?: ReactNode;
   children: ReactNode;
@@ -116,19 +117,19 @@ export function Panel({
   bodyClassName?: string;
   id?: string;
 }) {
-  const tone = { primary: "bg-primary/10 text-primary", error: "bg-error/15 text-error", tertiary: "bg-tertiary/15 text-tertiary", secondary: "bg-secondary/10 text-secondary" }[iconTone];
+  const tone = { primary: "text-primary", error: "text-error", tertiary: "text-tertiary", secondary: "text-secondary" }[iconTone];
   return (
     <section id={id} className={cx("panel flex flex-col overflow-hidden", className)}>
       <header className="panel-header">
         <div className="flex min-w-0 items-center gap-2.5">
           {icon && (
-            <div className={cx("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", tone)}>
-              <Icon name={icon} className="text-[18px]" />
+            <div className={cx("flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-hairline bg-white/[0.03]", tone)}>
+              {typeof icon === "string" ? <Icon name={icon} className="text-[16px]" /> : icon}
             </div>
           )}
           <div className="min-w-0">
-            <h2 className="truncate font-mono text-sm font-bold leading-tight text-on-surface">{title}</h2>
-            {subtitle && <div className="truncate font-mono text-[11px] text-outline">{subtitle}</div>}
+            <h2 className="truncate text-sm font-semibold leading-tight tracking-tight text-on-surface">{title}</h2>
+            {subtitle && <div className="mt-0.5 truncate text-xs text-outline">{subtitle}</div>}
           </div>
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -158,23 +159,26 @@ export function KpiCard({
   footer?: ReactNode;
 }) {
   const valueTone = { neutral: "text-on-surface", good: "text-on-surface", bad: "text-error", warn: "text-tertiary", info: "text-on-surface" }[tone];
-  const border = { neutral: "hover:border-primary/40", good: "hover:border-secondary/40", bad: "border-error/30 hover:border-error", warn: "hover:border-tertiary/40", info: "hover:border-primary/40" }[tone];
+  const border = { neutral: "border-hairline", good: "border-hairline", bad: "border-error/25", warn: "border-hairline", info: "border-hairline" }[tone];
   const unitTone = { neutral: "text-primary", good: "text-secondary", bad: "text-error", warn: "text-tertiary", info: "text-primary" }[tone];
+  const ambient = { neutral: "tone-info", good: "tone-good", bad: "tone-critical", warn: "tone-warn", info: "tone-info" }[tone];
   return (
-    <div className={cx("flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface-container-low p-5 shadow-sm transition-all", border)}>
+    <div className={cx("ambient flex flex-col justify-between rounded-xl border bg-surface-container-low p-5 transition-[border-color,background-color,transform] duration-300 spring hover:-translate-y-px hover:border-hairline-strong", ambient, border)}>
       <div className="flex items-start justify-between gap-2">
         <span className="label">{label}</span>
         {badge}
       </div>
       <div className="my-4">
         <div className="flex items-baseline gap-2">
-          <span className={cx("font-mono text-3xl font-bold", valueTone)}>{value}</span>
-          {unit && <span className={cx("font-mono text-xs font-semibold", unitTone)}>{unit}</span>}
+          <span key={String(value)} className={cx("metric-tick text-[32px] font-semibold leading-none tracking-[-0.035em] tabular-nums", valueTone)}>
+            {value}
+          </span>
+          {unit && <span className={cx("text-xs font-medium", unitTone)}>{unit}</span>}
           {delta}
         </div>
-        {description && <p className="mt-1 text-xs text-on-surface-variant">{description}</p>}
+        {description && <p className="mt-2 text-xs leading-relaxed text-on-surface-variant">{description}</p>}
       </div>
-      {footer && <div className="flex items-center justify-between gap-2 border-t border-outline-variant/20 pt-2 font-mono text-xs text-outline">{footer}</div>}
+      {footer && <div className="flex items-center justify-between gap-2 border-t border-hairline pt-3 text-xs text-outline">{footer}</div>}
     </div>
   );
 }
@@ -182,10 +186,10 @@ export function KpiCard({
 export function Badge({ tone = "neutral", children, pulse }: { tone?: "good" | "bad" | "warn" | "info" | "neutral"; children: ReactNode; pulse?: boolean }) {
   const t = {
     good: "bg-secondary/10 text-secondary",
-    bad: "bg-error-container text-error",
+    bad: "bg-error/10 text-error",
     warn: "bg-tertiary-container/30 text-tertiary",
     info: "bg-primary/10 text-primary",
-    neutral: "bg-surface-container-highest text-on-surface-variant",
+    neutral: "bg-white/[0.05] text-on-surface-variant",
   }[tone];
   const d = { good: "bg-secondary", bad: "bg-error", warn: "bg-tertiary", info: "bg-primary", neutral: "bg-outline" }[tone];
   return (
@@ -205,21 +209,22 @@ type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export function Button({ variant = "secondary", icon, busy, size = "md", className, children, disabled, ...rest }: BtnProps) {
+  // Primario claro sobre oscuro (estilo Vercel/Apple); acentos de color solo para acciones con significado
   const v = {
-    primary: "bg-primary text-on-primary hover:bg-primary-fixed shadow-sm",
-    secondary: "bg-surface-container-high text-on-surface hover:bg-surface-bright border border-outline-variant/30",
-    danger: "bg-error text-on-error hover:bg-on-error-container shadow-[0_0_12px_rgba(255,180,171,0.25)]",
-    success: "bg-secondary text-on-secondary hover:bg-secondary-fixed",
-    ghost: "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+    primary: "bg-on-surface text-background hover:bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]",
+    secondary: "border border-hairline-strong bg-white/[0.04] text-on-surface hover:border-white/20 hover:bg-white/[0.07]",
+    danger: "bg-danger text-white hover:bg-danger-hover shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]",
+    success: "bg-secondary-container text-white hover:bg-[#00b37c] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]",
+    ghost: "text-on-surface-variant hover:bg-white/[0.06] hover:text-on-surface",
   }[variant];
-  const s = size === "sm" ? "px-2.5 py-1.5 text-xs" : "px-4 py-2 text-xs";
+  const s = size === "sm" ? "h-7 px-2.5 text-xs" : "h-8 px-3.5 text-[13px]";
   return (
     <button
       type="button"
       {...rest}
       disabled={disabled || busy}
       className={cx(
-        "inline-flex items-center justify-center gap-1.5 rounded-xl font-mono font-semibold transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-medium transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40",
         v,
         s,
         className,
@@ -254,8 +259,10 @@ export function Loading({ label = "Cargando…" }: { label?: string }) {
 export function Empty({ icon = "inbox", title, children }: { icon?: string; title: string; children?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center">
-      <Icon name={icon} className="text-[32px] text-outline" />
-      <p className="font-mono text-sm font-semibold text-on-surface">{title}</p>
+      <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-hairline bg-white/[0.03]">
+        <Icon name={icon} className="text-[20px] text-outline" />
+      </span>
+      <p className="mt-1 text-sm font-medium text-on-surface">{title}</p>
       {children && <div className="max-w-md text-xs text-on-surface-variant">{children}</div>}
     </div>
   );
@@ -263,7 +270,7 @@ export function Empty({ icon = "inbox", title, children }: { icon?: string; titl
 
 export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   return (
-    <div role="alert" className="flex items-start gap-3 rounded-xl border border-error/30 bg-error-container/20 p-3 text-sm text-on-error-container">
+    <div role="alert" className="flex items-start gap-3 rounded-lg border border-error/25 bg-error/[0.06] p-3 text-sm text-on-error-container">
       <Icon name="error" className="mt-0.5 text-[18px] text-error" />
       <div className="flex-1">{errorMessage(error)}</div>
       {onRetry && (
@@ -277,9 +284,9 @@ export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => v
 
 export function Stat({ label, value, tone }: { label: string; value: ReactNode; tone?: string }) {
   return (
-    <div className="rounded-xl bg-surface-container-lowest p-2.5 text-center">
-      <span className="block font-mono text-[11px] text-outline">{label}</span>
-      <span className={cx("font-mono text-sm font-bold", tone ?? "text-on-surface")}>{value}</span>
+    <div className="rounded-lg border border-hairline bg-white/[0.02] p-2.5 text-center">
+      <span className="block text-[11px] text-outline">{label}</span>
+      <span className={cx("text-sm font-semibold tabular-nums", tone ?? "text-on-surface")}>{value}</span>
     </div>
   );
 }

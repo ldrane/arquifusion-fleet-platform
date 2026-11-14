@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { can } from "@/auth/permissions";
 import { CLASS_LABEL, FuelDeviationChart, ProductivityMatrix } from "@/components/charts/Charts";
+import { Arqui } from "@/components/brand/Arqui";
 import { Badge, Empty, ErrorBox, Icon, KpiCard, Loading, Panel, Segmented } from "@/components/ui";
 import { fmt1, fmtDateTime, fmtSigned, ZONE_LABEL } from "@/lib/format";
 import { api } from "@/services";
@@ -34,7 +35,7 @@ export function Efficiency() {
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-mono text-headline-md font-bold text-on-surface">Eficiencia operativa</h1>
+          <h1 className="text-headline-md font-semibold text-on-surface">Eficiencia operativa</h1>
           <p className="font-mono text-xs text-outline">{ZONE_LABEL(zone)} · AnalisisDiario (A7) · KPIs, combustible y productividad</p>
         </div>
         <Segmented label="Periodo" value={period} onChange={setPeriod} options={[{ value: "7d", label: "Últimos 7 días" }, { value: "30d", label: "Últimos 30 días" }]} />
@@ -55,7 +56,7 @@ export function Efficiency() {
         <Panel icon="summarize" title="Resumen gerencial IA" subtitle={report.data ? `Generado ${fmtDateTime(report.data.generated_at)} · ${report.data.prompt_version}` : "GET /reports/latest"}>
           {report.error ? <ErrorBox error={report.error} onRetry={report.refetch} /> : !report.data ? <Loading /> : (
             <div className="flex gap-3">
-              <Icon name="smart_toy" className="mt-0.5 text-[22px] text-primary" />
+              <Arqui className="h-8 w-8" />
               <p className="text-sm leading-relaxed text-on-surface">{report.data.summary_text}</p>
             </div>
           )}
@@ -76,7 +77,7 @@ export function Efficiency() {
             <div className="max-h-[420px] overflow-auto scroll-thin">
               <table className="w-full text-left text-xs">
                 <thead className="table-head"><tr><th className="px-3 py-2">Máquina</th><th className="px-3 py-2 text-right">L/h</th><th className="px-3 py-2 text-right">L/t</th><th className="px-3 py-2 text-right">vs pares</th><th className="px-3 py-2 text-right">vs historial</th><th className="px-3 py-2">Causas probables</th></tr></thead>
-                <tbody className="divide-y divide-outline-variant/15">
+                <tbody className="divide-y divide-hairline">
                   {fuel.data.map((f) => (
                     <tr key={f.machine_id}>
                       <td className="px-3 py-2 font-mono font-semibold"><Link to={`/salud/${f.machine_id}`} className="hover:text-primary">{f.machine_id}</Link>{f.progressive_increase && <Icon name="trending_up" className="ml-1 align-middle text-[14px] text-tertiary" />}</td>
@@ -110,11 +111,11 @@ export function Efficiency() {
             <div className="max-h-[420px] overflow-auto scroll-thin">
               <table className="w-full text-left text-xs">
                 <thead className="table-head"><tr><th className="px-3 py-2">Máquina</th><th className="px-3 py-2">Zona</th><th className="px-3 py-2 text-right">Utilización</th><th className="px-3 py-2 text-right">USD/h</th><th className="px-3 py-2">Clase</th></tr></thead>
-                <tbody className="divide-y divide-outline-variant/15">
+                <tbody className="divide-y divide-hairline">
                   {[...prod.data].sort((a, b) => b.utilization_pct - a.utilization_pct).map((p) => (
                     <tr key={p.machine_id}>
                       <td className="px-3 py-2 font-mono font-semibold">{p.machine_id}</td>
-                      <td className="px-3 py-2 font-mono capitalize text-on-surface-variant">{p.zone}</td>
+                      <td className="px-3 py-2 capitalize text-on-surface-variant">{p.zone}</td>
                       <td className="px-3 py-2 text-right font-mono">{fmt1(p.utilization_pct)}%</td>
                       <td className="px-3 py-2 text-right font-mono">{fmt1(p.cost_per_hour_usd)}</td>
                       <td className="px-3 py-2">{CLASS_LABEL[p.classification]}</td>
@@ -131,9 +132,9 @@ export function Efficiency() {
         {suggestions.length === 0 ? (
           <Empty icon="balance" title="La carga está equilibrada" />
         ) : (
-          <ul className="grid grid-cols-1 divide-y divide-outline-variant/15 md:grid-cols-2 md:divide-y-0">
+          <ul className="grid grid-cols-1 divide-y divide-hairline md:grid-cols-2 md:divide-y-0">
             {suggestions.slice(0, 10).map((p) => (
-              <li key={p.machine_id} className="flex items-center gap-3 border-outline-variant/15 px-5 py-3 md:border-b">
+              <li key={p.machine_id} className="flex items-center gap-3 border-hairline px-5 py-3 md:border-b">
                 <Badge tone="warn">{fmt1(p.utilization_pct)}%</Badge>
                 <span className="font-mono text-sm font-semibold text-on-surface">{p.machine_id}</span>
                 <span className="flex-1 text-xs text-on-surface-variant">{p.redistribution_suggestion}</span>

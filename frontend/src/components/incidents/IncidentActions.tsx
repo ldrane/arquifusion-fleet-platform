@@ -179,7 +179,7 @@ function ResolveDialog({
                   type="button"
                   aria-pressed={on}
                   onClick={() => setParts((p) => (on ? p.filter((x) => x !== c.component_id) : [...p, c.component_id]))}
-                  className={cx("rounded-lg border px-2 py-1 text-left text-[11px]", on ? "border-primary bg-primary/15 text-primary" : "border-outline-variant/40 text-on-surface-variant hover:border-outline")}
+                  className={cx("rounded-lg border px-2 py-1 text-left text-[11px]", on ? "border-primary bg-primary/15 text-primary" : "border-hairline text-on-surface-variant hover:border-outline")}
                 >
                   <span className="font-mono">{c.component_id}</span> {c.name}
                 </button>
@@ -240,7 +240,7 @@ function AssignDialog({ incident, busy, onClose, onSubmit }: { incident: Inciden
                 onClick={() => setSelected(c.technician_id)}
                 className={cx(
                   "flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-colors disabled:opacity-50",
-                  selected === c.technician_id ? "border-primary bg-primary/10" : "border-outline-variant/30 hover:border-outline",
+                  selected === c.technician_id ? "border-primary bg-primary/10" : "border-hairline hover:border-outline",
                 )}
               >
                 <span className="w-5 font-mono text-xs text-outline">{i + 1}</span>
@@ -254,7 +254,7 @@ function AssignDialog({ incident, busy, onClose, onSubmit }: { incident: Inciden
                   </span>
                 </span>
                 <span className="text-right font-mono text-xs">
-                  <span className="block font-bold text-primary">{c.score.toFixed(2)}</span>
+                  <span className="block font-semibold text-primary">{c.score.toFixed(2)}</span>
                   <span className="text-outline">ETA {t.eta_minutes ?? c.eta_min} min</span>
                 </span>
               </button>

@@ -52,7 +52,7 @@ export const NAV: NavItem[] = [
   { path: "/inventario", label: "Inventario y Repuestos", icon: "inventory_2", caps: ["inventory"] },
   { path: "/eficiencia", label: "Eficiencia y Combustible", icon: "local_gas_station", caps: ["fuel"] },
   { path: "/incidentes", label: "Historial de Incidentes", icon: "history_toggle_off", caps: ["incidents"] },
-  { path: "/asistente", label: "Asistente IA", icon: "smart_toy", caps: ["assistant"] },
+  { path: "/asistente", label: "Arqui · Asistente IA", icon: "arqui", caps: ["assistant"] }, // icon "arqui" = mascota SVG
 ];
 
 export function navFor(role: Role | null | undefined): NavItem[] {
