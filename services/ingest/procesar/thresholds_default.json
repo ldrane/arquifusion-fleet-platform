@@ -392,5 +392,307 @@
         "crit_low": 1340.0
       }
     }
+  },
+  "nominal": {
+    "CAT-336": {
+      "temperature_c": [
+        88.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        4.0,
+        0.6
+      ],
+      "pressure_bar": [
+        300.0,
+        15.0
+      ],
+      "fuel_rate_lph": [
+        38.0,
+        4.0
+      ],
+      "load_pct": [
+        70.0,
+        10.0
+      ],
+      "speed_kmh": [
+        3.0,
+        1.5
+      ],
+      "rpm": [
+        1800.0,
+        80.0
+      ]
+    },
+    "CAT-793F": {
+      "temperature_c": [
+        92.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        3.5,
+        0.5
+      ],
+      "pressure_bar": [
+        180.0,
+        10.0
+      ],
+      "fuel_rate_lph": [
+        170.0,
+        12.0
+      ],
+      "load_pct": [
+        75.0,
+        15.0
+      ],
+      "speed_kmh": [
+        30.0,
+        8.0
+      ],
+      "rpm": [
+        1700.0,
+        90.0
+      ]
+    },
+    "CAT-994K": {
+      "temperature_c": [
+        90.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        4.2,
+        0.6
+      ],
+      "pressure_bar": [
+        280.0,
+        15.0
+      ],
+      "fuel_rate_lph": [
+        160.0,
+        10.0
+      ],
+      "load_pct": [
+        70.0,
+        12.0
+      ],
+      "speed_kmh": [
+        10.0,
+        4.0
+      ],
+      "rpm": [
+        1850.0,
+        80.0
+      ]
+    },
+    "CAT-D10T": {
+      "temperature_c": [
+        91.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        5.0,
+        0.7
+      ],
+      "pressure_bar": [
+        250.0,
+        12.0
+      ],
+      "fuel_rate_lph": [
+        70.0,
+        6.0
+      ],
+      "load_pct": [
+        68.0,
+        12.0
+      ],
+      "speed_kmh": [
+        6.0,
+        2.0
+      ],
+      "rpm": [
+        1900.0,
+        80.0
+      ]
+    },
+    "EPI-PV271": {
+      "temperature_c": [
+        87.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        6.0,
+        0.8
+      ],
+      "pressure_bar": [
+        350.0,
+        20.0
+      ],
+      "fuel_rate_lph": [
+        90.0,
+        7.0
+      ],
+      "load_pct": [
+        65.0,
+        12.0
+      ],
+      "speed_kmh": [
+        1.5,
+        0.8
+      ],
+      "rpm": [
+        1800.0,
+        70.0
+      ]
+    },
+    "KOM-930E": {
+      "temperature_c": [
+        93.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        3.6,
+        0.5
+      ],
+      "pressure_bar": [
+        185.0,
+        10.0
+      ],
+      "fuel_rate_lph": [
+        190.0,
+        14.0
+      ],
+      "load_pct": [
+        75.0,
+        15.0
+      ],
+      "speed_kmh": [
+        28.0,
+        8.0
+      ],
+      "rpm": [
+        1750.0,
+        90.0
+      ]
+    },
+    "KOM-D375A": {
+      "temperature_c": [
+        91.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        5.2,
+        0.7
+      ],
+      "pressure_bar": [
+        255.0,
+        12.0
+      ],
+      "fuel_rate_lph": [
+        75.0,
+        6.0
+      ],
+      "load_pct": [
+        68.0,
+        12.0
+      ],
+      "speed_kmh": [
+        6.0,
+        2.0
+      ],
+      "rpm": [
+        1900.0,
+        80.0
+      ]
+    },
+    "KOM-PC2000": {
+      "temperature_c": [
+        90.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        4.5,
+        0.6
+      ],
+      "pressure_bar": [
+        320.0,
+        15.0
+      ],
+      "fuel_rate_lph": [
+        110.0,
+        8.0
+      ],
+      "load_pct": [
+        72.0,
+        10.0
+      ],
+      "speed_kmh": [
+        2.5,
+        1.2
+      ],
+      "rpm": [
+        1800.0,
+        80.0
+      ]
+    },
+    "KOM-WA900": {
+      "temperature_c": [
+        89.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        4.1,
+        0.6
+      ],
+      "pressure_bar": [
+        270.0,
+        15.0
+      ],
+      "fuel_rate_lph": [
+        120.0,
+        9.0
+      ],
+      "load_pct": [
+        70.0,
+        12.0
+      ],
+      "speed_kmh": [
+        10.0,
+        4.0
+      ],
+      "rpm": [
+        1800.0,
+        80.0
+      ]
+    },
+    "SAN-DR412i": {
+      "temperature_c": [
+        86.0,
+        3.0
+      ],
+      "vibration_mm_s": [
+        5.8,
+        0.8
+      ],
+      "pressure_bar": [
+        340.0,
+        20.0
+      ],
+      "fuel_rate_lph": [
+        85.0,
+        7.0
+      ],
+      "load_pct": [
+        65.0,
+        12.0
+      ],
+      "speed_kmh": [
+        1.5,
+        0.8
+      ],
+      "rpm": [
+        1800.0,
+        70.0
+      ]
+    }
   }
 }

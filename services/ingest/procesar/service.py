@@ -27,7 +27,7 @@ from arquifusion_ml.lake import flatten_reading
 from arquifusion_shared.observability import logger, metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from ingest_procesar import rules, scoring
-from ingest_procesar.baseline import Baseline, zscores
+from ingest_procesar.baseline import Baseline, standardize, zscores
 from ingest_procesar.message import InvalidMessage, parse
 
 EVENT_SOURCE = "arquifusion.processor"
@@ -211,8 +211,14 @@ class Processor:
         # El baseline describe la máquina OPERANDO: en espera, detenida o en mantenimiento las variables caen
         # (rpm 750, presión 0) y compararlas contra él daría z enormes sin que haya falla (#2).
         operating = reading.get("state", "operating") == "operating"
+        # Cohorte (tipo + zona, contratos.md §9) en unidades estandarizadas por el nominal de cada modelo: así
+        # un CAT-336 y un KOM-PC2000 de la misma zona son comparables y un desvío común de zona (RF-12) se nota.
+        nominal = self._thresholds.nominal(reading.get("model"))
+        cohort_values = standardize(values, nominal)
         if operating:
-            z_own, z_cohort = zscores(own, values, warmup), zscores(cohort, values, warmup)
+            z_own = zscores(own, values, warmup, {v: sd for v, (_mu, sd) in nominal.items()})
+            z_cohort = zscores(cohort, cohort_values, warmup, {v: 1.0 for v in cohort_values})
+            z_cohort = {v: z_cohort.get(v, 0.0) for v in values}
         else:
             z_own = z_cohort = {v: 0.0 for v in values}
         ml = self._score_ml(reading)
@@ -221,7 +227,7 @@ class Processor:
         # Las lecturas en alerta no alimentan el baseline: una falla no debe volverse "normal".
         if operating and not scoring.is_alert(assessment.severity):
             own.update(values, self._s.ewma_alpha)
-            cohort.update(values, self._s.ewma_alpha)
+            cohort.update(cohort_values, self._s.ewma_alpha)
         for key, baseline in ((own_key, own), (cohort_key, cohort)):
             state[key] = dirty[key] = {"pk": key[0], "sk": key[1], "stats": baseline.to_item()}
 

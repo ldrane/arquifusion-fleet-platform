@@ -1,1 +1,6 @@
+# En Lambda: Powertools llega por la layer pública de AWS; google-auth por la layer de C
+# (scripts/build_query_layer.sh -> build/layer-c-gcp.zip). boto3 y urllib3 ya vienen en el runtime python3.12.
 aws-lambda-powertools[tracer]==3.*
+# Custom token de Firebase (firma RS256 local) y access token para Firestore REST.
+# Se eligió google-auth (~1 MB con rsa/pyasn1/cachetools) en vez de firebase-admin (~60 MB con grpc).
+google-auth>=2.30,<3

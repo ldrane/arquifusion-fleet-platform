@@ -10,6 +10,7 @@ Fuente, en orden (contratos.md §9):
    derivados y no pisa cambios manuales).
 2. `thresholds_default.json` (generado desde `contracts/fixtures/seed/machine_models.json`):
    `models.<model>` y, si el modelo no existe, `types.<machine_type>` (el umbral más permisivo de su tipo).
+   `nominal.<model>` guarda además [μ, σ] para la capa 2 (piso de σ y cohorte estandarizada).
 
 Formato de un juego de umbrales: {"<variable>": {"warn_high", "crit_high", "warn_low"?, "crit_low"?}}
 Regenerar los defaults: `python services/ingest/procesar/ingest_procesar/rules.py`.
@@ -62,7 +63,12 @@ def build_defaults(machine_models: list[dict]) -> dict:
             current = merged.setdefault(variable, dict(limits))
             for key, value in limits.items():
                 current[key] = max(current[key], value) if key.endswith("_high") else min(current[key], value)
-    return {"models": dict(sorted(models.items())), "types": dict(sorted(types.items()))}
+    nominal = {m["model_id"]: {v: [float(x) for x in ms] for v, ms in m["nominal"].items()} for m in machine_models}
+    return {
+        "models": dict(sorted(models.items())),
+        "types": dict(sorted(types.items())),
+        "nominal": dict(sorted(nominal.items())),
+    }
 
 
 def evaluate(reading: dict, thresholds: dict) -> list[RuleHit]:
@@ -100,6 +106,10 @@ class ThresholdProvider:
         self._clock = clock
         self._cache: dict[str, tuple[float, dict]] = {}
         self._defaults = defaults or json.loads(DEFAULTS_FILE.read_text())
+
+    def nominal(self, model: str | None) -> dict[str, tuple[float, float]]:
+        """`nominal` {variable: (μ, σ)} del modelo según el seed; vacío si el modelo no existe."""
+        return {v: (ms[0], ms[1]) for v, ms in self._defaults.get("nominal", {}).get(model or "", {}).items()}
 
     def default_for(self, model: str | None, machine_type: str | None = None) -> dict:
         return self._defaults["models"].get(model or "") or self._defaults["types"].get(machine_type or "", {})
