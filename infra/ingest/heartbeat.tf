@@ -27,16 +27,17 @@ resource "aws_cloudwatch_log_group" "heartbeat" {
 }
 
 resource "aws_lambda_function" "heartbeat" {
-  function_name    = local.heartbeat_name
-  description      = "Marca máquinas silenciosas y emite MachineSilent (OBS-09)"
-  role             = local.lab_role
-  runtime          = "python3.12"
-  handler          = "handler.handler"
-  filename         = data.archive_file.heartbeat.output_path
-  source_code_hash = data.archive_file.heartbeat.output_base64sha256
-  layers           = [aws_lambda_layer_version.common.arn]
-  memory_size      = 256
-  timeout          = 120
+  function_name                  = local.heartbeat_name
+  description                    = "Marca máquinas silenciosas y emite MachineSilent (OBS-09)"
+  role                           = local.lab_role
+  runtime                        = "python3.12"
+  handler                        = "handler.handler"
+  filename                       = data.archive_file.heartbeat.output_path
+  source_code_hash               = data.archive_file.heartbeat.output_base64sha256
+  layers                         = [aws_lambda_layer_version.common.arn]
+  memory_size                    = 256
+  timeout                        = 120
+  reserved_concurrent_executions = var.reserved_concurrency["heartbeat"] # tope AWS Academy
 
   tracing_config {
     mode = "Active"

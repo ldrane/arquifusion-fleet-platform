@@ -31,7 +31,7 @@ export function MachineDetail() {
   const { me } = useAuth();
   const live = useFleet().machines.find((m) => m.machine_id === id);
   const [range, setRange] = useViewState<RangeKey>("machine.range", "6h");
-  const detail = useQuery(`machine:${id}`, () => api.getMachine(id), { staleMs: 5000, refreshMs: 8_000 });
+  const detail = useQuery(`machine:${id}`, () => api.getMachine(id), { staleMs: 5000, refreshMs: 15_000 });
   // La ventana se redondea al minuto para que la clave de caché sea estable entre renders
   const to = Math.floor(Date.now() / 60_000) * 60_000;
   const from = to - RANGES[range].ms;

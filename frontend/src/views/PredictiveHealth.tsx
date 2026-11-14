@@ -16,7 +16,7 @@ type SortKey = "health" | "id" | "last_seen";
 
 function MlModelCard() {
   const { me } = useAuth();
-  const q = useQuery("ml:model", () => api.mlModel(), { staleMs: 5_000, refreshMs: 10_000 });
+  const q = useQuery("ml:model", () => api.mlModel(), { staleMs: 10_000, refreshMs: 15_000 });
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const retrain = async () => {

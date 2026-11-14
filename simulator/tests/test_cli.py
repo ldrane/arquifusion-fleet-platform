@@ -44,7 +44,7 @@ def test_default_rate_follows_expected_interval(tmp_path):
     main(["stream", "--duration", "3", "--dry-run", "--out", str(out)])
     lines = [json.loads(line) for line in out.read_text().splitlines()]
     timestamps = sorted({r["timestamp"] for b in lines for r in b["readings"]})
-    assert len(timestamps) == 6  # 2 lecturas por máquina por minuto (cada 30 s; expected_interval_s = 60)
+    assert len(timestamps) == 3  # 1 lectura por máquina por minuto (= expected_interval_s 60; cuida la concurrencia)
 
 
 def test_history_accepts_days_suffix():

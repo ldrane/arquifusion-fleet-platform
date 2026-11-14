@@ -35,3 +35,13 @@ variable "alarms_enabled" {
   type        = bool
   default     = true
 }
+
+# Presupuesto de concurrencia (AWS Academy: <=10 Lambdas en paralelo, RNF-costo). Ver docs/concurrencia-lambda.md.
+variable "reserved_concurrency" {
+  description = "Concurrencia reservada por Lambda (clave = local.functions). replicar=2 cubre 3 streams de 1 shard con reintentos."
+  type        = map(number)
+  default = {
+    api_lectura = 2
+    replicar    = 2
+  }
+}

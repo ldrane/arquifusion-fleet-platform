@@ -120,6 +120,8 @@ resource "aws_lambda_function" "fn" {
   timeout          = each.value.timeout
   layers           = [nonsensitive(data.aws_ssm_parameter.powertools.value), aws_lambda_layer_version.gcp.arn]
 
+  reserved_concurrent_executions = lookup(var.reserved_concurrency, each.key, 1) # tope AWS Academy
+
   # Fuera de la VPC: firebase-token y replicar salen a Firestore (GCP) y la VPC no tiene NAT (contratos.md §7).
   tracing_config {
     mode = "Active"

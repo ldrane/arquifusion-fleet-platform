@@ -18,7 +18,7 @@ export function Efficiency() {
   const [view, setView] = useViewState<"chart" | "table">("ef.fuelView", "chart");
   const [prodView, setProdView] = useViewState<"chart" | "table">("ef.prodView", "chart");
   const q = { ...(zone ? { zone } : {}), period };
-  const kpis = useQuery(`kpis:${zone}:${period}`, () => api.kpis(q), { staleMs: 10_000, refreshMs: 15_000 });
+  const kpis = useQuery(`kpis:${zone}:${period}`, () => api.kpis(q), { staleMs: 20_000, refreshMs: 30_000 });
   const fuel = useQuery(`fuel:${zone}:${period}`, () => api.fuel(q), { staleMs: 60_000 });
   const prod = useQuery(`prod:${zone}:${period}`, () => api.productivity(q), { staleMs: 60_000 });
   const report = useQuery(can(role, "report") ? "report:daily" : null, () => api.latestReport("daily"), { staleMs: 120_000 });

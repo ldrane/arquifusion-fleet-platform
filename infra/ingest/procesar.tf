@@ -15,14 +15,15 @@ resource "aws_cloudwatch_log_group" "procesar" {
 }
 
 resource "aws_lambda_function" "procesar" {
-  function_name = local.procesar_name
-  description   = "Detección de anomalías en telemetría (RF-02, RF-09)"
-  role          = local.lab_role
-  package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.ml.repository_url}:procesar-${var.image_tag}"
-  architectures = ["x86_64"]
-  memory_size   = 1024
-  timeout       = 55 # < visibilidad de la cola (60 s)
+  function_name                  = local.procesar_name
+  description                    = "Detección de anomalías en telemetría (RF-02, RF-09)"
+  role                           = local.lab_role
+  package_type                   = "Image"
+  image_uri                      = "${aws_ecr_repository.ml.repository_url}:procesar-${var.image_tag}"
+  architectures                  = ["x86_64"]
+  memory_size                    = 1024
+  timeout                        = 55                                   # < visibilidad de la cola (60 s)
+  reserved_concurrent_executions = var.reserved_concurrency["procesar"] # tope AWS Academy (= maximum_concurrency SQS)
 
   tracing_config {
     mode = "Active"
@@ -51,7 +52,7 @@ resource "aws_lambda_event_source_mapping" "procesar_sqs" {
   function_response_types            = ["ReportBatchItemFailures"]
 
   scaling_config {
-    maximum_concurrency = 10 # acota el costo y la presión sobre DynamoDB en picos
+    maximum_concurrency = var.reserved_concurrency["procesar"] # = reservada: SQS nunca sobre-invoca (sin throttles -> sin DLQ). Mínimo de SQS: 2
   }
 }
 

@@ -71,16 +71,17 @@ resource "aws_cloudwatch_log_group" "ia_gemini" {
 }
 
 resource "aws_lambda_function" "ia_gemini" {
-  function_name    = local.ia_gemini_name
-  description      = "Cliente LLM (Gemini o Bedrock) con fallback determinista (RF-02.6, RF-14)"
-  role             = local.lab_role
-  runtime          = "python3.12"
-  handler          = "handler.handler"
-  filename         = data.archive_file.ia_gemini.output_path
-  source_code_hash = data.archive_file.ia_gemini.output_base64sha256
-  layers           = [aws_lambda_layer_version.common.arn]
-  memory_size      = 512
-  timeout          = 30 # API Gateway corta a los 29 s; LLM_TIMEOUT_S por llamada y deadline de 20 s en el asistente
+  function_name                  = local.ia_gemini_name
+  description                    = "Cliente LLM (Gemini o Bedrock) con fallback determinista (RF-02.6, RF-14)"
+  role                           = local.lab_role
+  runtime                        = "python3.12"
+  handler                        = "handler.handler"
+  filename                       = data.archive_file.ia_gemini.output_path
+  source_code_hash               = data.archive_file.ia_gemini.output_base64sha256
+  layers                         = [aws_lambda_layer_version.common.arn]
+  memory_size                    = 512
+  timeout                        = 30                                    # API Gateway corta a los 29 s; LLM_TIMEOUT_S por llamada y deadline de 20 s en el asistente
+  reserved_concurrent_executions = var.reserved_concurrency["ia_gemini"] # tope AWS Academy
 
   tracing_config {
     mode = "Active"

@@ -17,10 +17,10 @@ from simulator.sender import TelemetrySender, batches
 # Cadencia por defecto: 2 lecturas por cada `expected_interval_s` del seed (60 s -> cada 30 s). Antes era 1 (cada 60 s).
 # Enviar más seguido que el intervalo esperado es inocuo para heartbeat (silencio = 3 × 60 s) y deja ver los cambios
 # en el mapa y en la detección el doble de rápido. Costo: el doble de requests/escrituras SOLO mientras corre el stream.
-DEFAULT_READINGS_PER_INTERVAL = 2.0
+DEFAULT_READINGS_PER_INTERVAL = 1.0  # cuida la concurrencia de Lambda (AWS Academy); --rate 2 para la demo rápida
 # Aceleración por defecto del escenario: 240 (1 min real = 4 h simuladas; la degradación de 48 h llega al máximo en
 # 12 min). Antes 60 (48 min reales): demasiado lento para la demo.
-DEFAULT_SPEEDUP = 240.0
+DEFAULT_SPEEDUP = 60.0
 
 
 def _days(value: str) -> int:
@@ -49,14 +49,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--rate",
         type=float,
         default=None,
-        help="lecturas por máquina por minuto (default: 2 × 60 / expected_interval_s del seed = 2, cada 30 s)",
+        help="lecturas por máquina por minuto (default: 60 / expected_interval_s del seed = 1, cada 60 s)",
     )
     stream.add_argument("--duration", type=float, default=0, help="minutos a simular; 0 = sin fin")
     stream.add_argument(
         "--speedup",
         type=float,
         default=DEFAULT_SPEEDUP,
-        help="aceleración del escenario (default 240: 1 min real = 4 h simuladas)",
+        help="aceleración del escenario (default 60: 1 min real = 1 h simulada; --speedup 240 para la demo rápida)",
     )
     stream.add_argument("--dry-run", action="store_true", help="no envía: imprime los lotes como JSON")
     stream.add_argument("--out", type=Path, help="con --dry-run, guarda los lotes en este archivo JSONL")

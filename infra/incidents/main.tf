@@ -214,6 +214,8 @@ resource "aws_lambda_function" "fn" {
   timeout          = each.value.timeout
   layers           = [nonsensitive(data.aws_ssm_parameter.powertools.value)]
 
+  reserved_concurrent_executions = lookup(var.reserved_concurrency, each.key, 1) # tope AWS Academy
+
   # Fuera de VPC: llaman a Step Functions, SNS y GCP (sin NAT).
   tracing_config {
     mode = "Active"
