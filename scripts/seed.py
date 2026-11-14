@@ -65,6 +65,12 @@ KEY_SCHEMA: dict[str, dict[str, Any]] = {
         "sk": ("sk", lambda i: i["component_id"]),  # sk = CMP-014
         "gsis": [("by_component", "component_id", "warehouse_id")],
     },
+    "warehouses": {  # contratos.md §9: la SFN (B) y la analítica (A) leen coordenadas y zona del almacén
+        "table": "warehouses",
+        "pk": ("pk", lambda i: i["warehouse_id"]),  # pk = WH-01
+        "sk": ("sk", lambda i: "META"),
+        "gsis": [],
+    },
     "notification_rules": {
         "table": "notification-rules",
         "pk": ("pk", lambda i: f"EVENT#{i['event_type']}"),
@@ -72,8 +78,8 @@ KEY_SCHEMA: dict[str, dict[str, Any]] = {
         "gsis": [],
     },
 }
-# datasets que solo se exportan como fixture (no van a DynamoDB)
-EXPORT_ONLY = {"warehouses"}
+# datasets que solo se exportan como fixture (no van a DynamoDB). Desde seed v2 `warehouses` sí se carga.
+EXPORT_ONLY: set[str] = set()
 
 # IDs que aparecen en contratos.md / openapi.yaml y DEBEN existir
 CONTRACT_IDS = {
@@ -81,6 +87,7 @@ CONTRACT_IDS = {
     "technicians": ("technician_id", ["TEC-07"]),
     "catalog": ("component_id", ["CMP-014"]),
     "inventory": ("warehouse_id", ["WH-01"]),
+    "warehouses": ("warehouse_id", ["WH-01", "WH-04"]),
 }
 
 

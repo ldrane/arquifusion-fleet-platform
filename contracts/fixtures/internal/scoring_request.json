@@ -1,11 +1,14 @@
 {
   "incident_id": "INC-01JC8ZK",
+  "correlation_id": "7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11",
   "machine_id": "EX-023",
   "zone": "norte",
   "severity": "high",
   "location": {
-    "lat": -12.05,
-    "lon": -77.04
+    "lat": -11.913239,
+    "lon": -76.39975,
+    "zone": "norte"
   },
-  "required_specialty": "hidraulica"
+  "required_specialty": "motor",
+  "exclude_technician_ids": []
 }

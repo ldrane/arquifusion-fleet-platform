@@ -17,7 +17,7 @@
     ],
     "cost_usd": 45,
     "lead_time_days": 2,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-002",
@@ -37,7 +37,7 @@
     ],
     "cost_usd": 38,
     "lead_time_days": 2,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-003",
@@ -57,7 +57,7 @@
     ],
     "cost_usd": 120,
     "lead_time_days": 3,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-004",
@@ -77,7 +77,7 @@
     ],
     "cost_usd": 650,
     "lead_time_days": 7,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-005",
@@ -97,7 +97,7 @@
     ],
     "cost_usd": 4800,
     "lead_time_days": 21,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-006",
@@ -117,7 +117,7 @@
     ],
     "cost_usd": 1200,
     "lead_time_days": 10,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-007",
@@ -137,7 +137,7 @@
     ],
     "cost_usd": 6500,
     "lead_time_days": 30,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-008",
@@ -157,7 +157,7 @@
     ],
     "cost_usd": 85,
     "lead_time_days": 3,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-009",
@@ -175,7 +175,7 @@
     ],
     "cost_usd": 18500,
     "lead_time_days": 35,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-010",
@@ -187,7 +187,7 @@
     ],
     "cost_usd": 9200,
     "lead_time_days": 28,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-011",
@@ -207,7 +207,7 @@
     ],
     "cost_usd": 260,
     "lead_time_days": 4,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-012",
@@ -227,7 +227,7 @@
     ],
     "cost_usd": 340,
     "lead_time_days": 5,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-013",
@@ -245,7 +245,7 @@
     ],
     "cost_usd": 5400,
     "lead_time_days": 20,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-014",
@@ -265,7 +265,7 @@
     ],
     "cost_usd": 1350,
     "lead_time_days": 10,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-015",
@@ -285,7 +285,7 @@
     ],
     "cost_usd": 1900,
     "lead_time_days": 12,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-016",
@@ -305,7 +305,7 @@
     ],
     "cost_usd": 1600,
     "lead_time_days": 12,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-017",
@@ -325,7 +325,7 @@
     ],
     "cost_usd": 320,
     "lead_time_days": 3,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-018",
@@ -345,7 +345,7 @@
     ],
     "cost_usd": 140,
     "lead_time_days": 4,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-019",
@@ -365,7 +365,7 @@
     ],
     "cost_usd": 480,
     "lead_time_days": 7,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-020",
@@ -385,7 +385,7 @@
     ],
     "cost_usd": 7800,
     "lead_time_days": 30,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-021",
@@ -397,7 +397,7 @@
     ],
     "cost_usd": 42000,
     "lead_time_days": 45,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-022",
@@ -409,7 +409,7 @@
     ],
     "cost_usd": 18000,
     "lead_time_days": 40,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-023",
@@ -425,7 +425,7 @@
     ],
     "cost_usd": 650,
     "lead_time_days": 14,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-024",
@@ -437,7 +437,7 @@
     ],
     "cost_usd": 2900,
     "lead_time_days": 15,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "component_id": "CMP-025",
@@ -451,6 +451,6 @@
     ],
     "cost_usd": 2100,
     "lead_time_days": 10,
-    "seed_version": 1
+    "seed_version": 2
   }
 ]

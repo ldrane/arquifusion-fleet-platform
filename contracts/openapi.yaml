@@ -18,11 +18,18 @@ info:
     - `x-roles` en cada operación = grupos de Cognito autorizados (RBAC dentro de la Lambda).
     - `x-lambda` = Lambda que atiende la ruta (nombres del diagrama de arquitectura).
     - El tiempo real NO va por esta API: lo pone Firestore (ver contratos.md §5).
+    - CORS (contratos.md §1.2): toda respuesta de `/v1/*` (también errores y gateway responses) lleva
+      `Access-Control-Allow-Origin: $CORS_ORIGIN`, `Access-Control-Allow-Headers: Authorization,Content-Type,X-Correlation-Id,X-Api-Key`,
+      `Access-Control-Allow-Methods: GET,POST,PUT,OPTIONS` y `Access-Control-Expose-Headers: X-Correlation-Id`. Cada recurso tiene `OPTIONS` (MOCK).
+    - Identidad (contratos.md §2.1): `cognito:username` = user_id, `cognito:groups` = rol, `custom:zone`, y `custom:technician_id` (solo técnicos).
+    - Comandos (`api-comandos`): responden el recurso COMPLETO leído de DynamoDB después del comando (`Incident` o `Technician`),
+      con el `status` real en ese momento. Step Functions cambia el estado de forma asíncrona, así que `meta.pending_transition`
+      indica a qué estado va a pasar; el estado final llega por Firestore. Nunca se devuelve un `status` que no esté en DynamoDB.
 servers:
   - url: https://{apiId}.execute-api.us-east-1.amazonaws.com/{stage}
     variables:
       apiId: {default: xxxxxxxxxx}
-      stage: {default: prod, enum: [dev-ana, dev-luis, prod]}
+      stage: {default: v1, enum: [v1], description: 'Stage único de API Gateway. Las rutas ya llevan /v1, así que la URL queda …/v1/v1/me (contratos.md §2)'}
 tags:
   - {name: Ingesta}
   - {name: Flota}
@@ -59,7 +66,7 @@ paths:
                   model: CAT-336
                   type: excavator
                   timestamp: '2026-11-13T15:04:05Z'
-                  location: {lat: -12.0464, lon: -77.0428, zone: norte}
+                  location: {lat: -11.913239, lon: -76.39975, zone: norte}
                   operating_hours: 4210.5
                   temperature_c: 96.4
                   vibration_mm_s: 7.9
@@ -99,10 +106,12 @@ paths:
       summary: Canjea el JWT de Cognito por un custom token de Firebase (para Firestore y FCM)
       description: |
         Necesario para que el frontend/móvil lea Firestore en tiempo real.
-        El token lleva los claims `role`, `zone` y `uid`, que usan las Security Rules.
-        Usa la service account guardada en Secrets Manager (por eso corre fuera de la VPC).
+        `uid` = `cognito:username`. Claims: `role`, `zone` (null si es global) y `technician_id` (solo técnicos, desde
+        `custom:technician_id`), que usan las Security Rules. Si llega `fcm_token`, se agrega con `arrayUnion` a
+        Firestore `users/{uid}.fcm_tokens` (lo lee la Cloud Function `notify_bridge`, contratos.md §4-§5).
+        Firma con la service account de Secrets Manager. Dueña: C (decisión 2026-11-14).
       x-roles: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]
-      x-lambda: api-ack
+      x-lambda: api-lectura
       requestBody:
         required: false
         content:
@@ -110,7 +119,7 @@ paths:
             schema:
               type: object
               properties:
-                fcm_token: {type: string, description: 'Token push del dispositivo; se guarda para notificar'}
+                fcm_token: {type: string, description: 'Token FCM del dispositivo (getToken). Se guarda en Firestore users/{uid}.fcm_tokens[]'}
       responses:
         '200':
           description: OK
@@ -291,8 +300,12 @@ paths:
         Llama a `SendTaskSuccess` con el `ack_token` guardado en el incidente.
         `accept` → estado `in_progress`. `reject` → Step Functions reasigna al siguiente mejor técnico.
         Repetir un ack ya procesado responde 409 `INCIDENT_STATE_INVALID`.
+        Un `tecnico` solo puede hacer ack de incidentes con `assigned_technician_id == custom:technician_id` (si no, 403).
+        El output de `SendTaskSuccess` lleva `{decision, reason, actor: {user_id, role, technician_id}}` (TRZ-02).
+        Respuesta: el `Incident` completo leído tras el comando (`status` real, normalmente aún `assigned`) y
+        `meta.pending_transition` = `in_progress` (accept) o `assigned` (reject).
       x-roles: [tecnico, mantenimiento]
-      x-lambda: api-ack
+      x-lambda: api-comandos
       parameters:
         - {$ref: '#/components/parameters/IncidentId'}
       requestBody:
@@ -310,6 +323,7 @@ paths:
                 type: object
                 properties:
                   data: {$ref: '#/components/schemas/Incident'}
+                  meta: {$ref: '#/components/schemas/CommandMeta'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
@@ -318,9 +332,11 @@ paths:
     post:
       tags: [Incidentes]
       summary: Asignación o reasignación manual (responsable de mantenimiento)
-      description: Devuelve a Step Functions la decisión `reassign`, que notifica de nuevo al técnico elegido.
+      description: |
+        Devuelve a Step Functions la decisión `reassign` (con `actor`), que notifica de nuevo al técnico elegido.
+        Respuesta: el `Incident` completo leído tras el comando y `meta.pending_transition` = `assigned`.
       x-roles: [mantenimiento, supervisor, admin]
-      x-lambda: api-ack
+      x-lambda: api-comandos
       parameters:
         - {$ref: '#/components/parameters/IncidentId'}
       requestBody:
@@ -342,6 +358,7 @@ paths:
                 type: object
                 properties:
                   data: {$ref: '#/components/schemas/Incident'}
+                  meta: {$ref: '#/components/schemas/CommandMeta'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
 
@@ -349,9 +366,13 @@ paths:
     post:
       tags: [Incidentes]
       summary: 'Marca el incidente como resuelto (reanuda Step Functions: resumen IA y cierre)'
-      description: Usa un segundo token, `resolve_token`. Step Functions genera el resumen con IA y cierra el incidente.
+      description: |
+        Usa un segundo token, `resolve_token`. Step Functions genera el resumen con IA, escribe el registro `corrective`
+        en `maintenance-records` y cierra el incidente. Un `tecnico` solo puede resolver incidentes asignados a él (403).
+        Respuesta: el `Incident` completo leído tras el comando (`status` real, normalmente aún `in_progress`, NUNCA un
+        `resolved` que no esté en DynamoDB) y `meta.pending_transition` = `resolved`.
       x-roles: [tecnico, mantenimiento]
-      x-lambda: api-ack
+      x-lambda: api-comandos
       parameters:
         - {$ref: '#/components/parameters/IncidentId'}
       requestBody:
@@ -368,6 +389,7 @@ paths:
                 type: object
                 properties:
                   data: {$ref: '#/components/schemas/Incident'}
+                  meta: {$ref: '#/components/schemas/CommandMeta'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
 
@@ -395,8 +417,11 @@ paths:
     put:
       tags: [Incidentes]
       summary: El técnico actualiza su disponibilidad y su ubicación (alimenta el scoring)
+      description: |
+        El técnico se identifica con el claim `custom:technician_id` (fixture `contracts/fixtures/api/technician_status.event.json`).
+        Se conserva `location.zone` = zona del técnico aunque el body no la traiga. Respuesta: el `Technician` completo actualizado.
       x-roles: [tecnico]
-      x-lambda: api-ack
+      x-lambda: api-comandos
       requestBody:
         required: true
         content:
@@ -660,7 +685,7 @@ paths:
       tags: [IA]
       summary: Lanza manualmente el workflow Reentrenamiento
       x-roles: [admin]
-      x-lambda: api-ack
+      x-lambda: api-comandos
       responses:
         '202':
           description: Ejecución iniciada
@@ -716,10 +741,10 @@ paths:
       summary: Eventos GCP → AWS (la Cloud Function reenvía acciones hechas en Firestore)
       description: |
         El móvil escribe en Firestore (acepta, resuelve, cambia estado). Una Cloud Function (trigger onWrite)
-        reenvía esa acción aquí. La Lambda `api-ack` ejecuta la misma lógica que los endpoints `/v1/incidents/*`.
+        reenvía esa acción aquí. La Lambda `api-comandos` ejecuta la misma lógica que los endpoints `/v1/incidents/*`.
         Idempotente por `event_id` (id del documento de Firestore).
       security: [{ApiKeyBridge: []}]
-      x-lambda: api-ack
+      x-lambda: api-comandos
       requestBody:
         required: true
         content:
@@ -905,7 +930,8 @@ components:
         incident_id: {type: string}
         parent_incident_id: {type: string, nullable: true}
         child_incident_ids: {type: array, items: {type: string}}
-        machine_ids: {type: array, items: {type: string}}
+        machine_id: {type: string, description: 'Máquina principal (la indexa el GSI by_machine)', example: EX-023}
+        machine_ids: {type: array, items: {type: string}, description: 'Principal primero + máquinas correlacionadas'}
         zone: {type: string}
         severity: {$ref: '#/components/schemas/Severity'}
         status: {$ref: '#/components/schemas/IncidentStatus'}
@@ -934,6 +960,17 @@ components:
         components_replaced: {type: array, items: {type: string}}
         cost_usd: {type: number, nullable: true}
         chat_channel_id: {type: string, nullable: true}
+
+    CommandMeta:
+      type: object
+      description: Metadatos de los comandos de incidente (contratos.md §2, #24)
+      properties:
+        pending_transition:
+          type: string
+          nullable: true
+          enum: [assigned, in_progress, resolved, closed, null]
+          description: Estado al que Step Functions llevará el incidente; el cambio llega por Firestore
+          example: in_progress
 
     AckRequest:
       type: object
@@ -983,6 +1020,7 @@ components:
             email: {type: string}
             role: {$ref: '#/components/schemas/Role'}
             zone: {type: string, nullable: true}
+            technician_id: {type: string, nullable: true, description: 'custom:technician_id; solo para el rol tecnico', example: TEC-07}
 
     BridgeEvent:
       type: object

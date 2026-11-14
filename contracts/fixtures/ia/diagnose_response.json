@@ -1,11 +1,14 @@
 {
   "result": {
-    "probable_cause": "Desgaste de rodamiento del tren de rodaje",
-    "suggested_action": "Inspeccionar rodamientos y lubricación antes del próximo turno",
+    "probable_cause": "Desgaste del kit de rodamientos del motor (vibración y temperatura altas a la vez)",
+    "suggested_action": "Detener en el próximo cambio de turno, inspeccionar rodamientos y lubricación del motor y reemplazar el kit si hay juego",
     "confidence": 0.72,
-    "parts_suggested": ["CMP-014"]
+    "parts_suggested": [
+      "CMP-014"
+    ]
   },
   "model": "gemini-2.5-flash",
   "degraded": false,
+  "prompt_version": "diagnose-v1",
   "latency_ms": 1840
 }

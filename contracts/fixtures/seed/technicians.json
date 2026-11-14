@@ -9,15 +9,15 @@
       "electrica"
     ],
     "location": {
-      "lat": -11.917171,
-      "lon": -76.396707,
+      "lat": -11.928,
+      "lon": -76.406,
       "zone": "norte"
     },
     "home_warehouse_id": "WH-01",
     "available": true,
     "shift": "day",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-02",
@@ -37,7 +37,7 @@
     "available": true,
     "shift": "day",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-03",
@@ -57,7 +57,7 @@
     "available": true,
     "shift": "day",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-04",
@@ -73,11 +73,11 @@
       "lon": -76.439816,
       "zone": "oeste"
     },
-    "home_warehouse_id": "WH-01",
+    "home_warehouse_id": "WH-04",
     "available": true,
     "shift": "day",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-05",
@@ -97,7 +97,7 @@
     "available": true,
     "shift": "night",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-06",
@@ -116,7 +116,7 @@
     "available": true,
     "shift": "night",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-07",
@@ -128,15 +128,15 @@
       "hidraulica"
     ],
     "location": {
-      "lat": -11.918979,
-      "lon": -76.394212,
+      "lat": -11.915,
+      "lon": -76.3965,
       "zone": "norte"
     },
     "home_warehouse_id": "WH-01",
     "available": true,
     "shift": "day",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-08",
@@ -156,7 +156,7 @@
     "available": true,
     "shift": "night",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-09",
@@ -172,11 +172,11 @@
       "lon": -76.439709,
       "zone": "oeste"
     },
-    "home_warehouse_id": "WH-01",
+    "home_warehouse_id": "WH-04",
     "available": true,
     "shift": "night",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-10",
@@ -196,7 +196,7 @@
     "available": true,
     "shift": "day",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-11",
@@ -215,7 +215,7 @@
     "available": true,
     "shift": "day",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "technician_id": "TEC-12",
@@ -231,10 +231,10 @@
       "lon": -76.438272,
       "zone": "oeste"
     },
-    "home_warehouse_id": "WH-01",
+    "home_warehouse_id": "WH-04",
     "available": true,
     "shift": "day",
     "current_load": 0,
-    "seed_version": 1
+    "seed_version": 2
   }
 ]

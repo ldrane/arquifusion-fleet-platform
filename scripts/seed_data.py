@@ -14,10 +14,12 @@ import math
 import random
 from datetime import date, timedelta
 
-SEED_VERSION = 1
+SEED_VERSION = 2  # v2: WH-04 oeste, expected_interval_s=60, reglas alineadas a contratos.md §10
 RANDOM_SEED = 27  # Grupo 27
 REFERENCE_DATE = date(2026, 11, 14)  # fechas relativas a este día (no a "hoy") para que sea determinista
 OPERATION_ID = "OP-01"
+# El simulador envía cada 60 s (simulator/cli.py); heartbeat declara silencio a 3x = 180 s (contratos.md §3).
+EXPECTED_INTERVAL_S = 60
 
 # --------------------------------------------------------------------------- zonas
 # Operación minera ficticia en la sierra central. Cada zona es un círculo de ~1.5 km.
@@ -33,6 +35,7 @@ WAREHOUSES = [
     {"warehouse_id": "WH-01", "name": "Almacén Norte", "zone": "norte", "location": {"lat": -11.9150, "lon": -76.3950, "zone": "norte"}},
     {"warehouse_id": "WH-02", "name": "Almacén Sur", "zone": "sur", "location": {"lat": -11.9850, "lon": -76.4050, "zone": "sur"}},
     {"warehouse_id": "WH-03", "name": "Almacén Este", "zone": "este", "location": {"lat": -11.9480, "lon": -76.3600, "zone": "este"}},
+    {"warehouse_id": "WH-04", "name": "Almacén Oeste", "zone": "oeste", "location": {"lat": -11.9480, "lon": -76.4400, "zone": "oeste"}},
 ]
 
 # --------------------------------------------------------------------------- modelos
@@ -127,27 +130,43 @@ TECHNICIANS = [
     ("TEC-12", "Elena Paredes", "oeste", ["hidraulica", "electrica"], "day"),
 ]
 
+# Ubicación inicial fijada para que el golden path sea determinista (contracts/fixtures/internal/scoring_*.json):
+# para EX-023 (motor, high) gana TEC-07 (junto a WH-01) y el 2.º candidato es TEC-01 (rechazo -> reasignación).
+PINNED_TECH_LOCATIONS = {
+    "TEC-07": {"lat": -11.9150, "lon": -76.3965, "zone": "norte"},
+    "TEC-01": {"lat": -11.9280, "lon": -76.4060, "zone": "norte"},
+}
+
 # --------------------------------------------------------------------------- notificaciones
-# event_type: incident.detected | incident.escalated | incident.closed | machine.silent | parts.shortage | report.daily
+# event_type = tabla "transición -> event_type" de contratos.md §10 (la usa notificar, B).
+# Para event_type incident.*, la regla del rol `tecnico` notifica SOLO al técnico asignado (o al nuevo candidato).
+# channels: push (FCM vía Pub/Sub), email (SNS alerts-{rol}), dashboard (sin envío: ya se ve por la réplica a Firestore).
 # content_profile: technical (detalle) | operational (seguridad) | executive (impacto) -> lo usa notificar/ia-gemini
 NOTIFICATION_RULES = [
-    ("incident.detected", "tecnico", "medium", ["push", "email"], "technical", 10),
     ("incident.detected", "operador", "high", ["push"], "operational", 10),
     ("incident.detected", "mantenimiento", "medium", ["email", "dashboard"], "technical", 15),
     ("incident.detected", "supervisor", "high", ["email", "dashboard"], "operational", 15),
     ("incident.detected", "gerencia", "critical", ["email"], "executive", 60),
-    ("incident.escalated", "tecnico", "medium", ["push"], "technical", 5),
+    ("incident.assigned", "tecnico", "info", ["push", "email"], "technical", 0),
+    ("incident.assigned", "mantenimiento", "medium", ["dashboard"], "technical", 0),
+    ("incident.in_progress", "operador", "medium", ["push"], "operational", 0),
+    ("incident.in_progress", "mantenimiento", "info", ["dashboard"], "technical", 0),
+    ("incident.escalated", "tecnico", "info", ["push"], "technical", 5),
     ("incident.escalated", "mantenimiento", "low", ["email", "push"], "technical", 5),
     ("incident.escalated", "supervisor", "high", ["email"], "operational", 15),
+    ("incident.resolved", "operador", "info", ["push"], "operational", 0),
+    ("incident.resolved", "mantenimiento", "info", ["dashboard"], "technical", 0),
     ("incident.closed", "mantenimiento", "info", ["dashboard"], "technical", 0),
+    ("incident.closed", "supervisor", "medium", ["dashboard"], "operational", 0),
     ("incident.closed", "gerencia", "critical", ["email"], "executive", 60),
-    ("machine.silent", "mantenimiento", "low", ["dashboard"], "technical", 30),
+    ("machine.silent", "mantenimiento", "low", ["dashboard", "email"], "technical", 30),
     ("machine.silent", "supervisor", "medium", ["dashboard"], "operational", 30),
     ("parts.shortage", "mantenimiento", "info", ["email"], "technical", 60),
     ("parts.shortage", "admin", "info", ["email"], "executive", 240),
     ("report.daily", "admin", "info", ["email"], "executive", 0),
     ("report.daily", "gerencia", "info", ["email"], "executive", 0),
 ]
+NOTIFICATION_EVENT_TYPES = sorted({r[0] for r in NOTIFICATION_RULES})
 
 # Ajustes de inventario para que la demo tenga alertas visibles: (warehouse, component) -> stock
 INVENTORY_OVERRIDES = {
@@ -209,7 +228,7 @@ def build_machines() -> list[dict]:
                 "severity": "info",
                 "health_score": rng.randint(84, 99),
                 "last_seen_at": None,  # aún no hay telemetría (heartbeat debe ignorar null)
-                "expected_interval_s": 30,
+                "expected_interval_s": EXPECTED_INTERVAL_S,
                 "operating_hours": round(rng.uniform(1500, 18000), 1),
                 "last_maintenance_at": last_maint.isoformat(),
                 "next_maintenance_at": next_maint.isoformat(),
@@ -230,13 +249,15 @@ def build_technicians() -> list[dict]:
     techs = []
     for tech_id, name, zone, specialties, shift in TECHNICIANS:
         home_wh = next((w for w in WAREHOUSES if w["zone"] == zone), WAREHOUSES[0])
+        location = _point_in_zone(rng, zone)  # se consume siempre, para no alterar la secuencia del resto
+        location = dict(PINNED_TECH_LOCATIONS.get(tech_id, location))
         techs.append({
             "technician_id": tech_id,
             "user_id": f"u-tec-{tech_id.split('-')[1]}",
             "name": name,
             "zone": zone,
             "specialties": specialties,
-            "location": _point_in_zone(rng, zone),
+            "location": location,
             "home_warehouse_id": home_wh["warehouse_id"],
             "available": True,
             "shift": shift,

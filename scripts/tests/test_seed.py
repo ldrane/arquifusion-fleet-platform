@@ -27,7 +27,9 @@ def test_cantidades_requerimientos_5_6():
     assert 3 <= len({m["zone"] for m in data["machines"]}) <= 5
     assert len(data["technicians"]) >= 10
     assert 20 <= len(data["catalog"]) <= 30
-    assert 2 <= len(data["warehouses"]) <= 3
+    # requerimientos §5.6 pide 2-3 almacenes; seed v2 agrega WH-04 para que la zona oeste (32 máquinas) tenga uno (#19)
+    assert 2 <= len(data["warehouses"]) <= 4
+    assert {w["zone"] for w in data["warehouses"]} == set(seed_data.ZONES)
 
 
 def test_ids_de_los_contratos_existen():

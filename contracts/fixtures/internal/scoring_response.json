@@ -1,23 +1,47 @@
 {
   "selected": "TEC-07",
+  "weights": {
+    "specialty": 0.35,
+    "eta": 0.35,
+    "availability": 0.15,
+    "load": 0.15
+  },
   "candidates": [
     {
-      "tech_id": "TEC-07",
-      "score": 0.91,
-      "eta_min": 12,
+      "technician_id": "TEC-07",
+      "name": "Pedro Rojas",
+      "score": 0.98,
+      "eta_min": 3,
       "breakdown": {
-        "severity": 0.3,
-        "eta": 0.25,
-        "specialty": 0.2,
-        "availability": 0.2,
-        "load": -0.04
+        "specialty": 1,
+        "eta": 0.93,
+        "availability": 1,
+        "load": 1
       }
     },
     {
-      "tech_id": "TEC-03",
-      "score": 0.74,
-      "eta_min": 25,
-      "breakdown": {}
+      "technician_id": "TEC-01",
+      "name": "Ana Huamán",
+      "score": 0.95,
+      "eta_min": 6,
+      "breakdown": {
+        "specialty": 1,
+        "eta": 0.87,
+        "availability": 1,
+        "load": 1
+      }
+    },
+    {
+      "technician_id": "TEC-05",
+      "name": "María Ccori",
+      "score": 0.62,
+      "eta_min": 4,
+      "breakdown": {
+        "specialty": 0,
+        "eta": 0.91,
+        "availability": 1,
+        "load": 1
+      }
     }
   ]
 }
