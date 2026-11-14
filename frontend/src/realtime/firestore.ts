@@ -1,0 +1,176 @@
+/**
+ * Tiempo real con Firestore (contratos.md §5, reglas en infra/gcp/firestore.rules).
+ * 1. POST /v1/auth/firebase-token -> custom token con claims role / zone / technician_id.
+ * 2. signInWithCustomToken -> las Security Rules ven esos claims.
+ * 3. onSnapshot sobre machines / incidents / technicians (filtrados por zona: las reglas exigen
+ *    que la consulta no pueda devolver documentos de otra zona) y sobre el chat.
+ * Caché persistente en IndexedDB: el chat se lee y se escribe sin conexión (RF-15, offline).
+ * El SDK de Firebase se carga bajo demanda para no pesar en el modo demo.
+ */
+import type { FleetApi } from "@/api/client";
+import type { ChatMessage, Incident, Machine, Me, Technician } from "@/api/types";
+import { can } from "@/auth/permissions";
+import { config } from "@/config";
+import { newCorrelationId, technicianIdFromUser } from "@/lib/ids";
+import type { FleetUpdate, RealtimeSource } from "./types";
+
+type FirestoreMod = typeof import("firebase/firestore");
+type Db = import("firebase/firestore").Firestore;
+
+const strip = <T>(doc: Record<string, unknown>): T => {
+  const { pk, sk, entity, ...rest } = doc;
+  void [pk, sk, entity];
+  return rest as T;
+};
+
+/** Timestamp de Firestore o string ISO -> ISO (replicar escribe ISO; serverTimestamp devuelve Timestamp). */
+const toIso = (v: unknown): string => {
+  if (!v) return new Date().toISOString();
+  if (typeof v === "string") return v;
+  if (typeof v === "object" && v && "toDate" in v) return (v as { toDate(): Date }).toDate().toISOString();
+  return new Date().toISOString();
+};
+
+export class FirestoreRealtime implements RealtimeSource {
+  readonly kind = "firestore" as const;
+  readonly canChat = true;
+  private ready: Promise<{ fs: FirestoreMod; db: Db; uid: string; role: string; techId: string | null }> | null = null;
+  private me: Me | null = null;
+
+  constructor(private readonly api: FleetApi) {}
+
+  private connect(me: Me) {
+    if (this.ready) return this.ready;
+    this.ready = (async () => {
+      const [{ initializeApp, getApps }, auth, fs] = await Promise.all([
+        import("firebase/app"),
+        import("firebase/auth"),
+        import("firebase/firestore"),
+      ]);
+      const app =
+        getApps()[0] ??
+        initializeApp({
+          apiKey: config.firebase.apiKey,
+          authDomain: config.firebase.authDomain || `${config.firebase.projectId}.firebaseapp.com`,
+          projectId: config.firebase.projectId,
+          appId: config.firebase.appId || undefined,
+        });
+      let db: Db;
+      try {
+        db = fs.initializeFirestore(app, { localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) });
+      } catch {
+        db = fs.getFirestore(app); // ya inicializado (HMR) o IndexedDB no disponible
+      }
+      const { firebase_token } = await this.api.firebaseToken();
+      const a = auth.getAuth(app);
+      const cred = await auth.signInWithCustomToken(a, firebase_token);
+      const claims = (await cred.user.getIdTokenResult()).claims;
+      return {
+        fs,
+        db,
+        uid: cred.user.uid,
+        role: String(claims.role ?? me.role),
+        techId: (claims.technician_id as string | undefined) ?? technicianIdFromUser(me.user_id),
+      };
+    })();
+    this.ready.catch(() => (this.ready = null));
+    return this.ready;
+  }
+
+  start(me: Me, onUpdate: (u: FleetUpdate) => void, onError: (e: unknown) => void) {
+    this.me = me;
+    const unsubs: (() => void)[] = [];
+    let stopped = false;
+    this.connect(me)
+      .then(({ fs, db, techId }) => {
+        if (stopped) return;
+        const { collection, query, where, onSnapshot } = fs;
+        const zoned = (name: string, field: string) =>
+          me.zone ? query(collection(db, name), where(field, "==", me.zone)) : collection(db, name);
+
+        unsubs.push(
+          onSnapshot(
+            zoned("machines", "location.zone"),
+            (s) => onUpdate({ machines: s.docs.map((d) => strip<Machine>(d.data())) }),
+            onError,
+          ),
+          onSnapshot(
+            zoned("incidents", "zone"),
+            (s) => onUpdate({ incidents: s.docs.map((d) => strip<Incident>(d.data())) }),
+            onError,
+          ),
+        );
+        const techQuery = can(me.role, "technicians")
+          ? zoned("technicians", "location.zone")
+          : me.role === "tecnico" && techId
+            ? query(collection(db, "technicians"), where("technician_id", "==", techId))
+            : null;
+        if (techQuery) {
+          unsubs.push(
+            onSnapshot(techQuery, (s) => onUpdate({ technicians: s.docs.map((d) => strip<Technician>(d.data())) }), onError),
+          );
+        }
+      })
+      .catch(onError);
+    return () => {
+      stopped = true;
+      unsubs.forEach((u) => u());
+    };
+  }
+
+  subscribeMessages(incidentId: string, onMessages: (m: ChatMessage[]) => void, onError: (e: unknown) => void) {
+    const me = this.me;
+    if (!me) return () => {};
+    let unsub = () => {};
+    let stopped = false;
+    this.connect(me)
+      .then(({ fs, db }) => {
+        if (stopped) return;
+        const q = fs.query(fs.collection(db, "incidents", incidentId, "messages"), fs.orderBy("created_at", "asc"));
+        unsub = fs.onSnapshot(
+          q,
+          { includeMetadataChanges: true },
+          (s) =>
+            onMessages(
+              s.docs.map((d) => {
+                const x = d.data({ serverTimestamps: "estimate" });
+                return {
+                  id: d.id,
+                  author_id: String(x.author_id ?? ""),
+                  role: x.role,
+                  text: String(x.text ?? ""),
+                  quick_action: x.quick_action ?? null,
+                  attachment_path: x.attachment_path ?? null,
+                  created_at: toIso(x.created_at),
+                  correlation_id: String(x.correlation_id ?? ""),
+                  pending: d.metadata.hasPendingWrites,
+                } satisfies ChatMessage;
+              }),
+            ),
+          onError,
+        );
+      })
+      .catch(onError);
+    return () => {
+      stopped = true;
+      unsub();
+    };
+  }
+
+  async sendMessage(incidentId: string, text: string, quickAction?: string | null) {
+    const me = this.me;
+    if (!me) throw new Error("Sin sesión");
+    const { fs, db, uid, role } = await this.connect(me);
+    // Campos exactos que valida firestore.rules (validMessage): created_at == request.time
+    const doc: Record<string, unknown> = {
+      author_id: uid,
+      role,
+      text,
+      created_at: fs.serverTimestamp(),
+      correlation_id: newCorrelationId(),
+    };
+    if (quickAction) doc.quick_action = quickAction;
+    // Sin await del servidor: con caché persistente el mensaje queda en cola si no hay red.
+    void fs.addDoc(fs.collection(db, "incidents", incidentId, "messages"), doc);
+  }
+}
