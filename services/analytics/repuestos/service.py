@@ -6,6 +6,9 @@
   usando la mezcla de componentes que históricamente consume cada tipo de máquina.
 - Stock mínimo = demanda en el lead time + stock de seguridad (95 %). Máximo = mínimo + 30 días de demanda.
 Salida: `insights` `parts_ranking` y `parts_forecast#{7,30,90}` (forma de GET /v1/parts/*).
+
+Los almacenes y su zona salen de `{p}-warehouses` (contratos.md §9, #19: 4 almacenes, WH-04 = oeste), así un almacén
+sin stock cargado igual recibe el pronóstico de su zona. `inventory.zone` es solo el respaldo.
 """
 
 import math
@@ -99,17 +102,31 @@ def ranking(history: dict[str, Demand], names: dict[str, str]) -> list[dict]:
     return sorted(rows, key=lambda r: r["units_used_90d"], reverse=True)
 
 
-def warehouse_shares(inventory: list[dict], active_by_zone: dict[str, int]) -> dict[str, dict[str, float]]:
-    """Fracción de la flota que atiende cada almacén. Sin zona declarada, se reparte en partes iguales."""
-    warehouses = sorted({i["location_id"] for i in inventory})
-    zones_of = {w: {i["zone"] for i in inventory if i["location_id"] == w and i.get("zone")} for w in warehouses}
+def warehouse_shares(
+    inventory: list[dict], active_by_zone: dict[str, int], warehouses: list[dict] | None = None
+) -> dict[str, dict]:
+    """Fracción de la flota que atiende cada almacén según su zona (tabla `warehouses`, o `inventory.zone`).
+
+    Sin zona declarada, se reparte en partes iguales.
+    """
+    zones_of: dict[str, set[str]] = {}
+    for w in warehouses or []:
+        if w.get("warehouse_id"):
+            zone = w.get("zone") or (w.get("location") or {}).get("zone")
+            zones_of[w["warehouse_id"]] = {zone} if zone else set()
+    declared = set(zones_of)
+    for i in inventory:
+        zones = zones_of.setdefault(i["location_id"], set())
+        if i.get("zone") and i["location_id"] not in declared:
+            zones.add(i["zone"])
+    names = sorted(zones_of)
     total = sum(active_by_zone.values())
     shares = {}
-    for w in warehouses:
+    for w in names:
         if zones_of[w] and total:
             shares[w] = sum(active_by_zone.get(z, 0) for z in zones_of[w]) / total
         else:
-            shares[w] = 1 / len(warehouses)
+            shares[w] = 1 / len(names)
     return {"share": shares, "zones": zones_of}
 
 
@@ -122,8 +139,9 @@ def forecast(
     catalog: dict[str, dict],
     active_by_zone: dict[str, int],
     today: date,
+    warehouses: list[dict] | None = None,
 ) -> list[dict]:
-    layout = warehouse_shares(inventory, active_by_zone)
+    layout = warehouse_shares(inventory, active_by_zone, warehouses)
     shares, zones_of = layout["share"], layout["zones"]
     if not shares:
         return []
@@ -193,12 +211,22 @@ def _catalog(items: list[dict]) -> dict[str, dict]:
     return out
 
 
-def run(ctx: RunContext, athena, machines_table, records_table, inventory_table, catalog_table, insights_table) -> dict:
+def run(
+    ctx: RunContext,
+    athena,
+    machines_table,
+    records_table,
+    inventory_table,
+    catalog_table,
+    insights_table,
+    warehouses_table=None,
+) -> dict:
     stats = daily.from_rows(fetch_rows(athena, ctx.query_execution_id))
     machines = scan_all(machines_table, FilterExpression=Attr("machine_id").exists())
     recs = records.normalize(scan_all(records_table))
     inventory = [i for i in scan_all(inventory_table) if i.get("location_id") and i.get("component_id")]
     catalog = _catalog(scan_all(catalog_table))
+    warehouses = scan_all(warehouses_table) if warehouses_table is not None else []
 
     machine_type = {m["machine_id"]: m.get("type") for m in machines if m.get("type")}
     machine_type.update({s.machine_id: s.machine_type for s in stats})
@@ -214,7 +242,7 @@ def run(ctx: RunContext, athena, machines_table, records_table, inventory_table,
     active = active_machines_by_zone(stats, machines, ctx.today)
     shortages = 0
     for horizon in HORIZONS:
-        rows = forecast(horizon, history, mix, machines, inventory, catalog, active, ctx.today)
+        rows = forecast(horizon, history, mix, machines, inventory, catalog, active, ctx.today, warehouses)
         write_insight(insights_table, f"parts_forecast#{horizon}", rows, ctx.run_at_iso, ctx.correlation_id)
         if horizon == 30:
             shortages = sum(r["shortage_for_planned_maintenance"] for r in rows)

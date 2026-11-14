@@ -28,3 +28,9 @@ variable "log_retention_days" {
   type    = number
   default = 7
 }
+
+variable "cors_origin" {
+  description = "Origen permitido del front para las respuestas de ia-gemini por API Gateway (contratos.md §1.2)"
+  type        = string
+  default     = "*"
+}

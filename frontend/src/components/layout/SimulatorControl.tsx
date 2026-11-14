@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { errorMessage } from "@/api/errors";
-import { SCENARIOS, ZONES } from "@/demo/data";
+import { DEMO_MACHINE, SIMULATOR_SCENARIOS, ZONES } from "@/demo/data";
 import { world } from "@/services";
 import { useViewState } from "@/state/viewState";
 import { Button, Icon } from "../ui";
@@ -68,7 +68,7 @@ export function SimulatorControl() {
           <label className="flex flex-col gap-1">
             <span className="label">Escenario</span>
             <select className="input" value={scenario} onChange={(e) => setScenario(e.target.value)}>
-              {SCENARIOS.map((s) => (
+              {SIMULATOR_SCENARIOS.map((s) => (
                 <option key={s.key} value={s.key}>
                   {s.label} ({s.severity})
                 </option>
@@ -79,7 +79,7 @@ export function SimulatorControl() {
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1">
               <span className="label">Máquina (opcional)</span>
-              <input className="input font-mono" placeholder="EX-023" value={machine} onChange={(e) => setMachine(e.target.value)} disabled={scenario === "grupal_zona"} />
+              <input className="input font-mono" placeholder={DEMO_MACHINE} value={machine} onChange={(e) => setMachine(e.target.value)} disabled={scenario === "grupal_zona"} />
             </label>
             <label className="flex flex-col gap-1">
               <span className="label">Zona (opcional)</span>

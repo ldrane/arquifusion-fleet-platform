@@ -1,6 +1,6 @@
 {
-  "resource": "/v1/technicians/me/status",
-  "path": "/v1/technicians/me/status",
+  "resource": "/technicians/me/status",
+  "path": "/technicians/me/status",
   "httpMethod": "PUT",
   "headers": {
     "Authorization": "eyJ...id-token",
@@ -10,7 +10,8 @@
   "queryStringParameters": null,
   "pathParameters": null,
   "requestContext": {
-    "resourcePath": "/v1/technicians/me/status",
+    "resourcePath": "/technicians/me/status",
+    "path": "/v1/technicians/me/status",
     "httpMethod": "PUT",
     "stage": "v1",
     "requestId": "d7b0ab07-8c72-12f7-0b52-04f9efacc0de",

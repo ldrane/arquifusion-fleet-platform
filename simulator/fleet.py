@@ -1,136 +1,44 @@
-"""Definición determinista de la flota simulada (RF-01, requerimientos §5.6).
+"""Flota simulada cargada desde los seeds de la Persona C (RF-01, requerimientos §5.6, hallazgo #1).
 
-La flota es la misma para una misma semilla: el simulador, el historial y los seeds de la Persona C
-comparten así los mismos IDs, modelos, zonas y baselines.
+La verdad de la flota son `contracts/fixtures/seed/machines.json` y `machine_models.json` (seed v2,
+generados por `scripts/seed_data.py`). El simulador NO inventa máquinas: usa los mismos IDs, modelo,
+tipo, zona, coordenadas base, horómetro y `expected_interval_s`. El baseline de cada variable es el
+`nominal` [media, desviación] del modelo (catalog `MODEL#<model>`, contratos.md §9).
 """
 
-from dataclasses import dataclass
+import json
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
 
-import numpy as np
+SEED_DIR = Path(__file__).resolve().parents[1] / "contracts" / "fixtures" / "seed"
+SEED_DIR_ENV = "SIMULATOR_SEED_DIR"  # override opcional (por ejemplo, seeds exportados en otra ruta)
 
-# Centro de la mina ficticia "Mina Huaylla" (sur del Perú) y desplazamiento de cada zona (grados).
-MINE_CENTER = (-14.4000, -71.9500)
-ZONES: dict[str, tuple[float, float]] = {
-    "norte": (0.0180, 0.0000),
-    "sur": (-0.0180, 0.0000),
-    "este": (0.0000, 0.0180),
-    "oeste": (0.0000, -0.0180),
+ZONES: tuple[str, ...] = ("norte", "sur", "este", "oeste")
+MACHINE_TYPES: tuple[str, ...] = ("excavator", "mining_truck", "loader", "bulldozer", "drill")
+
+# Cuánto se desplaza cada tipo alrededor de su punto base (grados). El radio de una zona del seed es 0.012°.
+ROAMING_DEG: dict[str, float] = {
+    "excavator": 0.0008,
+    "mining_truck": 0.0060,
+    "loader": 0.0015,
+    "bulldozer": 0.0010,
+    "drill": 0.0002,
 }
+DEFAULT_EXPECTED_INTERVAL_S = 60  # contratos.md §3 (heartbeat: silencio a 3x)
 
 
 @dataclass(frozen=True)
 class Baseline:
-    """Media y desviación estándar de una variable en operación normal."""
+    """Media y desviación estándar de una variable en operación normal (`nominal` del modelo)."""
 
     mean: float
     sd: float
 
 
 @dataclass(frozen=True)
-class MachineType:
-    """Parámetros de un tipo de máquina (enum MachineType del OpenAPI)."""
-
-    name: str
-    prefix: str
-    count: int
-    models: tuple[str, ...]
-    roaming_deg: float  # cuánto se desplaza alrededor de su punto base
-    baselines: dict[str, Baseline]
-
-
-def _b(**values: tuple[float, float]) -> dict[str, Baseline]:
-    return {k: Baseline(*v) for k, v in values.items()}
-
-
-MACHINE_TYPES: tuple[MachineType, ...] = (
-    MachineType(
-        "excavator",
-        "EX",
-        24,
-        ("AF-EX350", "AF-EX520"),
-        0.0008,
-        _b(
-            temperature_c=(85, 3),
-            vibration_mm_s=(3.0, 0.35),
-            pressure_bar=(220, 10),
-            fuel_rate_lph=(32, 2),
-            load_pct=(70, 8),
-            speed_kmh=(3, 1),
-            rpm=(1800, 60),
-        ),
-    ),
-    MachineType(
-        "mining_truck",
-        "CM",
-        25,
-        ("AF-HT90", "AF-HT140"),
-        0.0060,
-        _b(
-            temperature_c=(88, 3),
-            vibration_mm_s=(2.5, 0.30),
-            pressure_bar=(180, 8),
-            fuel_rate_lph=(60, 4),
-            load_pct=(80, 10),
-            speed_kmh=(25, 5),
-            rpm=(1700, 80),
-        ),
-    ),
-    MachineType(
-        "loader",
-        "CF",
-        12,
-        ("AF-WL980", "AF-WL1200"),
-        0.0015,
-        _b(
-            temperature_c=(84, 3),
-            vibration_mm_s=(2.8, 0.30),
-            pressure_bar=(200, 9),
-            fuel_rate_lph=(28, 2),
-            load_pct=(65, 9),
-            speed_kmh=(10, 3),
-            rpm=(1750, 70),
-        ),
-    ),
-    MachineType(
-        "bulldozer",
-        "BD",
-        10,
-        ("AF-D85", "AF-D155"),
-        0.0010,
-        _b(
-            temperature_c=(86, 3),
-            vibration_mm_s=(3.5, 0.40),
-            pressure_bar=(210, 10),
-            fuel_rate_lph=(40, 3),
-            load_pct=(75, 8),
-            speed_kmh=(5, 1.5),
-            rpm=(1850, 60),
-        ),
-    ),
-    MachineType(
-        "drill",
-        "PF",
-        13,
-        ("AF-RD45", "AF-RD60"),
-        0.0002,
-        _b(
-            temperature_c=(82, 3),
-            vibration_mm_s=(4.0, 0.45),
-            pressure_bar=(250, 12),
-            fuel_rate_lph=(35, 2.5),
-            load_pct=(60, 7),
-            speed_kmh=(0.5, 0.3),
-            rpm=(2000, 70),
-        ),
-    ),
-)
-
-TYPES_BY_NAME: dict[str, MachineType] = {t.name: t for t in MACHINE_TYPES}
-
-
-@dataclass(frozen=True)
 class MachineSpec:
-    """Una máquina concreta de la flota."""
+    """Una máquina concreta de la flota (= ítem de `machines` del seed)."""
 
     machine_id: str
     machine_type: str
@@ -139,37 +47,51 @@ class MachineSpec:
     home_lat: float
     home_lon: float
     initial_operating_hours: float
+    expected_interval_s: int = DEFAULT_EXPECTED_INTERVAL_S
+    baselines: dict[str, Baseline] = field(default_factory=dict, hash=False)
 
     @property
-    def type_spec(self) -> MachineType:
-        return TYPES_BY_NAME[self.machine_type]
+    def roaming_deg(self) -> float:
+        return ROAMING_DEG.get(self.machine_type, 0.001)
 
     @property
     def number(self) -> int:
         return int(self.machine_id.split("-")[1])
 
 
-def build_fleet(seed: int = 42) -> list[MachineSpec]:
-    """Construye la flota completa (84 máquinas, 5 tipos, 4 zonas). Mismo `seed` = misma flota."""
-    rng = np.random.default_rng(seed)
-    zone_names = list(ZONES)
+def _seed_dir(seed_dir: Path | str | None) -> Path:
+    return Path(seed_dir or os.environ.get(SEED_DIR_ENV) or SEED_DIR)
+
+
+def load_models(seed_dir: Path | str | None = None) -> dict[str, dict]:
+    """Modelos del seed (`machine_models.json`) indexados por `model_id`."""
+    models = json.loads((_seed_dir(seed_dir) / "machine_models.json").read_text())
+    return {m["model_id"]: m for m in models}
+
+
+def build_fleet(seed_dir: Path | str | None = None) -> list[MachineSpec]:
+    """Flota completa del seed (100 máquinas, 5 tipos, 4 zonas), ordenada por `machine_id`."""
+    base = _seed_dir(seed_dir)
+    models = load_models(base)
+    machines = json.loads((base / "machines.json").read_text())
     fleet = []
-    for mtype in MACHINE_TYPES:
-        for i in range(1, mtype.count + 1):
-            zone = zone_names[(i - 1) % len(zone_names)]
-            dlat, dlon = ZONES[zone]
-            fleet.append(
-                MachineSpec(
-                    machine_id=f"{mtype.prefix}-{i:03d}",
-                    machine_type=mtype.name,
-                    model=mtype.models[(i - 1) % len(mtype.models)],
-                    zone=zone,
-                    home_lat=round(MINE_CENTER[0] + dlat + rng.normal(0, 0.004), 6),
-                    home_lon=round(MINE_CENTER[1] + dlon + rng.normal(0, 0.004), 6),
-                    initial_operating_hours=round(float(rng.uniform(2_000, 15_000)), 1),
-                )
+    for m in machines:
+        model = models[m["model"]]
+        home = m.get("home_location") or m["location"]
+        fleet.append(
+            MachineSpec(
+                machine_id=m["machine_id"],
+                machine_type=m["type"],
+                model=m["model"],
+                zone=m["zone"],
+                home_lat=float(home["lat"]),
+                home_lon=float(home["lon"]),
+                initial_operating_hours=float(m["operating_hours"]),
+                expected_interval_s=int(m.get("expected_interval_s") or DEFAULT_EXPECTED_INTERVAL_S),
+                baselines={v: Baseline(float(mu), float(sd)) for v, (mu, sd) in model["nominal"].items()},
             )
-    return fleet
+        )
+    return sorted(fleet, key=lambda s: s.machine_id)
 
 
 def select(
@@ -183,11 +105,12 @@ def select(
 
 
 def to_dict(spec: MachineSpec) -> dict:
-    """Vista exportable de una máquina (sirve a la Persona C para generar los seeds de `machines`)."""
+    """Vista exportable de una máquina (subconjunto de `Machine` del OpenAPI)."""
     return {
         "machine_id": spec.machine_id,
         "type": spec.machine_type,
         "model": spec.model,
         "location": {"lat": spec.home_lat, "lon": spec.home_lon, "zone": spec.zone},
         "operating_hours": spec.initial_operating_hours,
+        "expected_interval_s": spec.expected_interval_s,
     }

@@ -25,9 +25,22 @@ KINDS: dict[str, str] = {
 }
 
 
-def items(kind: str, day: str, data, generated_at: str, correlation_id: str) -> list[dict]:
-    """Devuelve los 2 ítems a escribir: el histórico del día (`sk=YYYY-MM-DD`) y `sk=LATEST`, que es el que lee C."""
+# kinds cuyo `data` es un objeto (no filas con `zone`): además del agregado se escribe un ítem por zona.
+ZONED_PREFIXES = ("kpis#",)
+
+
+def items(kind: str, day: str, data, generated_at: str, correlation_id: str, zone: str | None = None) -> list[dict]:
+    """Devuelve los 2 ítems a escribir: el histórico del día (`sk=YYYY-MM-DD`) y `sk=LATEST`, que es el que lee C.
+
+    Con `zone` (solo `kpis#*`, contratos.md §9.1) las claves son `YYYY-MM-DD#<zone>` y `LATEST#<zone>`; `LATEST`
+    sin sufijo sigue siendo el agregado de toda la flota.
+    """
     if kind not in KINDS:
         raise ValueError(f"kind desconocido: {kind}")
+    if zone is not None and not kind.startswith(ZONED_PREFIXES):
+        raise ValueError(f"{kind} no admite ítems por zona: filtra por la columna `zone` de cada fila")
+    suffix = f"#{zone}" if zone else ""
     base = {"pk": kind, "data": data, "generated_at": generated_at, "correlation_id": correlation_id}
-    return [{**base, "sk": day}, {**base, "sk": LATEST}]
+    if zone:
+        base["zone"] = zone
+    return [{**base, "sk": f"{day}{suffix}"}, {**base, "sk": f"{LATEST}{suffix}"}]

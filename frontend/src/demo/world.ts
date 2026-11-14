@@ -315,7 +315,7 @@ export class DemoWorld {
     const group = inZone("oeste").filter((m) => m.type !== "drill").slice(0, 3).map((m) => m.machine_id);
     this.detect(group, "combustible", now - 20_000, true);
 
-    // Golden path: EX-023 (contratos.md) con degradación crítica. Se asignará a TEC-07 (usuario demo u-tec-07).
+    // Golden path: EX-023 (contratos.md) con degradación (high, motor). Se asignará a TEC-07 (usuario demo u-tec-07).
     this.detect(["EX-023"], "degradacion", now - 6_000);
 
     // Pre-alertas sin incidente (Salud Predictiva) y una máquina sin señal (heartbeat, OBS-09)

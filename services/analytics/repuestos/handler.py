@@ -22,4 +22,5 @@ def handler(event, context):
         inventory_table=_dynamodb.Table(os.environ["TABLE_INVENTORY"]),
         catalog_table=_dynamodb.Table(os.environ["TABLE_CATALOG"]),
         insights_table=_dynamodb.Table(os.environ["TABLE_INSIGHTS"]),
+        warehouses_table=_dynamodb.Table(os.environ["TABLE_WAREHOUSES"]),
     )

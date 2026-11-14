@@ -7,7 +7,7 @@ import pytest
 
 HERE = Path(__file__).resolve()
 REPO = HERE.parents[4]
-sys.path[:0] = [str(HERE.parents[1]), str(REPO / "services" / "shared")]
+sys.path[:0] = [str(HERE.parents[1]), str(HERE.parents[2] / "common"), str(REPO / "services" / "shared")]
 
 # Se importa aquí y no dentro del test: con la suite completa se resolvería al handler.py de otro servicio.
 import handler  # noqa: E402
@@ -23,15 +23,22 @@ def test_precedencia_de_roles():
 
 
 def test_me_tecnico_desde_fixture():
-    assert service.run(FIXTURE) == {
-        "user_id": "u-tec-07", "email": "tec07@demo.arquifusion.local", "role": "tecnico", "zone": "norte",
-    }
+    assert service.run(FIXTURE) == (
+        {
+            "user_id": "u-tec-07",
+            "email": "tec07@demo.arquifusion.local",
+            "role": "tecnico",
+            "zone": "norte",
+            "technician_id": "TEC-07",
+        },
+        {},
+    )
 
 
 def test_rol_global_sin_zona():
     ev = copy.deepcopy(FIXTURE)
     ev["requestContext"]["authorizer"]["claims"].update({"cognito:groups": "gerencia", "custom:zone": "*"})
-    assert service.run(ev)["zone"] is None
+    assert service.run(ev)[0]["zone"] is None
 
 
 def _code(ev):
@@ -52,14 +59,23 @@ def test_sin_claims_401():
     assert _code(ev) == (401, "UNAUTHENTICATED")
 
 
+def test_fixture_sin_prefijo_v1():
+    assert FIXTURE["resource"] == "/me" and FIXTURE["requestContext"]["stage"] == "v1"
+
+
 def test_ruta_desconocida_404():
-    assert _code(dict(FIXTURE, resource="/v1/nope")) == (404, "NOT_FOUND")
+    assert _code(dict(FIXTURE, resource="/nope")) == (404, "NOT_FOUND")
 
 
 def test_handler_envelope():
 
     class Ctx:
-        function_name, memory_limit_in_mb, invoked_function_arn, aws_request_id = "api-lectura", 256, "arn:aws:lambda:us-east-1:1:function:x", "req-1"
+        function_name, memory_limit_in_mb, invoked_function_arn, aws_request_id = (
+            "api-lectura",
+            256,
+            "arn:aws:lambda:us-east-1:1:function:x",
+            "req-1",
+        )
 
     resp = handler.handler(FIXTURE, Ctx())
     assert resp["statusCode"] == 200

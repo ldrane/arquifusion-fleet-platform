@@ -164,7 +164,9 @@ class ToolBox:
     def get_insight(self, kind: str) -> dict:
         if kind not in INSIGHT_KINDS:
             return {"error": f"Tipo de análisis no disponible: {kind}"}
-        page = self._insights.query(KeyConditionExpression=Key("pk").eq(kind) & Key("sk").eq("LATEST"))
+        # Los KPIs son un objeto: con alcance de zona se lee el ítem por zona `LATEST#<zone>` (contratos.md §9.1).
+        sk = f"LATEST#{self._zone_scope}" if self._zone_scope and kind.startswith("kpis#") else "LATEST"
+        page = self._insights.query(KeyConditionExpression=Key("pk").eq(kind) & Key("sk").eq(sk))
         items = page.get("Items", [])
         if not items:
             return {"error": "Aún no hay análisis de este tipo"}

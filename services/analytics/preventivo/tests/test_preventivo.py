@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 import service
-from analytics_common import daily, records
+from analytics_common import daily, fleet, records
 from analytics_common.run_context import parse_event
 from analytics_testkit import FakeAthena, create_table, series
 from moto import mock_aws
@@ -18,7 +18,7 @@ def stats(*rows_lists):
 def test_heavy_use_brings_maintenance_forward():
     light = stats(series("EX-1", TODAY, 30, avg_load_pct=60.0))
     heavy = stats(series("EX-2", TODAY, 30, avg_load_pct=95.0, avg_temperature_c=105.0))
-    rec = lambda mid: records.Record(mid, "preventivo", date(2026, 10, 20), 1100.0, {}, 0.0)  # noqa: E731
+    rec = lambda mid: records.Record(mid, "preventivo", date(2026, 10, 20), 1250.0, {}, 0.0)  # noqa: E731
     a = service.plan_machine({"machine_id": "EX-1", "type": "excavator"}, light, rec("EX-1"), TODAY)
     b = service.plan_machine({"machine_id": "EX-2", "type": "excavator"}, heavy, rec("EX-2"), TODAY)
     assert service.intensity(heavy) > service.intensity(light) == 1.0
@@ -63,6 +63,36 @@ def test_plan_shape_and_priority():
     assert {p["machine_id"] for p in plan} == {"EX-1", "EX-2", "TR-9"}  # TR-9 solo existe en el lake
 
 
+CATALOG = fleet.Catalog.from_items(
+    [
+        {
+            "pk": "MODEL#CAT-336",
+            "sk": "META",
+            "model_id": "CAT-336",
+            "type": "excavator",
+            "maintenance_interval_h": 250,
+        },
+        {
+            "pk": "MODEL#CAT-793F",
+            "sk": "META",
+            "model_id": "CAT-793F",
+            "type": "mining_truck",
+            "maintenance_interval_h": 500,
+        },
+    ]
+)
+
+
+def test_interval_comes_from_catalog_model():
+    s = stats(series("EX-1", TODAY, 30, model="CAT-336"))
+    last = records.Record("EX-1", "preventivo", date(2026, 11, 1), s[-1].max_hours - 300, {}, 0.0)
+    # 300 h desde el último servicio: vencido con 250 h del CAT-336 (seed), en regla con el respaldo de 500 h de camión
+    assert service.plan_machine({"machine_id": "EX-1", "model": "CAT-336"}, s, last, TODAY, CATALOG).flag == "overdue"
+    truck = {"machine_id": "CM-1", "model": "CAT-793F", "type": "mining_truck"}
+    assert service.plan_machine(truck, s, last, TODAY, CATALOG).flag != "overdue"
+    assert CATALOG.service_interval("NO-EXISTE", "mining_truck") == 500.0  # respaldo = valores del seed
+
+
 @pytest.fixture
 def env():
     with mock_aws():
@@ -70,6 +100,7 @@ def env():
             "machines": create_table("machines"),
             "records": create_table("records", pk="record_id", sk=None),
             "insights": create_table("insights"),
+            "catalog": create_table("catalog"),
         }
 
 
@@ -88,10 +119,33 @@ def test_run_writes_insight_and_updates_machines(env):
     )
     ctx = parse_event({"query_execution_id": "q", "correlation_id": "cid", "run_at": "2026-11-14T10:00:00Z"})
 
-    out = service.run(ctx, FakeAthena(series("EX-1", TODAY, 30)), env["machines"], env["records"], env["insights"])
+    env["catalog"].put_item(
+        Item={
+            "pk": "MODEL#CAT-336",
+            "sk": "META",
+            "model_id": "CAT-336",
+            "type": "excavator",
+            "maintenance_interval_h": 250,
+        }
+    )
+    out = service.run(
+        ctx,
+        FakeAthena(series("EX-1", TODAY, 30, model="CAT-336")),
+        env["machines"],
+        env["records"],
+        env["insights"],
+        env["catalog"],
+    )
 
     assert out["kind"] == "maintenance_plan" and out["machines"] == 1
     latest = env["insights"].get_item(Key={"pk": "maintenance_plan", "sk": "LATEST"})["Item"]
     assert latest["data"][0]["machine_id"] == "EX-1" and latest["correlation_id"] == "cid"
     machine = env["machines"].get_item(Key={"pk": "OP-01#EX-1", "sk": "META"})["Item"]
     assert machine["next_maintenance_at"] == latest["data"][0]["next_maintenance_at"]
+
+
+def test_run_never_creates_machines(env):
+    ctx = parse_event({"query_execution_id": "q", "correlation_id": "cid", "run_at": "2026-11-14T10:00:00Z"})
+    service.machine_table_update(env["machines"], {"pk": "OP-01#ZZ-9", "sk": "META"}, "2026-12-01")
+    assert "Item" not in env["machines"].get_item(Key={"pk": "OP-01#ZZ-9", "sk": "META"})
+    assert ctx.today == TODAY

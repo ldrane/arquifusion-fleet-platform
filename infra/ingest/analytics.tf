@@ -16,6 +16,7 @@ locals {
       env = {
         TABLE_MACHINES            = local.tables.machines
         TABLE_MAINTENANCE_RECORDS = local.tables.maintenance_records
+        TABLE_CATALOG             = local.tables.catalog
         TABLE_INSIGHTS            = local.tables.insights
       }
     }
@@ -26,12 +27,16 @@ locals {
         TABLE_MAINTENANCE_RECORDS = local.tables.maintenance_records
         TABLE_INVENTORY           = local.tables.inventory
         TABLE_CATALOG             = local.tables.catalog
+        TABLE_WAREHOUSES          = local.tables.warehouses
         TABLE_INSIGHTS            = local.tables.insights
       }
     }
     combustible = {
       description = "Consumo de combustible vs pares e historial (RF-07)"
-      env         = { TABLE_INSIGHTS = local.tables.insights }
+      env = {
+        TABLE_CATALOG  = local.tables.catalog
+        TABLE_INSIGHTS = local.tables.insights
+      }
     }
     productividad = {
       description = "Utilización y matriz productividad x costo (RF-08)"
@@ -45,6 +50,7 @@ locals {
       env = {
         TABLE_MACHINES     = local.tables.machines
         TABLE_INCIDENTS    = local.tables.incidents
+        TABLE_CATALOG      = local.tables.catalog
         TABLE_INSIGHTS     = local.tables.insights
         IA_GEMINI_FUNCTION = aws_lambda_function.ia_gemini.function_name
       }
@@ -52,7 +58,11 @@ locals {
   }
 
   # SQL escapado para insertarlo dentro de un string JSON del ASL.
-  sql_daily_stats = trimsuffix(trimprefix(jsonencode(file("${local.analytics_common_dir}/analytics_common/sql/daily_machine_stats.sql")), "\""), "\"")
+  # El SQL filtra `operation_id = 'OP-01'` (proyección injected, #10); aquí se fija la operación del stage.
+  sql_daily_stats = trimsuffix(trimprefix(jsonencode(replace(
+    file("${local.analytics_common_dir}/analytics_common/sql/daily_machine_stats.sql"),
+    "operation_id = 'OP-01'", "operation_id = '${var.default_operation_id}'"
+  )), "\""), "\"")
 }
 
 data "archive_file" "analytics" {
@@ -162,4 +172,5 @@ resource "aws_cloudwatch_metric_alarm" "analisis_diario_failed" {
   threshold           = 1
   comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "notBreaching"
+  alarm_actions       = [local.alarm_topic_arn]
 }

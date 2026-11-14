@@ -1,12 +1,12 @@
 rules_version = '2';
 
-// ArquiFusion — Security Rules de Firestore (dueña: C). Ver contratos.md §5.
-// Los claims vienen del custom token de POST /v1/auth/firebase-token:
+// ArquiFusion — Security Rules de Firestore (dueña: C). Ver contratos.md §2.1 y §5.
+// Los claims vienen del custom token de POST /auth/firebase-token (api-lectura):
 //   role          operador | tecnico | mantenimiento | supervisor | admin | gerencia
 //   zone          norte | sur | este | oeste ; null o "*" = todas las zonas
-//   technician_id solo para role=tecnico (ej. TEC-07)   <- claim aditivo propuesto por C
-// La Lambda replicar escribe con la service account (Admin SDK), que NO pasa por estas reglas.
-// Los clientes nunca escriben machines/incidents/technicians: son réplica de DynamoDB.
+//   technician_id solo para role=tecnico (= custom:technician_id de Cognito, ej. TEC-07)
+// replicar y api-lectura escriben con la service account (OAuth2, IAM), que NO pasa por estas reglas.
+// Los clientes nunca escriben machines/incidents/technicians/users: son réplica de DynamoDB o perfil del servidor.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -27,9 +27,22 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------- técnicos
+    // replicar siempre escribe location.zone (#11); `zone` de primer nivel es el respaldo.
+    // Las consultas del front filtran por location.zone (así la regla es demostrable para la query).
     match /technicians/{techId} {
-      allow read: if (hasRole(['mantenimiento', 'supervisor', 'admin']) && inZone(resource.data.location.zone))
+      // `||` de las reglas tolera el error si location.zone falta y cae al `zone` de primer nivel.
+      function inTechZone() { return inZone(resource.data.location.zone) || inZone(resource.data.zone); }
+      allow read: if (hasRole(['mantenimiento', 'supervisor', 'admin']) && inTechZone())
                   || (hasRole(['tecnico']) && resource.data.technician_id == claims().get('technician_id', ''));
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------- perfil push (contratos.md §5)
+    // users/{uid}: user_id, role, zone, technician_id, fcm_tokens[], updated_at.
+    // Lo escribe SOLO api-lectura (POST /auth/firebase-token, arrayUnion) y lo lee notify_bridge (Admin).
+    // El usuario puede leer su propio documento (p. ej. para saber si el push quedó registrado).
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
       allow write: if false;
     }
 

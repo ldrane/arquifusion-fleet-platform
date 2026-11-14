@@ -52,7 +52,7 @@ export function Efficiency() {
       )}
 
       {can(role, "report") && (
-        <Panel icon="summarize" title="Resumen gerencial IA" subtitle={report.data ? `Generado ${fmtDateTime(report.data.generated_at)} · ${report.data.prompt_version}` : "GET /v1/reports/latest"}>
+        <Panel icon="summarize" title="Resumen gerencial IA" subtitle={report.data ? `Generado ${fmtDateTime(report.data.generated_at)} · ${report.data.prompt_version}` : "GET /reports/latest"}>
           {report.error ? <ErrorBox error={report.error} onRetry={report.refetch} /> : !report.data ? <Loading /> : (
             <div className="flex gap-3">
               <Icon name="smart_toy" className="mt-0.5 text-[22px] text-primary" />

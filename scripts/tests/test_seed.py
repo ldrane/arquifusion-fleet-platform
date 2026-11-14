@@ -1,4 +1,5 @@
 """Tests de los seeds (sin AWS). Correr: python -m pytest scripts/tests -q"""
+
 import re
 import sys
 from decimal import Decimal

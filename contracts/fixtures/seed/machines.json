@@ -21,14 +21,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5697.7,
-    "last_maintenance_at": "2026-10-25",
-    "next_maintenance_at": "2026-11-10",
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-002",
@@ -52,14 +52,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5589.3,
-    "last_maintenance_at": "2026-10-26",
-    "next_maintenance_at": "2026-11-11",
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-003",
@@ -83,14 +83,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 11578.1,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-10-27",
+    "last_maintenance_at": "2026-11-01",
+    "next_maintenance_at": "2026-11-17",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-004",
@@ -114,14 +114,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 1699.7,
-    "last_maintenance_at": "2026-10-16",
-    "next_maintenance_at": "2026-11-01",
+    "last_maintenance_at": "2026-11-03",
+    "next_maintenance_at": "2026-11-19",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-005",
@@ -145,14 +145,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 13120.1,
-    "last_maintenance_at": "2026-10-26",
-    "next_maintenance_at": "2026-11-11",
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-006",
@@ -176,14 +176,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 14298.3,
-    "last_maintenance_at": "2026-11-05",
-    "next_maintenance_at": "2026-11-21",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-007",
@@ -207,14 +207,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4353.0,
-    "last_maintenance_at": "2026-11-01",
-    "next_maintenance_at": "2026-11-17",
+    "last_maintenance_at": "2026-11-09",
+    "next_maintenance_at": "2026-11-25",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-008",
@@ -238,14 +238,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 2572.2,
-    "last_maintenance_at": "2026-10-14",
-    "next_maintenance_at": "2026-10-30",
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-009",
@@ -269,14 +269,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4432.2,
-    "last_maintenance_at": "2026-10-13",
-    "next_maintenance_at": "2026-10-29",
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-010",
@@ -300,14 +300,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 14113.1,
-    "last_maintenance_at": "2026-10-09",
-    "next_maintenance_at": "2026-10-25",
+    "last_maintenance_at": "2026-10-31",
+    "next_maintenance_at": "2026-11-16",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-011",
@@ -331,14 +331,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 7985.8,
-    "last_maintenance_at": "2026-10-07",
-    "next_maintenance_at": "2026-10-23",
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-12",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-012",
@@ -362,14 +362,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 6447.0,
-    "last_maintenance_at": "2026-10-23",
-    "next_maintenance_at": "2026-11-08",
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-013",
@@ -393,14 +393,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5073.9,
-    "last_maintenance_at": "2026-10-24",
-    "next_maintenance_at": "2026-11-09",
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-014",
@@ -424,14 +424,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 1564.2,
-    "last_maintenance_at": "2026-10-07",
-    "next_maintenance_at": "2026-10-23",
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-12",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-015",
@@ -455,14 +455,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 2029.9,
-    "last_maintenance_at": "2026-10-19",
-    "next_maintenance_at": "2026-11-04",
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-016",
@@ -486,14 +486,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 16279.6,
-    "last_maintenance_at": "2026-10-16",
-    "next_maintenance_at": "2026-11-01",
+    "last_maintenance_at": "2026-11-03",
+    "next_maintenance_at": "2026-11-19",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-017",
@@ -517,14 +517,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17837.3,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-018",
@@ -548,14 +548,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4527.1,
-    "last_maintenance_at": "2026-10-18",
-    "next_maintenance_at": "2026-11-03",
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-019",
@@ -579,14 +579,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 3190.9,
-    "last_maintenance_at": "2026-10-24",
-    "next_maintenance_at": "2026-11-09",
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-020",
@@ -610,14 +610,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 10326.8,
-    "last_maintenance_at": "2026-10-25",
-    "next_maintenance_at": "2026-11-10",
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-021",
@@ -641,14 +641,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 13358.3,
-    "last_maintenance_at": "2026-10-15",
-    "next_maintenance_at": "2026-10-31",
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-022",
@@ -672,14 +672,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 9244.4,
-    "last_maintenance_at": "2026-10-06",
-    "next_maintenance_at": "2026-10-22",
+    "last_maintenance_at": "2026-10-25",
+    "next_maintenance_at": "2026-11-10",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-023",
@@ -703,14 +703,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 3582.1,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-11-22",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-024",
@@ -734,14 +734,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4592.1,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-11-22",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "EX-025",
@@ -765,14 +765,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 11431.0,
-    "last_maintenance_at": "2026-11-08",
-    "next_maintenance_at": "2026-11-24",
+    "last_maintenance_at": "2026-11-12",
+    "next_maintenance_at": "2026-11-28",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-001",
@@ -796,14 +796,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 7533.2,
-    "last_maintenance_at": "2026-10-25",
-    "next_maintenance_at": "2026-11-25",
+    "last_maintenance_at": "2026-10-30",
+    "next_maintenance_at": "2026-11-30",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-002",
@@ -827,14 +827,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5470.9,
-    "last_maintenance_at": "2026-10-17",
-    "next_maintenance_at": "2026-11-17",
+    "last_maintenance_at": "2026-10-23",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-003",
@@ -858,14 +858,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 7078.0,
-    "last_maintenance_at": "2026-10-22",
-    "next_maintenance_at": "2026-11-22",
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-004",
@@ -889,14 +889,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 13001.3,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-12-08",
+    "last_maintenance_at": "2026-11-10",
+    "next_maintenance_at": "2026-12-11",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-005",
@@ -920,14 +920,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 8888.1,
-    "last_maintenance_at": "2026-11-08",
-    "next_maintenance_at": "2026-12-09",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-12-12",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-006",
@@ -951,14 +951,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 13349.8,
-    "last_maintenance_at": "2026-10-23",
-    "next_maintenance_at": "2026-11-23",
+    "last_maintenance_at": "2026-10-28",
+    "next_maintenance_at": "2026-11-28",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-007",
@@ -982,14 +982,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 7202.1,
-    "last_maintenance_at": "2026-10-21",
-    "next_maintenance_at": "2026-11-21",
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-008",
@@ -1013,14 +1013,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17619.8,
-    "last_maintenance_at": "2026-10-23",
-    "next_maintenance_at": "2026-11-23",
+    "last_maintenance_at": "2026-10-28",
+    "next_maintenance_at": "2026-11-28",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-009",
@@ -1044,14 +1044,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 12101.8,
-    "last_maintenance_at": "2026-10-28",
-    "next_maintenance_at": "2026-11-28",
+    "last_maintenance_at": "2026-11-02",
+    "next_maintenance_at": "2026-12-03",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-010",
@@ -1075,14 +1075,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 3306.9,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-11-11",
+    "last_maintenance_at": "2026-10-18",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-011",
@@ -1106,14 +1106,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 14438.6,
-    "last_maintenance_at": "2026-10-08",
-    "next_maintenance_at": "2026-11-08",
+    "last_maintenance_at": "2026-10-15",
+    "next_maintenance_at": "2026-11-15",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-012",
@@ -1137,14 +1137,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17922.1,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-12-05",
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-12-09",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-013",
@@ -1168,14 +1168,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 13952.7,
-    "last_maintenance_at": "2026-10-25",
-    "next_maintenance_at": "2026-11-25",
+    "last_maintenance_at": "2026-10-30",
+    "next_maintenance_at": "2026-11-30",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-014",
@@ -1199,14 +1199,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 12805.4,
-    "last_maintenance_at": "2026-11-06",
-    "next_maintenance_at": "2026-12-07",
+    "last_maintenance_at": "2026-11-09",
+    "next_maintenance_at": "2026-12-10",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-015",
@@ -1230,14 +1230,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 1904.3,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-12-05",
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-12-09",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-016",
@@ -1261,14 +1261,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 10311.0,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-11-11",
+    "last_maintenance_at": "2026-10-18",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-017",
@@ -1292,14 +1292,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4411.1,
-    "last_maintenance_at": "2026-10-24",
-    "next_maintenance_at": "2026-11-24",
+    "last_maintenance_at": "2026-10-29",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-018",
@@ -1323,14 +1323,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 7643.8,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-11-11",
+    "last_maintenance_at": "2026-10-18",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-019",
@@ -1354,14 +1354,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17484.3,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-11-11",
+    "last_maintenance_at": "2026-10-18",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-020",
@@ -1385,14 +1385,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 9782.5,
-    "last_maintenance_at": "2026-10-05",
-    "next_maintenance_at": "2026-11-05",
+    "last_maintenance_at": "2026-10-08",
+    "next_maintenance_at": "2026-11-08",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-021",
@@ -1416,14 +1416,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 15532.9,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-12-08",
+    "last_maintenance_at": "2026-11-10",
+    "next_maintenance_at": "2026-12-11",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-022",
@@ -1447,14 +1447,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 3532.7,
-    "last_maintenance_at": "2026-10-21",
-    "next_maintenance_at": "2026-11-21",
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-023",
@@ -1478,14 +1478,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 9601.1,
-    "last_maintenance_at": "2026-10-30",
-    "next_maintenance_at": "2026-11-30",
+    "last_maintenance_at": "2026-11-03",
+    "next_maintenance_at": "2026-12-04",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-024",
@@ -1509,14 +1509,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 3170.7,
-    "last_maintenance_at": "2026-10-21",
-    "next_maintenance_at": "2026-11-21",
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-025",
@@ -1540,14 +1540,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17486.8,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-11-11",
+    "last_maintenance_at": "2026-10-18",
+    "next_maintenance_at": "2026-11-18",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-026",
@@ -1571,14 +1571,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 6564.6,
-    "last_maintenance_at": "2026-10-31",
-    "next_maintenance_at": "2026-12-01",
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-12-05",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-027",
@@ -1602,14 +1602,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 10375.9,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-12-05",
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-12-09",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-028",
@@ -1633,14 +1633,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 13513.2,
-    "last_maintenance_at": "2026-10-22",
-    "next_maintenance_at": "2026-11-22",
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-029",
@@ -1664,14 +1664,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 2446.4,
-    "last_maintenance_at": "2026-10-14",
-    "next_maintenance_at": "2026-11-14",
+    "last_maintenance_at": "2026-10-21",
+    "next_maintenance_at": "2026-11-21",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-030",
@@ -1695,14 +1695,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 11758.3,
-    "last_maintenance_at": "2026-10-07",
-    "next_maintenance_at": "2026-11-07",
+    "last_maintenance_at": "2026-10-12",
+    "next_maintenance_at": "2026-11-12",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-031",
@@ -1726,14 +1726,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 1659.0,
-    "last_maintenance_at": "2026-11-03",
-    "next_maintenance_at": "2026-12-04",
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-12-08",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-032",
@@ -1757,14 +1757,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 11754.0,
-    "last_maintenance_at": "2026-10-07",
-    "next_maintenance_at": "2026-11-07",
+    "last_maintenance_at": "2026-10-12",
+    "next_maintenance_at": "2026-11-12",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-033",
@@ -1788,14 +1788,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5369.3,
-    "last_maintenance_at": "2026-11-01",
-    "next_maintenance_at": "2026-12-02",
+    "last_maintenance_at": "2026-11-05",
+    "next_maintenance_at": "2026-12-06",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-034",
@@ -1819,14 +1819,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 7770.5,
-    "last_maintenance_at": "2026-10-13",
-    "next_maintenance_at": "2026-11-13",
+    "last_maintenance_at": "2026-10-20",
+    "next_maintenance_at": "2026-11-20",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CM-035",
@@ -1850,14 +1850,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 12964.5,
-    "last_maintenance_at": "2026-11-05",
-    "next_maintenance_at": "2026-12-06",
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-12-09",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-001",
@@ -1881,14 +1881,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 16844.1,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-11-20",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-002",
@@ -1912,14 +1912,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 11988.3,
-    "last_maintenance_at": "2026-10-16",
-    "next_maintenance_at": "2026-11-01",
+    "last_maintenance_at": "2026-11-03",
+    "next_maintenance_at": "2026-11-19",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-003",
@@ -1943,14 +1943,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 15609.6,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-10-27",
+    "last_maintenance_at": "2026-11-01",
+    "next_maintenance_at": "2026-11-17",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-004",
@@ -1974,14 +1974,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 9531.8,
-    "last_maintenance_at": "2026-10-07",
-    "next_maintenance_at": "2026-10-23",
+    "last_maintenance_at": "2026-10-27",
+    "next_maintenance_at": "2026-11-12",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-005",
@@ -2005,14 +2005,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17378.6,
-    "last_maintenance_at": "2026-10-31",
-    "next_maintenance_at": "2026-11-16",
+    "last_maintenance_at": "2026-11-09",
+    "next_maintenance_at": "2026-11-25",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-006",
@@ -2036,14 +2036,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 9031.7,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-10-27",
+    "last_maintenance_at": "2026-11-01",
+    "next_maintenance_at": "2026-11-17",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-007",
@@ -2067,14 +2067,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5066.7,
-    "last_maintenance_at": "2026-10-12",
-    "next_maintenance_at": "2026-10-28",
+    "last_maintenance_at": "2026-11-01",
+    "next_maintenance_at": "2026-11-17",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-008",
@@ -2098,14 +2098,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 13089.3,
-    "last_maintenance_at": "2026-10-05",
-    "next_maintenance_at": "2026-10-21",
+    "last_maintenance_at": "2026-10-23",
+    "next_maintenance_at": "2026-11-08",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-009",
@@ -2129,14 +2129,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17032.7,
-    "last_maintenance_at": "2026-10-06",
-    "next_maintenance_at": "2026-10-22",
+    "last_maintenance_at": "2026-10-25",
+    "next_maintenance_at": "2026-11-10",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-010",
@@ -2160,14 +2160,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 15613.8,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-12",
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-011",
@@ -2191,14 +2191,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 2352.1,
-    "last_maintenance_at": "2026-10-29",
-    "next_maintenance_at": "2026-11-14",
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-11-24",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-012",
@@ -2222,14 +2222,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 16674.2,
-    "last_maintenance_at": "2026-10-21",
-    "next_maintenance_at": "2026-11-06",
+    "last_maintenance_at": "2026-11-05",
+    "next_maintenance_at": "2026-11-21",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-013",
@@ -2253,14 +2253,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5534.4,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-11-20",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-014",
@@ -2284,14 +2284,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 14239.4,
-    "last_maintenance_at": "2026-10-18",
-    "next_maintenance_at": "2026-11-03",
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "CF-015",
@@ -2315,14 +2315,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 1755.1,
-    "last_maintenance_at": "2026-11-04",
-    "next_maintenance_at": "2026-11-20",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-001",
@@ -2346,14 +2346,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 10686.7,
-    "last_maintenance_at": "2026-10-30",
-    "next_maintenance_at": "2026-11-15",
+    "last_maintenance_at": "2026-11-09",
+    "next_maintenance_at": "2026-11-25",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-002",
@@ -2377,14 +2377,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 8991.4,
-    "last_maintenance_at": "2026-10-21",
-    "next_maintenance_at": "2026-11-06",
+    "last_maintenance_at": "2026-11-05",
+    "next_maintenance_at": "2026-11-21",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-003",
@@ -2408,14 +2408,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 1561.3,
-    "last_maintenance_at": "2026-11-03",
-    "next_maintenance_at": "2026-11-19",
+    "last_maintenance_at": "2026-11-10",
+    "next_maintenance_at": "2026-11-26",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-004",
@@ -2439,14 +2439,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4687.4,
-    "last_maintenance_at": "2026-10-25",
-    "next_maintenance_at": "2026-11-10",
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-005",
@@ -2470,14 +2470,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4582.0,
-    "last_maintenance_at": "2026-11-05",
-    "next_maintenance_at": "2026-11-21",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-006",
@@ -2501,14 +2501,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 2765.0,
-    "last_maintenance_at": "2026-10-10",
-    "next_maintenance_at": "2026-10-26",
+    "last_maintenance_at": "2026-10-31",
+    "next_maintenance_at": "2026-11-16",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-007",
@@ -2532,14 +2532,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17659.4,
-    "last_maintenance_at": "2026-11-10",
-    "next_maintenance_at": "2026-11-26",
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-008",
@@ -2563,14 +2563,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 6811.3,
-    "last_maintenance_at": "2026-10-24",
-    "next_maintenance_at": "2026-11-09",
+    "last_maintenance_at": "2026-11-06",
+    "next_maintenance_at": "2026-11-22",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-009",
@@ -2594,14 +2594,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 8413.2,
-    "last_maintenance_at": "2026-10-18",
-    "next_maintenance_at": "2026-11-03",
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-010",
@@ -2625,14 +2625,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 11598.0,
-    "last_maintenance_at": "2026-10-17",
-    "next_maintenance_at": "2026-11-02",
+    "last_maintenance_at": "2026-11-03",
+    "next_maintenance_at": "2026-11-19",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-011",
@@ -2656,14 +2656,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4536.0,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "BD-012",
@@ -2687,14 +2687,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 13823.1,
-    "last_maintenance_at": "2026-10-11",
-    "next_maintenance_at": "2026-10-27",
+    "last_maintenance_at": "2026-11-01",
+    "next_maintenance_at": "2026-11-17",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-001",
@@ -2718,14 +2718,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 14403.8,
-    "last_maintenance_at": "2026-10-20",
-    "next_maintenance_at": "2026-11-05",
+    "last_maintenance_at": "2026-11-04",
+    "next_maintenance_at": "2026-11-20",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-002",
@@ -2749,14 +2749,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 9922.5,
-    "last_maintenance_at": "2026-11-07",
-    "next_maintenance_at": "2026-11-23",
+    "last_maintenance_at": "2026-11-12",
+    "next_maintenance_at": "2026-11-28",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-003",
@@ -2780,14 +2780,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5498.0,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-12",
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-004",
@@ -2811,14 +2811,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 17256.7,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-12",
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-005",
@@ -2842,14 +2842,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 10903.5,
-    "last_maintenance_at": "2026-10-28",
-    "next_maintenance_at": "2026-11-13",
+    "last_maintenance_at": "2026-11-08",
+    "next_maintenance_at": "2026-11-24",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-006",
@@ -2873,14 +2873,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 14981.6,
-    "last_maintenance_at": "2026-10-27",
-    "next_maintenance_at": "2026-11-12",
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-007",
@@ -2904,14 +2904,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 4104.4,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-008",
@@ -2935,14 +2935,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 16242.0,
-    "last_maintenance_at": "2026-10-30",
-    "next_maintenance_at": "2026-11-15",
+    "last_maintenance_at": "2026-11-09",
+    "next_maintenance_at": "2026-11-25",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-009",
@@ -2966,14 +2966,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 11746.8,
-    "last_maintenance_at": "2026-10-26",
-    "next_maintenance_at": "2026-11-11",
+    "last_maintenance_at": "2026-11-07",
+    "next_maintenance_at": "2026-11-23",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-010",
@@ -2997,14 +2997,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 5407.9,
-    "last_maintenance_at": "2026-11-05",
-    "next_maintenance_at": "2026-11-21",
+    "last_maintenance_at": "2026-11-11",
+    "next_maintenance_at": "2026-11-27",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-011",
@@ -3028,14 +3028,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 10583.9,
-    "last_maintenance_at": "2026-11-11",
-    "next_maintenance_at": "2026-11-27",
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-012",
@@ -3059,14 +3059,14 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 8686.9,
-    "last_maintenance_at": "2026-11-10",
-    "next_maintenance_at": "2026-11-26",
+    "last_maintenance_at": "2026-11-13",
+    "next_maintenance_at": "2026-11-29",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "machine_id": "PF-013",
@@ -3090,13 +3090,13 @@
     "last_seen_at": null,
     "expected_interval_s": 60,
     "operating_hours": 11713.3,
-    "last_maintenance_at": "2026-10-22",
-    "next_maintenance_at": "2026-11-07",
+    "last_maintenance_at": "2026-11-05",
+    "next_maintenance_at": "2026-11-21",
     "failure_probability": null,
     "rul_hours": null,
     "open_incident_id": null,
     "top_factors": [],
     "model_version": null,
-    "seed_version": 2
+    "seed_version": 3
   }
 ]

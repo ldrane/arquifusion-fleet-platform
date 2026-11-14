@@ -2,7 +2,7 @@
 
 - **Dueño:** Persona C · **RF:** RF-05, RF-11, RF-15, RF-16 (+ vistas de RF-03/04/07/08/14)
 - **Stack:** React 18 + Vite + TypeScript + Tailwind (tokens del diseño *Precision Industrial Dark*), React Router, Leaflet, Recharts.
-- **Consume:** `GET/POST /v1/*` (`contracts/openapi.yaml`) y Firestore (`contracts/contratos.md` §5, reglas en `infra/gcp/firestore.rules`).
+- **Consume:** la API REST (`contracts/openapi.yaml`, stage `v1`, rutas **sin** prefijo `/v1`: `${VITE_API_URL}/me`) y Firestore (`contracts/contratos.md` §5, reglas en `infra/gcp/firestore.rules`).
 
 ## Arranque rápido
 
@@ -18,7 +18,7 @@ npm test           # vitest: ciclo de vida del incidente, RBAC, zona, paginació
 
 | | **Demo** (sin `VITE_API_URL`) | **Real** (`VITE_API_URL` definido) |
 |---|---|---|
-| Datos | `contracts/fixtures/seed/*.json` (los seeds de C1, importados tal cual) + simulación | API Gateway `/v1/*` |
+| Datos | `contracts/fixtures/seed/*.json` (los seeds de C1, importados tal cual) + simulación | API Gateway (`api-lectura` / `api-comandos`) |
 | Login | Selector de los usuarios demo del runbook (`u-op-01`, `u-tec-07`, …) | Cognito `USER_PASSWORD_AUTH`, **ID token** |
 | Tiempo real | Mundo simulado (procesar → GestionIncidente → replicar) | Firestore `onSnapshot` (o polling cada 10 s si no hay config de Firebase) |
 | Chat | Simulado | Firestore `incidents/{id}/messages`, con caché offline |
@@ -26,7 +26,7 @@ npm test           # vitest: ciclo de vida del incidente, RBAC, zona, paginació
 Las vistas solo hablan con la interfaz `FleetApi` (`src/api/client.ts`) y con `RealtimeSource` (`src/realtime/types.ts`).
 La única pieza que sabe en qué modo corre la app es `src/services.ts`.
 
-**Modo demo para el pitch:** el botón **Simulador** del encabezado inyecta los escenarios de `simulator/` (degradación, falla súbita, combustible, grupal por zona…).
+**Modo demo para el pitch:** el botón **Simulador** del encabezado inyecta **solo** los escenarios que existen en `simulator/scenarios.py` (`degradacion`, `falla_subita`, `combustible`, `grupal_zona`; #27). Los patrones hidráulico, eléctrico y de neumáticos solo aparecen en el historial y el piloto automático.
 El técnico `u-tec-07` (TEC-07, Pedro Rojas) recibe el incidente de **EX-023** y lo acepta, resuelve y cierra a mano: es el golden path completo.
 
 ## Configuración (modo real)
@@ -38,13 +38,19 @@ Copia `.env.example` a `.env.local`. Todo lo que va ahí es **público**: el nav
 | `VITE_API_URL` | URL del stage `v1` de `{p}-api` (B, `infra/base`) |
 | `VITE_COGNITO_REGION`, `VITE_COGNITO_CLIENT_ID` | User Pool de B. App client **sin secret** y con `ALLOW_USER_PASSWORD_AUTH` |
 | `VITE_FIREBASE_*` | Firebase → Configuración → app web (runbook H0 §4) |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_VAPID_KEY` | Firebase → Configuración → Cloud Messaging (ID del remitente y clave pública de *Certificados push web*). Sin ellas no hay push |
 
-## Lo que el front necesita del backend (pendiente)
+## Integración con el backend
 
-1. **CORS (B):** API Gateway con `OPTIONS` en `/v1/*` y `shared/response.py` con `Access-Control-Allow-Origin` y `Access-Control-Expose-Headers: X-Correlation-Id`.
-   El front envía `Authorization`, `Content-Type` y `X-Correlation-Id` (acuerdo 3 de `docs/h0-persona-c.md`).
-2. **`api-lectura` (C2/C3):** hoy solo responde `/v1/me`. Las demás rutas GET deben devolver exactamente los shapes del OpenAPI (el demo ya los respeta).
-3. **`POST /v1/auth/firebase-token` (C6)** con los claims `role`, `zone` y `technician_id`, y **`replicar` (C5)**. Sin ellos, el modo real usa polling y el chat queda deshabilitado.
+1. **Identidad (#8):** `GET /me` devuelve `technician_id` (claim `custom:technician_id`). El front usa `myTechnicianId(me)`;
+   `technicianIdFromUser` (mapeo `u-tec-07` → `TEC-07`) queda solo como respaldo para sesiones viejas.
+2. **Tiempo real:** `POST /auth/firebase-token` → `signInWithCustomToken` (claims `role`, `zone`, `technician_id`) →
+   `onSnapshot` de `machines`, `incidents`, `technicians` (las escribe `replicar`). Sin config de Firebase: polling cada 10 s.
+3. **Push FCM (#15, RF-16):** `src/realtime/push.ts` registra `public/firebase-messaging-sw.js`, pide permiso y obtiene el
+   token con `getToken`; lo envía en el body de `POST /auth/firebase-token` (`{ "fcm_token" }`) y `api-lectura` lo guarda en
+   `users/{uid}.fcm_tokens[]`. Los `deep_link` `/incidents/{id}` del push redirigen a `/incidentes/{id}`.
+4. **Comandos:** `ack`/`assign`/`resolve` devuelven el `Incident` completo con `meta.pending_transition`; el estado final llega por Firestore.
+5. **CORS (B):** `OPTIONS` en cada recurso y headers de contratos.md §1.2 en todas las respuestas.
 
 ## Estructura
 

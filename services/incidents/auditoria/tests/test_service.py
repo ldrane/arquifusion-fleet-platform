@@ -1,8 +1,65 @@
-import pytest
+import json
+from pathlib import Path
 
 import service
 
+FIX = Path(__file__).parents[4] / "contracts" / "fixtures" / "events"
 
-@pytest.mark.skip(reason="TODO: implementar auditoria")
-def test_run():
-    assert service.run({})
+
+class FakeClientError(Exception):
+    response = {"Error": {"Code": "ConditionalCheckFailedException"}}
+
+
+class FakeTable:
+    def __init__(self):
+        self.items = {}
+
+    def put_item(self, Item, ConditionExpression=None):
+        key = (Item["pk"], Item.get("sk"))
+        if key in self.items:
+            raise FakeClientError()
+        self.items[key] = Item
+
+
+def eventbridge(name):
+    entry = json.loads((FIX / name).read_text())[0]
+    return {
+        "id": "x",
+        "source": entry["Source"],
+        "detail-type": entry["DetailType"],
+        "detail": json.loads(entry["Detail"]),
+    }
+
+
+def deps():
+    return {"audit": FakeTable(), "incidents": FakeTable()}
+
+
+def test_incident_state_changed_escribe_auditoria_e_historial():
+    d = deps()
+    out = service.run(eventbridge("incident_state_changed.json"), d)
+    assert out == {"audit": True, "history": True}
+    ((key, hist),) = d["incidents"].items.items()
+    assert key == ("INC#INC-01JC8ZK", "EVT#2026-11-13T10:15:00Z#01JC8ZK5T7Y2N4Q8R3W6X9A1B2")
+    assert hist["entity"] == "incident_event" and hist["event_type"] == "incident.assigned"
+    assert hist["from"] == "detected" and hist["to"] == "assigned" and hist["technician_id"] == "TEC-07"
+    for forbidden in ("incident_id", "status", "machine_id", "detected_at"):
+        assert forbidden not in hist
+    ((akey, audit),) = d["audit"].items.items()
+    assert akey[0] == "incident#INC-01JC8ZK"
+    assert audit["actor"] == {"type": "system", "user_id": None, "role": None}
+
+
+def test_reintento_es_idempotente():
+    d = deps()
+    service.run(eventbridge("incident_state_changed.json"), d)
+    assert service.run(eventbridge("incident_state_changed.json"), d) == {"audit": False, "history": False}
+
+
+def test_anomalia_y_silencio_se_auditan_por_maquina():
+    d = deps()
+    service.run(eventbridge("anomaly_detected.json"), d)
+    service.run(eventbridge("machine_silent.json"), d)
+    pks = sorted(k[0] for k in d["audit"].items)
+    assert pks == ["machine#CM-004", "machine#EX-023"]
+    assert d["incidents"].items == {}

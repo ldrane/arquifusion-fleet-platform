@@ -2,7 +2,7 @@ import type { Me } from "@/api/types";
 import { can } from "@/auth/permissions";
 import { DEMO_USERS } from "@/demo/data";
 import type { DemoWorld, Topic } from "@/demo/world";
-import { technicianIdFromUser } from "@/lib/ids";
+import { myTechnicianId } from "@/lib/ids";
 import type { FleetUpdate, RealtimeSource } from "./types";
 
 /** Tiempo real del modo demo. Aplica la misma visibilidad que las Security Rules (rol + zona). */
@@ -23,7 +23,7 @@ export class DemoRealtime implements RealtimeSource {
       u.incidents = [...this.world.incidents.values()].filter((i) => zoneOk(i.zone)).map((i) => this.world.publicIncident(i));
     }
     if (topics.has("technicians")) {
-      const ownId = technicianIdFromUser(me.user_id);
+      const ownId = myTechnicianId(me);
       u.technicians = [...this.world.techs.values()]
         .filter((t) => (can(me.role, "technicians") && zoneOk(t.zone)) || t.technician_id === ownId)
         .map((t) => this.world.publicTech(t));
@@ -58,7 +58,7 @@ export class DemoRealtime implements RealtimeSource {
     if (!can(me.role, "chatWrite")) throw new Error("Tu rol solo puede leer el chat");
     const parent = this.world.incidents.get(incidentId)?.parent_incident_id ?? incidentId;
     const name = DEMO_USERS.find((u) => u.user_id === me.user_id)?.name ?? me.user_id;
-    this.world.chat(parent, { user_id: me.user_id, role: me.role, name, technician_id: technicianIdFromUser(me.user_id) }, text, quickAction);
+    this.world.chat(parent, { user_id: me.user_id, role: me.role, name, technician_id: myTechnicianId(me) }, text, quickAction);
   }
 
   subscribeNotifications(onNotifications: (n: import("@/demo/world").Notification[]) => void) {

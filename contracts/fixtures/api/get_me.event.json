@@ -1,6 +1,6 @@
 {
-  "resource": "/v1/me",
-  "path": "/v1/me",
+  "resource": "/me",
+  "path": "/me",
   "httpMethod": "GET",
   "headers": {
     "Authorization": "eyJ...id-token",
@@ -9,7 +9,8 @@
   "queryStringParameters": null,
   "pathParameters": null,
   "requestContext": {
-    "resourcePath": "/v1/me",
+    "resourcePath": "/me",
+    "path": "/v1/me",
     "httpMethod": "GET",
     "stage": "v1",
     "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",

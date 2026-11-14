@@ -27,6 +27,8 @@ AMBIENT_TEMPERATURE_C = 18.0
 IDLE_PROBABILITY = 0.08
 LIMA = timezone(timedelta(hours=-5))
 SHIFT_HOURS = range(6, 22)  # turno de 06:00 a 22:00 hora de Lima
+NOMINAL_MAX_Z = 2.5  # la operación nominal queda dentro de μ±2.5σ (umbral de la capa 1: μ±3σ)
+FUEL_LOAD_CORR = 0.6  # correlación consumo-carga en operación normal
 
 
 def iso(ts: datetime) -> str:
@@ -45,9 +47,14 @@ def base_state(ts: datetime, rng: np.random.Generator, shifts: bool) -> str:
     return "idle" if rng.random() < IDLE_PROBABILITY else "operating"
 
 
+def _z(rng: np.random.Generator) -> float:
+    """Ruido normal estándar truncado a ±NOMINAL_MAX_Z: una máquina sana no cruza el umbral μ±3σ (#2)."""
+    return float(np.clip(rng.normal(0, 1), -NOMINAL_MAX_Z, NOMINAL_MAX_Z))
+
+
 def normal_values(spec: MachineSpec, state: str, rng: np.random.Generator) -> dict[str, float]:
-    """Valores normales de las variables según el tipo y el estado de la máquina."""
-    b = spec.type_spec.baselines
+    """Valores normales según el `nominal` del modelo (seed) y el estado de la máquina."""
+    b = spec.baselines
     if state in ("stopped", "maintenance"):
         return {
             "temperature_c": AMBIENT_TEMPERATURE_C + rng.normal(0, 2),
@@ -58,7 +65,16 @@ def normal_values(spec: MachineSpec, state: str, rng: np.random.Generator) -> di
             "speed_kmh": 0.0,
             "rpm": 0.0,
         }
-    values = {v: rng.normal(b[v].mean, b[v].sd) for v in VARIABLES}
+    z = {v: _z(rng) for v in VARIABLES}
+    # El consumo acompaña a la carga (fuel_per_load estable) sin cambiar su distribución marginal nominal.
+    z["fuel_rate_lph"] = float(
+        np.clip(
+            FUEL_LOAD_CORR * z["load_pct"] + np.sqrt(1 - FUEL_LOAD_CORR**2) * z["fuel_rate_lph"],
+            -NOMINAL_MAX_Z,
+            NOMINAL_MAX_Z,
+        )
+    )
+    values = {v: b[v].mean + z[v] * b[v].sd for v in VARIABLES}
     if state == "idle":
         values.update(
             load_pct=0.0,
@@ -68,9 +84,6 @@ def normal_values(spec: MachineSpec, state: str, rng: np.random.Generator) -> di
             vibration_mm_s=values["vibration_mm_s"] * 0.4,
             temperature_c=values["temperature_c"] - 10,
         )
-    else:
-        # El consumo acompaña a la carga, así fuel_per_load se mantiene estable en operación normal.
-        values["fuel_rate_lph"] *= 0.6 + 0.4 * values["load_pct"] / b["load_pct"].mean
     return values
 
 
@@ -86,7 +99,7 @@ def apply_effect(values: dict[str, float], effect: Effect) -> dict[str, float]:
 
 
 def jitter_location(spec: MachineSpec, rng: np.random.Generator) -> dict:
-    r = spec.type_spec.roaming_deg
+    r = spec.roaming_deg
     return {
         "lat": round(spec.home_lat + rng.normal(0, r), 6),
         "lon": round(spec.home_lon + rng.normal(0, r), 6),

@@ -21,7 +21,7 @@ const Ctx = createContext<AuthValue | null>(null);
 async function finish(tokens: CognitoTokens) {
   const claims = decodeJwt<Record<string, string>>(tokens.idToken);
   sessionStore.set({ me: null, tokens, name: claims.name ?? claims["cognito:username"] ?? null });
-  // GET /v1/me es la fuente del rol y la zona (api-lectura resuelve la precedencia de grupos)
+  // GET /me es la fuente del rol, la zona y el technician_id (api-lectura resuelve la precedencia de grupos)
   const me = await api.me();
   sessionStore.set({ me, tokens, name: claims.name ?? me.user_id });
 }
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isDemo) return;
     const u = DEMO_USERS.find((x) => x.user_id === userId);
     if (!u) return;
-    sessionStore.set({ me: { user_id: u.user_id, email: u.email, role: u.role, zone: u.zone }, tokens: null, name: u.name });
+    sessionStore.set({ me: { user_id: u.user_id, email: u.email, role: u.role, zone: u.zone, technician_id: "technician_id" in u ? u.technician_id : null }, tokens: null, name: u.name });
   }, []);
 
   const logout = useCallback(() => sessionStore.clear(), []);

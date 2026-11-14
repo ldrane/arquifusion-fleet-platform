@@ -2,11 +2,12 @@
 
 Keyschema esperado de las tablas de infra/base (Persona B). Atributos `pk` y `sk` de tipo string:
 
-- machines:      pk `{operation_id}#{machine_id}`, sk `META`.
+- machines:      pk `{operation_id}#{machine_id}`, sk `META`. Ítem sembrado por C: `procesar` solo actualiza los
+                 campos dinámicos y nunca crea máquinas (`attribute_exists(pk)`, contratos.md §9, hallazgo #1).
 - machine-state: pk `{machine_id}` o `COHORT#{type}#{zone}`; sk `LAST`, `BASELINE` o `AGG#1h#{YYYY-MM-DDTHH}`.
 - idempotency:   pk `{machine_id}#{timestamp}`, sin sk, TTL en `expires_at`.
-- anomalies:     pk `{machine_id}`, sk `{timestamp}#{anomaly_id}`;
-                 GSI1 `gsi1pk` = `{zone}#{YYYY-MM-DD}`, `gsi1sk` = timestamp.
+- anomalies:     pk `{machine_id}`, sk `{detected_at}#{anomaly_id}`; GSI `by_zone`: `zone` → `detected_at`
+                 (`detected_at` = timestamp ISO de la lectura, hallazgo #7).
 """
 
 import json
@@ -96,15 +97,39 @@ class Repository:
                 batch.put_item(Item=to_dynamo(item))
 
     # ------------------------------------------------------------------ máquina (RF-05)
+    def load_machines(self, pks: Iterable[str]) -> dict[str, dict]:
+        """Ítems sembrados de `machines` (solo los campos maestros) por pk. Los que no existen no aparecen."""
+        pending = [{"pk": pk, "sk": "META"} for pk in dict.fromkeys(pks)]
+        found: dict[str, dict] = {}
+        for start in range(0, len(pending), DDB_MAX_BATCH_GET):
+            request = {
+                self._s.table_machines: {
+                    "Keys": pending[start : start + DDB_MAX_BATCH_GET],
+                    "ProjectionExpression": "pk, machine_id, #model, #type, #zone, expected_interval_s",
+                    "ExpressionAttributeNames": {"#model": "model", "#type": "type", "#zone": "zone"},
+                }
+            }
+            while request:
+                response = self._ddb.batch_get_item(RequestItems=request)
+                for item in response["Responses"].get(self._s.table_machines, []):
+                    found[item["pk"]] = from_dynamo(item)
+                request = response.get("UnprocessedKeys") or None
+        return found
+
     def update_machine(self, pk: str, fields: dict) -> bool:
-        """Actualiza el estado de la máquina. Ignora lecturas más antiguas que la última guardada."""
+        """Actualiza los campos dinámicos de una máquina SEMBRADA (nunca la crea).
+
+        Ignora lecturas más antiguas que la última guardada. False si la máquina no existe o la lectura es vieja.
+        """
         names = {f"#{k}": k for k in fields}
         values = {f":{k}": to_dynamo(v) for k, v in fields.items()}
         try:
             self._machines.update_item(
                 Key={"pk": pk, "sk": "META"},
                 UpdateExpression="SET " + ", ".join(f"#{k} = :{k}" for k in fields),
-                ConditionExpression="attribute_not_exists(#last_seen_at) OR #last_seen_at <= :last_seen_at",
+                ConditionExpression=(
+                    "attribute_exists(pk) AND (attribute_not_exists(#last_seen_at) OR #last_seen_at <= :last_seen_at)"
+                ),
                 ExpressionAttributeNames=names,
                 ExpressionAttributeValues=values,
             )
@@ -121,7 +146,7 @@ class Repository:
                 Key={"pk": pk, "sk": "META"},
                 UpdateExpression="SET anomaly_lock_until = :until",
                 ConditionExpression=(
-                    "attribute_not_exists(open_incident_id) AND "
+                    "attribute_exists(pk) AND attribute_not_exists(open_incident_id) AND "
                     "(attribute_not_exists(anomaly_lock_until) OR anomaly_lock_until < :now)"
                 ),
                 ExpressionAttributeValues={":until": until_iso, ":now": now_iso},

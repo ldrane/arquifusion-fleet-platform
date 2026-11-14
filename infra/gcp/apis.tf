@@ -1,4 +1,4 @@
-# APIs del proyecto. C habilita la base para que A (Vertex AI) y B (Pub/Sub, Cloud Functions, FCM)
+# APIs del proyecto. C habilita la base para que B (Pub/Sub, Cloud Functions, FCM)
 # no se bloqueen en H1. serviceusage y cloudresourcemanager se habilitan antes con gcloud (paso 2 del runbook).
 locals {
   apis = [
@@ -16,8 +16,8 @@ locals {
     "eventarc.googleapis.com",       # B: trigger Firestore/PubSub -> función
     "artifactregistry.googleapis.com",
     "secretmanager.googleapis.com",  # B: API key del bridge del lado GCP
-    "aiplatform.googleapis.com",     # A: Vertex AI / Gemini
     "logging.googleapis.com",
+    "firebasecloudmessaging.googleapis.com", # B: FCM HTTP v1 (send)
   ]
 }
 

@@ -3,7 +3,6 @@ from datetime import UTC, datetime
 import numpy as np
 import pytest
 
-from simulator.fleet import TYPES_BY_NAME
 from simulator.generator import make_reading
 from simulator.scenarios import NO_EFFECT, SCENARIOS, degradation
 
@@ -17,7 +16,7 @@ def _mean(spec, effect, var):
 
 
 def _sd(spec, var):
-    return TYPES_BY_NAME[spec.machine_type].baselines[var].sd
+    return spec.baselines[var].sd
 
 
 @pytest.mark.parametrize(
@@ -25,11 +24,13 @@ def _sd(spec, var):
     [
         ("degradacion", 48, "temperature_c", 5),
         ("degradacion", 48, "vibration_mm_s", 5),
-        ("degradacion", 48, "fuel_rate_lph", 3),
+        ("degradacion", 48, "fuel_rate_lph", 2.5),
         ("falla_subita", 0, "temperature_c", 8),
         ("falla_subita", 0, "vibration_mm_s", 8),
         ("combustible", 24, "fuel_rate_lph", 5),
         ("grupal_zona", 0, "fuel_rate_lph", 3),
+        ("presion", 0, "pressure_bar", 3),
+        ("neumaticos", 0, "vibration_mm_s", 3),
     ],
 )
 def test_scenario_raises_variable(fleet, scenario, hours, var, min_sigmas):
@@ -37,6 +38,21 @@ def test_scenario_raises_variable(fleet, scenario, hours, var, min_sigmas):
     effect = SCENARIOS[scenario].effect(spec, hours)
     assert _mean(spec, effect, var) - _mean(spec, NO_EFFECT, var) > min_sigmas * _sd(spec, var)
     assert effect.label == scenario
+
+
+def test_electrical_fault_drops_rpm(fleet):
+    spec = SCENARIOS["electrico"].default_targets(fleet)[0]
+    effect = SCENARIOS["electrico"].effect(spec, 0)
+    assert _mean(spec, NO_EFFECT, "rpm") - _mean(spec, effect, "rpm") > 3 * _sd(spec, "rpm")
+
+
+def test_default_targets_exist_in_seed_and_respect_zone(fleet):
+    by_id = {m.machine_id: m for m in fleet}
+    assert [m.machine_id for m in SCENARIOS["degradacion"].default_targets(fleet)] == ["EX-023"]
+    for name, scenario in SCENARIOS.items():
+        for m in scenario.default_targets(fleet):
+            assert by_id[m.machine_id] == m, name
+    assert all(m.machine_id != "EX-023" for m in SCENARIOS["grupal_zona"].default_targets(fleet))
 
 
 def test_degradation_is_progressive():

@@ -8,6 +8,10 @@ Por cada mensaje SQS (un lote de hasta 100 lecturas de `POST /telemetry`):
    anomalías con severidad ≥ media (`anomalies`) y la lectura cruda en el lake (Firehose).
 5. Emite `AnomalyDetected` solo si la máquina no tiene incidente abierto ni bloqueo vigente (contratos.md §9).
 
+La máquina debe existir en `machines` (seed de C, hallazgo #1): las lecturas de IDs desconocidos se descartan con
+log estructurado y métrica `ReadingsUnknownMachine`, sin crear máquinas fantasma. `model`, `type` y `zone` salen
+del seed (no de la lectura) y `procesar` solo escribe los campos dinámicos (contratos.md §9).
+
 Un mensaje que falla se devuelve en `batchItemFailures` y libera sus registros de idempotencia,
 para que el reintento de SQS lo procese completo. Tras 3 intentos va a la DLQ.
 """
@@ -23,7 +27,7 @@ from arquifusion_ml.lake import flatten_reading
 from arquifusion_shared.observability import logger, metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from ingest_procesar import rules, scoring
-from ingest_procesar.baseline import Baseline, zscores
+from ingest_procesar.baseline import Baseline, standardize, zscores
 from ingest_procesar.message import InvalidMessage, parse
 
 EVENT_SOURCE = "arquifusion.processor"
@@ -113,6 +117,9 @@ class Processor:
 
     # ------------------------------------------------------------------ evaluación
     def _process_readings(self, readings: list[dict], correlation_id: str, now: datetime) -> None:
+        readings = self._known_readings(readings)
+        if not readings:
+            return
         state = self._repo.load_state(self._state_keys(readings))
         by_machine: dict[str, list[dict]] = defaultdict(list)
         for r in readings:
@@ -133,13 +140,49 @@ class Processor:
 
         self._repo.save_state(dirty.values())
         for pk, fields in machine_updates:
-            self._repo.update_machine(pk, fields)
+            if not self._repo.update_machine(pk, fields):
+                logger.info("Estado de máquina no actualizado (lectura antigua o máquina eliminada)", extra={"pk": pk})
         self._repo.put_anomalies(anomalies)
         self._repo.send_to_lake(lake_rows)
         for e in to_emit:
             self._emit_anomaly(e, correlation_id, now)
         if anomalies:
             metrics.add_metric(name="AnomaliesDetected", unit=MetricUnit.Count, value=len(anomalies))
+
+    def _known_readings(self, readings: list[dict]) -> list[dict]:
+        """Deja solo lecturas de máquinas sembradas y les impone `model`, `type` y `zone` del seed (#1)."""
+        machines = self._repo.load_machines(self._machine_pk(r) for r in readings)
+        known, unknown = [], set()
+        for r in readings:
+            seed = machines.get(self._machine_pk(r))
+            if seed is None:
+                unknown.add(r["machine_id"])
+                continue
+            known.append(self._with_seed_identity(r, seed))
+        if unknown:
+            dropped = len(readings) - len(known)
+            logger.warning(
+                "Lecturas de máquinas no sembradas descartadas",
+                extra={"machine_ids": sorted(unknown), "count": dropped},
+            )
+            metrics.add_metric(name="ReadingsUnknownMachine", unit=MetricUnit.Count, value=dropped)
+        return known
+
+    @staticmethod
+    def _with_seed_identity(reading: dict, seed: dict) -> dict:
+        mismatched = {k: reading.get(k) for k in ("model", "type") if seed.get(k) and reading.get(k) != seed[k]}
+        zone = seed.get("zone") or reading["location"].get("zone")
+        if reading["location"].get("zone") != zone:
+            mismatched["zone"] = reading["location"].get("zone")
+        if not mismatched:
+            return reading
+        logger.warning(
+            "Lectura con identidad distinta al seed; se usa la del seed",
+            extra={"machine_id": reading["machine_id"], "reading": mismatched},
+        )
+        fixed = {**reading, "location": {**reading["location"], "zone": zone}}
+        fixed.update({k: seed[k] for k in ("model", "type") if seed.get(k)})
+        return fixed
 
     def _state_keys(self, readings: list[dict]) -> list[tuple[str, str]]:
         keys = []
@@ -162,15 +205,27 @@ class Processor:
         cohort = Baseline.from_item(state.get(cohort_key, {}).get("stats"))
         warmup = self._s.warmup_readings
 
-        hits = rules.evaluate(reading, self._thresholds.get(reading["type"]))
-        z_own, z_cohort = zscores(own, values, warmup), zscores(cohort, values, warmup)
+        hits = rules.evaluate(reading, self._thresholds.get(reading.get("model"), reading["type"]))
+        # El baseline describe la máquina OPERANDO: en espera, detenida o en mantenimiento las variables caen
+        # (rpm 750, presión 0) y compararlas contra él daría z enormes sin que haya falla (#2).
+        operating = reading.get("state", "operating") == "operating"
+        # Cohorte (tipo + zona, contratos.md §9) en unidades estandarizadas por el nominal de cada modelo: así
+        # un CAT-336 y un KOM-PC2000 de la misma zona son comparables y un desvío común de zona (RF-12) se nota.
+        nominal = self._thresholds.nominal(reading.get("model"))
+        cohort_values = standardize(values, nominal)
+        if operating:
+            z_own = zscores(own, values, warmup, {v: sd for v, (_mu, sd) in nominal.items()})
+            z_cohort = zscores(cohort, cohort_values, warmup, {v: 1.0 for v in cohort_values})
+            z_cohort = {v: z_cohort.get(v, 0.0) for v in values}
+        else:
+            z_own = z_cohort = {v: 0.0 for v in values}
         ml = self._score_ml(reading)
         assessment = scoring.assess(reading, hits, z_own, z_cohort, ml.risk if ml else None)
 
         # Las lecturas en alerta no alimentan el baseline: una falla no debe volverse "normal".
-        if not scoring.is_alert(assessment.severity):
+        if operating and not scoring.is_alert(assessment.severity):
             own.update(values, self._s.ewma_alpha)
-            cohort.update(values, self._s.ewma_alpha)
+            cohort.update(cohort_values, self._s.ewma_alpha)
         for key, baseline in ((own_key, own), (cohort_key, cohort)):
             state[key] = dirty[key] = {"pk": key[0], "sk": key[1], "stats": baseline.to_item()}
 
@@ -183,7 +238,9 @@ class Processor:
             "severity": assessment.severity,
         }
         agg_key = (machine_id, _agg_sk(reading["timestamp"]))
-        state[agg_key] = dirty[agg_key] = self._aggregate(state.get(agg_key), agg_key, values)
+        # `health_score` también se agrega (min/avg/max): lo expone GET /machines/{machine_id}/telemetry (pedido de C).
+        agg_values = {**values, "health_score": float(assessment.health_score)}
+        state[agg_key] = dirty[agg_key] = self._aggregate(state.get(agg_key), agg_key, agg_values)
         return Evaluated(reading, assessment, ml.model_version if ml else NO_MODEL)
 
     def _score_ml(self, reading: dict):
@@ -211,13 +268,11 @@ class Processor:
         return f"{self._s.default_operation_id}#{reading['machine_id']}"
 
     def _machine_fields(self, e: Evaluated) -> dict:
+        """Solo campos dinámicos (contratos.md §9). `model`, `type`, `zone`, `home_location` y
+        `expected_interval_s` son del seed y no se tocan. `failure_probability` y `latest_reading`
+        alimentan `MachineDetail` del OpenAPI."""
         r, a = e.reading, e.assessment
         return {
-            "machine_id": r["machine_id"],
-            "operation_id": self._s.default_operation_id,
-            "type": r["type"],
-            "model": r.get("model"),
-            "zone": r["location"].get("zone"),
             "location": r["location"],
             "status": a.status,
             "severity": a.severity,
@@ -231,16 +286,19 @@ class Processor:
         }
 
     def _anomaly_item(self, e: Evaluated, correlation_id: str) -> dict:
+        """Ítem de `anomalies` (contratos.md §9.1, #7): `zone` + `detected_at` alimentan el GSI `by_zone`."""
         r, a = e.reading, e.assessment
-        zone = r["location"].get("zone", "sin-zona")
+        anomaly_id = uuid.uuid4().hex[:12]
+        detected_at = r["timestamp"]
         return {
             "pk": r["machine_id"],
-            "sk": f"{r['timestamp']}#{uuid.uuid4().hex[:12]}",
-            "gsi1pk": f"{zone}#{r['timestamp'][:10]}",
-            "gsi1sk": r["timestamp"],
+            "sk": f"{detected_at}#{anomaly_id}",
+            "anomaly_id": anomaly_id,
             "machine_id": r["machine_id"],
-            "zone": zone,
+            "zone": r["location"]["zone"],
+            "detected_at": detected_at,
             "machine_type": r["type"],
+            "model": r.get("model"),
             "severity": a.severity,
             "anomaly_score": a.risk,
             "health_score": a.health_score,

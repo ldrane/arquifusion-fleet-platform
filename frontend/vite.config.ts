@@ -26,7 +26,7 @@ export default defineConfig({
           react: ["react", "react-dom", "react-router-dom"],
           map: ["leaflet", "react-leaflet"],
           charts: ["recharts"],
-          firebase: ["firebase/app", "firebase/auth", "firebase/firestore"],
+          firebase: ["firebase/app", "firebase/auth", "firebase/firestore", "firebase/messaging"],
         },
       },
     },

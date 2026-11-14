@@ -33,16 +33,38 @@ def test_rules_levels():
 def test_threshold_provider_uses_ssm_then_cache_then_defaults():
     calls = []
 
-    def fetch(machine_type):
-        calls.append(machine_type)
-        return '{"rpm": {"warn_high": 1}}' if machine_type == "drill" else None
+    def fetch(model):
+        calls.append(model)
+        return '{"rpm": {"warn_high": 1}}' if model == "EPI-PV271" else None
 
-    clock = iter([0, 10, 400]).__next__
+    clock = iter([0, 10, 400, 500]).__next__
     provider = rules.ThresholdProvider(fetch, ttl_s=300, clock=clock)
-    assert provider.get("drill") == {"rpm": {"warn_high": 1}}
-    provider.get("drill")  # dentro del TTL: no consulta SSM
-    assert "temperature_c" in provider.get("excavator")  # sin parámetro: defaults del repo
-    assert calls == ["drill", "excavator"]
+    assert provider.get("EPI-PV271", "drill") == {"rpm": {"warn_high": 1}}
+    provider.get("EPI-PV271", "drill")  # dentro del TTL: no consulta SSM
+    assert provider.get("CAT-336", "excavator")["temperature_c"] == {"warn_high": 97.0, "crit_high": 100.0}
+    assert "temperature_c" in provider.get("XX-1", "excavator")  # modelo desconocido: respaldo por tipo
+    assert calls == ["EPI-PV271", "CAT-336", "XX-1"]
+
+
+def test_low_rules_only_when_operating():
+    limits = {"pressure_bar": {"warn_low": 150, "crit_low": 100}}
+    assert rules.evaluate({"pressure_bar": 0, "state": "stopped"}, limits) == []
+    assert rules.evaluate({"pressure_bar": 0, "state": "operating"}, limits) == [
+        rules.RuleHit("pressure_bar", "crit", "low")
+    ]
+
+
+def test_derived_thresholds_follow_nominal():
+    t = rules.derive_thresholds({"temperature_c": [88, 3], "pressure_bar": [300, 15], "load_pct": [70, 10]})
+    assert t["temperature_c"] == {"warn_high": 97.0, "crit_high": 100.0}
+    assert t["pressure_bar"] == {"warn_high": 345.0, "crit_high": 360.0, "warn_low": 255.0, "crit_low": 240.0}
+    assert "load_pct" not in t  # carga y velocidad son de productividad (RF-08), no de falla
+
+
+def test_defaults_file_is_in_sync_with_seed():
+    """`thresholds_default.json` = derivado del seed v2 (regenerar con `python .../rules.py`)."""
+    seed_models = json.loads(rules.seed_models_file().read_text())
+    assert json.loads(rules.DEFAULTS_FILE.read_text()) == rules.build_defaults(seed_models)
 
 
 # ---------------------------------------------------------------- capa 2

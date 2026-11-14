@@ -23,4 +23,5 @@ def handler(event, context):
         insights_table=_dynamodb.Table(os.environ["TABLE_INSIGHTS"]),
         invoke_ia=_invoke_ia,
         branches=event.get("branches"),
+        catalog_table=_dynamodb.Table(os.environ["TABLE_CATALOG"]),
     )

@@ -8,7 +8,7 @@ import { FleetMap, type MapFilter } from "@/components/map/FleetMap";
 import { Badge, Button, cx, Empty, HealthBar, Icon, KpiCard, Panel, Segmented, StatusDot } from "@/components/ui";
 import { SEED } from "@/demo/data";
 import { SEVERITY_RANK, STATUS_LABEL, TYPE_LABEL, ZONE_LABEL, timeAgo } from "@/lib/format";
-import { technicianIdFromUser } from "@/lib/ids";
+import { myTechnicianId } from "@/lib/ids";
 import { api } from "@/services";
 import { useZoned } from "@/state/FleetContext";
 import { useQuery } from "@/state/queryCache";
@@ -34,7 +34,7 @@ export function CommandCenter() {
     );
   }, [incidents, sort]);
 
-  const myTech = me ? technicianIdFromUser(me.user_id) : null;
+  const myTech = myTechnicianId(me);
   const queue = me?.role === "tecnico" ? [...open.filter((i) => i.assigned_technician_id === myTech), ...open.filter((i) => i.assigned_technician_id !== myTech)] : open;
 
   const active = machines.filter((m) => m.status === "operational").length;

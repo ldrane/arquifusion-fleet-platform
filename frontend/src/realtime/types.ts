@@ -11,7 +11,7 @@ export interface FleetUpdate {
 /**
  * Fuente de tiempo real (contratos.md §5). Implementaciones:
  *  - firestore: onSnapshot de machines / incidents / technicians y chat (offline con caché persistente)
- *  - polling:   GET /v1/* cada 10 s cuando no hay config de Firebase (sin chat)
+ *  - polling:   GET (API) cada 10 s cuando no hay config de Firebase (sin chat)
  *  - demo:      eventos del mundo simulado
  */
 export interface RealtimeSource {

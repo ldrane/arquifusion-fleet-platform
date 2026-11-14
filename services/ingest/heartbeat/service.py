@@ -2,7 +2,8 @@
 
 Cada 5 min (EventBridge Scheduler) recorre `machines` y marca `status = silent` las máquinas cuya última lectura
 (`last_seen_at`) es más antigua que `factor × expected_interval_s` (por defecto 3 × 60 s). Por cada máquina que pasa a
-silenciosa emite UN `MachineSilent` (contratos.md §3). La escritura es condicional sobre `last_seen_at`, así que:
+silenciosa emite UN `MachineSilent` (contratos.md §3) con `zone` (del seed) y `silence_threshold_s` = factor ×
+`expected_interval_s` (#21). La escritura es condicional sobre `last_seen_at`, así que:
 - no se emite dos veces por el mismo silencio;
 - si llega una lectura nueva entre el scan y la escritura, no se marca.
 Cuando `procesar` recibe una lectura nueva, el status deja de ser `silent` y un silencio posterior vuelve a emitir.
@@ -59,22 +60,23 @@ class Heartbeat:
         candidates = silenced = 0
         for machine in self._scan_active():
             interval = int(machine.get("expected_interval_s") or self._config.default_interval_s)
-            if now - _parse(machine["last_seen_at"]) <= timedelta(seconds=interval * self._config.silence_factor):
+            threshold = interval * self._config.silence_factor
+            if now - _parse(machine["last_seen_at"]) <= timedelta(seconds=threshold):
                 continue
             candidates += 1
             if self._mark_silent(machine, now):
-                self._emit(machine, interval, now)
+                self._emit(machine, interval, threshold, now)
                 silenced += 1
         return {"candidates": candidates, "silenced": silenced}
 
     def _scan_active(self):
         """Máquinas con lectura previa que aún no están en silencio, paginando el scan."""
         kwargs = {
-            "ProjectionExpression": "pk, sk, machine_id, last_seen_at, expected_interval_s, #st",
+            "ProjectionExpression": "pk, sk, machine_id, #zone, last_seen_at, expected_interval_s, #st",
             "FilterExpression": (
                 "sk = :meta AND attribute_exists(last_seen_at) AND (attribute_not_exists(#st) OR #st <> :silent)"
             ),
-            "ExpressionAttributeNames": {"#st": "status"},
+            "ExpressionAttributeNames": {"#st": "status", "#zone": "zone"},
             "ExpressionAttributeValues": {":meta": "META", ":silent": SILENT},
         }
         while True:
@@ -114,7 +116,7 @@ class Heartbeat:
             ExpressionAttributeValues={":prev": machine.get("status", "operational"), ":silent": SILENT},
         )
 
-    def _emit(self, machine: dict, interval: int, now: datetime) -> None:
+    def _emit(self, machine: dict, interval: int, threshold: int, now: datetime) -> None:
         detail = {
             "event_id": str(uuid.uuid4()),
             "correlation_id": str(uuid.uuid4()),
@@ -122,8 +124,10 @@ class Heartbeat:
             "version": 1,
             "data": {
                 "machine_id": machine["machine_id"],
+                "zone": machine.get("zone"),
                 "last_seen_at": machine["last_seen_at"],
                 "expected_interval_s": interval,
+                "silence_threshold_s": threshold,
             },
         }
         try:

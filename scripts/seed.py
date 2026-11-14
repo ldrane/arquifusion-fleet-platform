@@ -14,14 +14,16 @@ correrlo 2 veces no cambia nada. Los datos son deterministas (misma semilla, mis
 El esquema de claves está en KEY_SCHEMA (abajo) y documentado en contracts/dynamodb.md.
 Si B cambia las claves en infra/base, se cambia SOLO ese diccionario.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import seed_data  # noqa: E402
@@ -126,7 +128,9 @@ def cmd_export(_args: argparse.Namespace) -> int:
         "machine_id_prefixes": {p["type"]: p["prefix"] for p in seed_data.FLEET_PLAN},
         "zones": list(seed_data.ZONES),
     }
-    (FIXTURES_DIR / "_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (FIXTURES_DIR / "_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     print("Export OK")
     return 0
 
@@ -183,12 +187,19 @@ def bootstrap_tables(client, stage: str) -> None:
             "KeySchema": [{"AttributeName": "pk", "KeyType": "HASH"}, {"AttributeName": "sk", "KeyType": "RANGE"}],
             "AttributeDefinitions": [{"AttributeName": a, "AttributeType": "S"} for a in sorted(attrs)],
             "StreamSpecification": {"StreamEnabled": True, "StreamViewType": "NEW_AND_OLD_IMAGES"},
-            "Tags": [{"Key": "project", "Value": "arquifusion"}, {"Key": "owner", "Value": "C"}, {"Key": "temporary", "Value": "bootstrap"}],
+            "Tags": [
+                {"Key": "project", "Value": "arquifusion"},
+                {"Key": "owner", "Value": "C"},
+                {"Key": "temporary", "Value": "bootstrap"},
+            ],
         }
         if gsis:
             params["GlobalSecondaryIndexes"] = [
-                {"IndexName": idx, "KeySchema": [{"AttributeName": h, "KeyType": "HASH"}, {"AttributeName": r, "KeyType": "RANGE"}],
-                 "Projection": {"ProjectionType": "ALL"}}
+                {
+                    "IndexName": idx,
+                    "KeySchema": [{"AttributeName": h, "KeyType": "HASH"}, {"AttributeName": r, "KeyType": "RANGE"}],
+                    "Projection": {"ProjectionType": "ALL"},
+                }
                 for idx, h, r in gsis
             ]
         client.create_table(**params)
@@ -199,7 +210,9 @@ def bootstrap_tables(client, stage: str) -> None:
 
 def cmd_load(args: argparse.Namespace) -> int:
     if args.bootstrap_tables and args.stage == "dev":
-        sys.exit("--bootstrap-tables está prohibido en stage=dev: ahí las tablas las crea infra/base (B) con Terraform.")
+        sys.exit(
+            "--bootstrap-tables está prohibido en stage=dev: ahí las tablas las crea infra/base (B) con Terraform."
+        )
     client, resource = _dynamodb(args)
     if args.bootstrap_tables:
         print("Bootstrap de tablas temporales:")
@@ -225,11 +238,12 @@ def cmd_verify(args: argparse.Namespace) -> int:
     client, resource = _dynamodb(args)
     expected = {k: len(v) for k, v in seed_data.build_all().items() if k not in EXPORT_ONLY}
     ok = True
-    for dataset, schema in KEY_SCHEMA.items():
+    for dataset, _schema in KEY_SCHEMA.items():
         name = table_name(args.stage, dataset)
         count = 0
         scan_kwargs: dict[str, Any] = {
-            "TableName": name, "Select": "COUNT",
+            "TableName": name,
+            "Select": "COUNT",
             "FilterExpression": "#e = :e",
             "ExpressionAttributeNames": {"#e": "entity"},
             "ExpressionAttributeValues": {":e": {"S": dataset}},

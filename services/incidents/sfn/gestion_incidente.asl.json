@@ -1,11 +1,1518 @@
 {
-  "Comment": "GestionIncidente: ciclo de vida del incidente (RF-06, RF-10, RF-11). TODO Persona B",
-  "StartAt": "CrearIncidente",
+  "Comment": "GestionIncidente (RF-06, RF-10, RF-11, RF-12, MH-SFN-01): Standard + JSONata. Crear (dedup) → Parallel IA‖correlación → stock → scoring → asignar → waitForTaskToken ack (timeout + escalamiento) → in_progress → waitForTaskToken resolve → resumen IA → corrective → closed. Emite IncidentStateChanged en cada transición.",
+  "QueryLanguage": "JSONata",
+  "StartAt": "Inicio",
   "States": {
-    "CrearIncidente": {
+    "Inicio": {
       "Type": "Pass",
-      "Comment": "TODO: DynamoDB PutItem condicional",
-      "End": true
+      "Comment": "Normaliza AnomalyDetected / MachineSilent (contratos.md §3) y genera INC-<ULID>",
+      "Assign": {
+        "cid": "{% $states.input.detail.correlation_id ? $states.input.detail.correlation_id : $uuid() %}",
+        "incidentId": "{% ( $a := '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; $t := $millis(); 'INC-' & $join($map([0..9], function($i) { $substring($a, $floor($t / $power(32, 9 - $i)) % 32, 1) })) & $join($map([1..16], function($i) { $substring($a, $floor($random() * 32), 1) })) ) %}",
+        "source": "{% $states.input.source = 'arquifusion.heartbeat' ? 'silence' : 'anomaly' %}",
+        "eventTypeDetected": "{% $states.input.source = 'arquifusion.heartbeat' ? 'machine.silent' : 'incident.detected' %}",
+        "machineId": "{% $states.input.detail.data.machine_id %}",
+        "zone": "{% $states.input.detail.data.zone %}",
+        "severity": "{% $states.input.source = 'arquifusion.heartbeat' ? 'low' : $states.input.detail.data.severity %}",
+        "topFactors": "{% $exists($states.input.detail.data.top_factors) ? $states.input.detail.data.top_factors : [] %}",
+        "healthScore": "{% $exists($states.input.detail.data.health_score) ? $states.input.detail.data.health_score : null %}",
+        "modelVersion": "{% $exists($states.input.detail.data.model_version) ? $states.input.detail.data.model_version : null %}",
+        "readingTs": "{% $exists($states.input.detail.data.reading_ts) ? $states.input.detail.data.reading_ts : ($exists($states.input.detail.data.last_seen_at) ? $states.input.detail.data.last_seen_at : $states.input.detail.occurred_at) %}",
+        "detectedAt": "{% $exists($states.input.detail.occurred_at) ? $states.input.detail.occurred_at : $now() %}",
+        "status": "detected",
+        "actor": "{% {'type': 'system', 'user_id': null, 'role': null} %}",
+        "technicianId": null,
+        "exclude": [],
+        "escalations": 0,
+        "escalating": false,
+        "scoring": null,
+        "location": null,
+        "requiredSpecialty": null,
+        "shortage": false,
+        "ack": null,
+        "resolution": null,
+        "summary": null,
+        "ackTimeout": "{% $states.input.detail.data.severity = 'critical' ? ${ack_timeout_critical_s} : ${ack_timeout_s} %}"
+      },
+      "Next": "ReclamarMaquina"
+    },
+    "ReclamarMaquina": {
+      "Type": "Task",
+      "Comment": "Dedup (RF-10.5, §9): fija open_incident_id solo si la máquina no tiene otro incidente abierto",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Arguments": {
+        "TableName": "${table_machines}",
+        "Key": {
+          "pk": {
+            "S": "{% '${operation_id}#' & $machineId %}"
+          },
+          "sk": {
+            "S": "META"
+          }
+        },
+        "UpdateExpression": "SET open_incident_id = :id",
+        "ConditionExpression": "attribute_exists(pk) AND (attribute_not_exists(open_incident_id) OR open_incident_id = :id)",
+        "ExpressionAttributeValues": {
+          ":id": {
+            "S": "{% $incidentId %}"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.RequestLimitExceededException",
+            "DynamoDB.ThrottlingException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.ConditionalCheckFailedException"
+          ],
+          "Next": "Deduplicado"
+        }
+      ],
+      "Next": "CrearIncidente"
+    },
+    "Deduplicado": {
+      "Type": "Succeed",
+      "Comment": "La máquina ya tiene un incidente abierto (o no existe)"
+    },
+    "CrearIncidente": {
+      "Type": "Task",
+      "Comment": "PutItem condicional del ítem META (status detected, RF-11.1). EVT# lo escribe auditoria",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${table_incidents}",
+        "Item": {
+          "pk": {
+            "S": "{% 'INC#' & $incidentId %}"
+          },
+          "sk": {
+            "S": "META"
+          },
+          "entity": {
+            "S": "incident"
+          },
+          "incident_id": {
+            "S": "{% $incidentId %}"
+          },
+          "machine_id": {
+            "S": "{% $machineId %}"
+          },
+          "machine_ids": {
+            "L": [
+              {
+                "S": "{% $machineId %}"
+              }
+            ]
+          },
+          "child_incident_ids": {
+            "L": []
+          },
+          "zone": {
+            "S": "{% $zone %}"
+          },
+          "severity": {
+            "S": "{% $severity %}"
+          },
+          "status": {
+            "S": "detected"
+          },
+          "detected_at": {
+            "S": "{% $detectedAt %}"
+          },
+          "source": {
+            "S": "{% $source %}"
+          },
+          "escalated": {
+            "BOOL": false
+          },
+          "escalation_count": {
+            "N": "0"
+          },
+          "is_recurrence": {
+            "BOOL": false
+          },
+          "correlation_id": {
+            "S": "{% $cid %}"
+          },
+          "execution_arn": {
+            "S": "{% $states.context.Execution.Id %}"
+          },
+          "chat_channel_id": {
+            "S": "{% $incidentId %}"
+          }
+        },
+        "ConditionExpression": "attribute_not_exists(pk)"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.RequestLimitExceededException",
+            "DynamoDB.ThrottlingException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.ConditionalCheckFailedException"
+          ],
+          "Next": "Deduplicado"
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "LiberarYFallar"
+        }
+      ],
+      "Next": "EmitirDetectado"
+    },
+    "EmitirDetectado": {
+      "Type": "Task",
+      "Comment": "— → detected (incident.detected | machine.silent, §10)",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "EventBusName": "${event_bus_name}",
+            "Source": "arquifusion.incident",
+            "DetailType": "IncidentStateChanged",
+            "Detail": "{% {'event_id': $uuid(), 'correlation_id': $cid, 'occurred_at': $now(), 'version': 1, 'data': {'incident_id': $incidentId, 'from': null, 'to': 'detected', 'event_type': $eventTypeDetected, 'actor': {'type': 'system', 'user_id': null, 'role': null}, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'technician_id': null}} %}"
+          }
+        ]
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Enriquecer"
+        }
+      ],
+      "Next": "Enriquecer"
+    },
+    "Enriquecer": {
+      "Type": "Parallel",
+      "Comment": "Diagnóstico IA con candidate_parts (§8.1) ‖ correlación por zona (RF-12)",
+      "Arguments": "{% {'incident_id': $incidentId, 'correlation_id': $cid, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'health_score': $healthScore, 'top_factors': $topFactors, 'reading_ts': $readingTs, 'source': $source} %}",
+      "Branches": [
+        {
+          "StartAt": "Contexto",
+          "States": {
+            "Contexto": {
+              "Type": "Task",
+              "Comment": "machine + MODEL# + COMPONENT# → candidate_parts",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Arguments": {
+                "FunctionName": "${fn_incidente}",
+                "Payload": "{% $merge([$states.input, {'action': 'contexto'}]) %}"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "TimeoutSeconds": 30,
+              "Output": "{% $merge([$states.result.Payload, {'correlation_id': $states.input.correlation_id}]) %}",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Output": "{% {'contexto': {'diagnose_payload': {'candidate_parts': []}, 'location': null}, 'diagnosis': null} %}",
+                  "Next": "DiagnosticoListo"
+                }
+              ],
+              "Next": "Diagnosticar"
+            },
+            "Diagnosticar": {
+              "Type": "Task",
+              "Comment": "ia-gemini nunca lanza error por la IA (fallback determinista, §8.1)",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Arguments": {
+                "FunctionName": "${fn_ia_gemini}",
+                "Payload": "{% {'task': 'diagnose', 'correlation_id': $states.input.correlation_id, 'payload': $states.input.diagnose_payload} %}"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "TimeoutSeconds": 25,
+              "Output": "{% {'contexto': $states.input, 'diagnosis': $states.result.Payload} %}",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Output": "{% {'contexto': $states.input, 'diagnosis': null} %}",
+                  "Next": "DiagnosticoListo"
+                }
+              ],
+              "Next": "DiagnosticoListo"
+            },
+            "DiagnosticoListo": {
+              "Type": "Pass",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Correlacionar",
+          "States": {
+            "Correlacionar": {
+              "Type": "Task",
+              "Comment": "§8.4: ≥3 máquinas en la zona en 15 min",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Arguments": {
+                "FunctionName": "${fn_correlacion}",
+                "Payload": "{% {'incident_id': $states.input.incident_id, 'machine_id': $states.input.machine_id, 'zone': $states.input.zone, 'reading_ts': $states.input.reading_ts, 'correlation_id': $states.input.correlation_id} %}"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "TimeoutSeconds": 30,
+              "Output": "{% {'correlation': $states.result.Payload, 'common_cause': null, 'correlation_id': $states.input.correlation_id, 'zone': $states.input.zone} %}",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Output": "{% {'correlation': {'parent_incident_id': null, 'machines': [$states.input.machine_id]}, 'common_cause': null} %}",
+                  "Next": "CorrelacionLista"
+                }
+              ],
+              "Next": "HayIncidentePadre"
+            },
+            "HayIncidentePadre": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Condition": "{% $count($states.input.correlation.machines) >= 3 %}",
+                  "Next": "CausaComun"
+                }
+              ],
+              "Default": "CorrelacionLista"
+            },
+            "CausaComun": {
+              "Type": "Task",
+              "Comment": "RF-12.3: causa común sugerida por IA",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Arguments": {
+                "FunctionName": "${fn_ia_gemini}",
+                "Payload": "{% {'task': 'common_cause', 'correlation_id': $states.input.correlation_id, 'payload': {'zone': $states.input.zone, 'incidents': [$map($states.input.correlation.machines, function($m) { {'machine_id': $m} })]}} %}"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0,
+                  "JitterStrategy": "FULL"
+                }
+              ],
+              "TimeoutSeconds": 25,
+              "Output": "{% {'correlation': $states.input.correlation, 'common_cause': $states.result.Payload.result} %}",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Output": "{% $states.input %}",
+                  "Next": "CorrelacionLista"
+                }
+              ],
+              "Next": "CorrelacionLista"
+            },
+            "CorrelacionLista": {
+              "Type": "Pass",
+              "End": true
+            }
+          }
+        }
+      ],
+      "Assign": {
+        "enrichment": "{% $states.result %}",
+        "location": "{% $states.result[0].contexto.location %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Assign": {
+            "enrichment": "{% [{'contexto': {'diagnose_payload': {'candidate_parts': []}, 'location': null}, 'diagnosis': null}, {'correlation': null, 'common_cause': null}] %}"
+          },
+          "Next": "GuardarEnriquecimiento"
+        }
+      ],
+      "Next": "GuardarEnriquecimiento"
+    },
+    "GuardarEnriquecimiento": {
+      "Type": "Task",
+      "Comment": "ai_diagnosis + required_specialty (§8.2) + parent/machine_ids + rama stock",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% $merge([{'action': 'enriquecer', 'incident_id': $incidentId, 'correlation_id': $cid}, {'machine_id': $machineId, 'zone': $zone, 'source': $source, 'top_factors': $topFactors, 'model_version': $modelVersion, 'diagnosis': $enrichment[0].diagnosis, 'candidate_parts': $enrichment[0].contexto.diagnose_payload.candidate_parts, 'correlation': $enrichment[1].correlation, 'common_cause': $enrichment[1].common_cause}]) %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 30,
+      "Assign": {
+        "requiredSpecialty": "{% $states.result.Payload.required_specialty %}",
+        "shortage": "{% $states.result.Payload.shortage %}",
+        "partId": "{% $states.result.Payload.part_id %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Assign": {
+            "partId": null
+          },
+          "Next": "PrioridadPorSeveridad"
+        }
+      ],
+      "Next": "HayFaltante"
+    },
+    "HayFaltante": {
+      "Type": "Choice",
+      "Comment": "Rama stock: sin repuesto sugerido en la zona → parts.shortage (RF-04.6)",
+      "Choices": [
+        {
+          "Condition": "{% $shortage = true %}",
+          "Next": "NotificarFaltante"
+        }
+      ],
+      "Default": "PrioridadPorSeveridad"
+    },
+    "NotificarFaltante": {
+      "Type": "Task",
+      "Comment": "Asíncrono: la notificación no frena la asignación",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_notificar}",
+        "Payload": "{% {'event_type': 'parts.shortage', 'incident_id': $incidentId, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'component_id': $partId, 'correlation_id': $cid} %}",
+        "InvocationType": "Event"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "PrioridadPorSeveridad"
+        }
+      ],
+      "Next": "PrioridadPorSeveridad"
+    },
+    "PrioridadPorSeveridad": {
+      "Type": "Choice",
+      "Comment": "critical → SLA de aceptación más corto (RF-06.3, RF-06.5)",
+      "Choices": [
+        {
+          "Condition": "{% $severity = 'critical' %}",
+          "Next": "SlaCritico"
+        }
+      ],
+      "Default": "SlaNormal"
+    },
+    "SlaCritico": {
+      "Type": "Pass",
+      "Assign": {
+        "ackTimeout": "{% ${ack_timeout_critical_s} %}"
+      },
+      "Next": "Puntuar"
+    },
+    "SlaNormal": {
+      "Type": "Pass",
+      "Assign": {
+        "ackTimeout": "{% ${ack_timeout_s} %}"
+      },
+      "Next": "Puntuar"
+    },
+    "Puntuar": {
+      "Type": "Task",
+      "Comment": "scoring-tecnicos (§8.3, TRZ-03)",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_scoring}",
+        "Payload": "{% {'incident_id': $incidentId, 'correlation_id': $cid, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'location': $location, 'required_specialty': $requiredSpecialty, 'exclude_technician_ids': $exclude} %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 30,
+      "Assign": {
+        "scoring": "{% $states.result.Payload %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "SinCandidatos"
+        }
+      ],
+      "Next": "HayCandidato"
+    },
+    "HayCandidato": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $exists($scoring.selected) and $scoring.selected != null %}",
+          "Next": "Asignar"
+        }
+      ],
+      "Default": "SinCandidatos"
+    },
+    "Asignar": {
+      "Type": "Task",
+      "Comment": "detected/assigned → assigned, scoring_candidates + technician_score",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% $merge([{'action': 'asignar', 'incident_id': $incidentId, 'correlation_id': $cid}, {'technician_id': $scoring.selected, 'scoring': $scoring}]) %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 30,
+      "Assign": {
+        "technicianId": "{% $states.result.Payload.technician_id %}",
+        "fromStatus": "{% $states.result.Payload.from %}",
+        "status": "assigned",
+        "actor": "{% {'type': 'system', 'user_id': null, 'role': null} %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "SinCandidatos"
+        }
+      ],
+      "Next": "EmitirAsignado"
+    },
+    "AsignarManual": {
+      "Type": "Task",
+      "Comment": "POST /incidents/{id}/assign (RF-06.4): decision reassign",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% $merge([{'action': 'asignar', 'incident_id': $incidentId, 'correlation_id': $cid}, {'technician_id': $ack.technician_id, 'scoring': null}]) %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 30,
+      "Assign": {
+        "technicianId": "{% $states.result.Payload.technician_id %}",
+        "fromStatus": "{% $states.result.Payload.from %}",
+        "status": "assigned",
+        "actor": "{% $exists($ack.actor) ? $ack.actor : {'type': 'system', 'user_id': null, 'role': null} %}",
+        "escalating": false
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "EsperarAsignacionManual"
+        }
+      ],
+      "Next": "EmitirAsignado"
+    },
+    "EmitirAsignado": {
+      "Type": "Task",
+      "Comment": "detected/assigned → assigned (incident.assigned)",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "EventBusName": "${event_bus_name}",
+            "Source": "arquifusion.incident",
+            "DetailType": "IncidentStateChanged",
+            "Detail": "{% {'event_id': $uuid(), 'correlation_id': $cid, 'occurred_at': $now(), 'version': 1, 'data': {'incident_id': $incidentId, 'from': $fromStatus, 'to': 'assigned', 'event_type': 'incident.assigned', 'actor': {'type': $actor.type, 'user_id': $actor.user_id, 'role': $actor.role}, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'technician_id': $technicianId}} %}"
+          }
+        ]
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "FueEscalamiento"
+        }
+      ],
+      "Next": "FueEscalamiento"
+    },
+    "FueEscalamiento": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $escalating = true %}",
+          "Next": "EmitirEscalado"
+        }
+      ],
+      "Default": "EsperarAceptacion"
+    },
+    "EmitirEscalado": {
+      "Type": "Task",
+      "Comment": "Timeout del ack: nuevo candidato (RF-06.5, RF-10.4)",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "EventBusName": "${event_bus_name}",
+            "Source": "arquifusion.incident",
+            "DetailType": "IncidentStateChanged",
+            "Detail": "{% {'event_id': $uuid(), 'correlation_id': $cid, 'occurred_at': $now(), 'version': 1, 'data': {'incident_id': $incidentId, 'from': 'assigned', 'to': 'assigned', 'event_type': 'incident.escalated', 'actor': {'type': 'system', 'user_id': null, 'role': null}, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'technician_id': $technicianId}} %}"
+          }
+        ]
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "EsperarAceptacion",
+          "Assign": {
+            "escalating": false
+          }
+        }
+      ],
+      "Next": "EsperarAceptacion",
+      "Assign": {
+        "escalating": false
+      }
+    },
+    "EsperarAceptacion": {
+      "Type": "Task",
+      "Comment": "waitForTaskToken: guarda ack_token; lo usan ack (accept/reject) y assign (reassign)",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% {'action': 'guardar_token', 'incident_id': $incidentId, 'correlation_id': $cid, 'token_name': 'ack_token', 'token': $states.context.Task.Token, 'statuses': ['assigned'], 'execution_arn': $states.context.Execution.Id} %}"
+      },
+      "TimeoutSeconds": "{% $ackTimeout %}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Assign": {
+        "ack": "{% $states.result %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Escalar"
+        }
+      ],
+      "Next": "DecisionTecnico"
+    },
+    "DecisionTecnico": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $ack.decision = 'accept' %}",
+          "Next": "Aceptar"
+        },
+        {
+          "Condition": "{% $ack.decision = 'reject' %}",
+          "Next": "Rechazar"
+        },
+        {
+          "Condition": "{% $ack.decision = 'reassign' %}",
+          "Next": "AsignarManual"
+        }
+      ],
+      "Default": "Escalar"
+    },
+    "Rechazar": {
+      "Type": "Pass",
+      "Comment": "reject → siguiente mejor candidato (RF-06.4)",
+      "Assign": {
+        "exclude": "{% $append($exclude, [$technicianId]) %}"
+      },
+      "Next": "Puntuar"
+    },
+    "Escalar": {
+      "Type": "Pass",
+      "Comment": "Timeout del ack_token (RF-06.5): excluye al técnico y busca otro, máximo N escalamientos",
+      "Assign": {
+        "escalations": "{% $escalations + 1 %}",
+        "exclude": "{% $technicianId ? $append($exclude, [$technicianId]) : $exclude %}",
+        "escalating": true
+      },
+      "Next": "MarcarEscalado"
+    },
+    "MarcarEscalado": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Arguments": {
+        "TableName": "${table_incidents}",
+        "Key": {
+          "pk": {
+            "S": "{% 'INC#' & $incidentId %}"
+          },
+          "sk": {
+            "S": "META"
+          }
+        },
+        "UpdateExpression": "SET escalated = :t, escalation_count = :n REMOVE ack_token",
+        "ExpressionAttributeValues": {
+          ":t": {
+            "BOOL": true
+          },
+          ":n": {
+            "N": "{% $string($escalations) %}"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.RequestLimitExceededException",
+            "DynamoDB.ThrottlingException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "QuedanEscalamientos"
+        }
+      ],
+      "Next": "QuedanEscalamientos"
+    },
+    "QuedanEscalamientos": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $escalations <= ${max_escalations} %}",
+          "Next": "Puntuar"
+        }
+      ],
+      "Default": "SinCandidatos"
+    },
+    "SinCandidatos": {
+      "Type": "Task",
+      "Comment": "Sin técnico disponible: marca escalated y espera asignación manual",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Arguments": {
+        "TableName": "${table_incidents}",
+        "Key": {
+          "pk": {
+            "S": "{% 'INC#' & $incidentId %}"
+          },
+          "sk": {
+            "S": "META"
+          }
+        },
+        "UpdateExpression": "SET escalated = :t",
+        "ExpressionAttributeValues": {
+          ":t": {
+            "BOOL": true
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.RequestLimitExceededException",
+            "DynamoDB.ThrottlingException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Assign": {
+        "escalating": false
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "EmitirSinCandidatos"
+        }
+      ],
+      "Next": "EmitirSinCandidatos"
+    },
+    "EmitirSinCandidatos": {
+      "Type": "Task",
+      "Comment": "Sin candidatos: escala a mantenimiento/supervisor (§10)",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "EventBusName": "${event_bus_name}",
+            "Source": "arquifusion.incident",
+            "DetailType": "IncidentStateChanged",
+            "Detail": "{% {'event_id': $uuid(), 'correlation_id': $cid, 'occurred_at': $now(), 'version': 1, 'data': {'incident_id': $incidentId, 'from': $status, 'to': $status, 'event_type': 'incident.escalated', 'actor': {'type': 'system', 'user_id': null, 'role': null}, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'technician_id': null}} %}"
+          }
+        ]
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "EsperarAsignacionManual"
+        }
+      ],
+      "Next": "EsperarAsignacionManual"
+    },
+    "EsperarAsignacionManual": {
+      "Type": "Task",
+      "Comment": "#16: con ack_token en detected/assigned, POST assign (reassign) funciona sin 409",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% {'action': 'guardar_token', 'incident_id': $incidentId, 'correlation_id': $cid, 'token_name': 'ack_token', 'token': $states.context.Task.Token, 'statuses': ['detected', 'assigned'], 'execution_arn': $states.context.Execution.Id} %}"
+      },
+      "TimeoutSeconds": "{% ${manual_timeout_s} %}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Assign": {
+        "ack": "{% $states.result %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "SinAtencion"
+        }
+      ],
+      "Next": "DecisionManual"
+    },
+    "DecisionManual": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $ack.decision = 'reassign' %}",
+          "Next": "AsignarManual"
+        },
+        {
+          "Condition": "{% $ack.decision = 'accept' and $status = 'assigned' %}",
+          "Next": "Aceptar"
+        }
+      ],
+      "Default": "EsperarAsignacionManual"
+    },
+    "SinAtencion": {
+      "Type": "Task",
+      "Comment": "Nadie asignó en el plazo: libera la máquina (el incidente queda abierto y escalado)",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% {'action': 'liberar', 'incident_id': $incidentId, 'machine_id': $machineId} %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "FinSinAtencion"
+        }
+      ],
+      "Next": "FinSinAtencion"
+    },
+    "FinSinAtencion": {
+      "Type": "Succeed"
+    },
+    "Aceptar": {
+      "Type": "Task",
+      "Comment": "assigned → in_progress (RF-06.4)",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Arguments": {
+        "TableName": "${table_incidents}",
+        "Key": {
+          "pk": {
+            "S": "{% 'INC#' & $incidentId %}"
+          },
+          "sk": {
+            "S": "META"
+          }
+        },
+        "UpdateExpression": "SET #st = :ip, accepted_at = :now REMOVE ack_token",
+        "ConditionExpression": "#st = :assigned",
+        "ExpressionAttributeNames": {
+          "#st": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":ip": {
+            "S": "in_progress"
+          },
+          ":assigned": {
+            "S": "assigned"
+          },
+          ":now": {
+            "S": "{% $now() %}"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.RequestLimitExceededException",
+            "DynamoDB.ThrottlingException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Assign": {
+        "status": "in_progress",
+        "actor": "{% $exists($ack.actor) ? $ack.actor : {'type': 'system', 'user_id': null, 'role': null} %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Escalar"
+        }
+      ],
+      "Next": "EmitirEnAtencion"
+    },
+    "EmitirEnAtencion": {
+      "Type": "Task",
+      "Comment": "assigned → in_progress (incident.in_progress)",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "EventBusName": "${event_bus_name}",
+            "Source": "arquifusion.incident",
+            "DetailType": "IncidentStateChanged",
+            "Detail": "{% {'event_id': $uuid(), 'correlation_id': $cid, 'occurred_at': $now(), 'version': 1, 'data': {'incident_id': $incidentId, 'from': 'assigned', 'to': 'in_progress', 'event_type': 'incident.in_progress', 'actor': {'type': $actor.type, 'user_id': $actor.user_id, 'role': $actor.role}, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'technician_id': $technicianId}} %}"
+          }
+        ]
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "EsperarResolucion"
+        }
+      ],
+      "Next": "EsperarResolucion"
+    },
+    "EsperarResolucion": {
+      "Type": "Task",
+      "Comment": "Segundo waitForTaskToken: POST /incidents/{id}/resolve (RF-11.1)",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% {'action': 'guardar_token', 'incident_id': $incidentId, 'correlation_id': $cid, 'token_name': 'resolve_token', 'token': $states.context.Task.Token, 'statuses': ['in_progress'], 'execution_arn': $states.context.Execution.Id} %}"
+      },
+      "TimeoutSeconds": "{% ${resolve_timeout_s} %}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Assign": {
+        "resolution": "{% $states.result %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "RecordarResolucion"
+        }
+      ],
+      "Next": "Resolver"
+    },
+    "RecordarResolucion": {
+      "Type": "Task",
+      "Comment": "Vence el plazo de resolución: escalated = true y se sigue esperando",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Arguments": {
+        "TableName": "${table_incidents}",
+        "Key": {
+          "pk": {
+            "S": "{% 'INC#' & $incidentId %}"
+          },
+          "sk": {
+            "S": "META"
+          }
+        },
+        "UpdateExpression": "SET escalated = :t",
+        "ExpressionAttributeValues": {
+          ":t": {
+            "BOOL": true
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerErrorException",
+            "DynamoDB.ProvisionedThroughputExceededException",
+            "DynamoDB.RequestLimitExceededException",
+            "DynamoDB.ThrottlingException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "EmitirEscaladoResolucion"
+        }
+      ],
+      "Next": "EmitirEscaladoResolucion"
+    },
+    "EmitirEscaladoResolucion": {
+      "Type": "Task",
+      "Comment": "Resolución vencida (RF-10.4)",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "EventBusName": "${event_bus_name}",
+            "Source": "arquifusion.incident",
+            "DetailType": "IncidentStateChanged",
+            "Detail": "{% {'event_id': $uuid(), 'correlation_id': $cid, 'occurred_at': $now(), 'version': 1, 'data': {'incident_id': $incidentId, 'from': 'in_progress', 'to': 'in_progress', 'event_type': 'incident.escalated', 'actor': {'type': 'system', 'user_id': null, 'role': null}, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'technician_id': $technicianId}} %}"
+          }
+        ]
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "EsperarResolucion"
+        }
+      ],
+      "Next": "EsperarResolucion"
+    },
+    "Resolver": {
+      "Type": "Task",
+      "Comment": "in_progress → resolved, downtime_minutes (RF-11.2)",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% $merge([{'action': 'resolver', 'incident_id': $incidentId, 'correlation_id': $cid}, {'resolution': $resolution}]) %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 30,
+      "Assign": {
+        "status": "resolved",
+        "actor": "{% $exists($resolution.actor) ? $resolution.actor : {'type': 'system', 'user_id': null, 'role': null} %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "EsperarResolucion"
+        }
+      ],
+      "Next": "EmitirResuelto"
+    },
+    "EmitirResuelto": {
+      "Type": "Task",
+      "Comment": "in_progress → resolved (incident.resolved)",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "EventBusName": "${event_bus_name}",
+            "Source": "arquifusion.incident",
+            "DetailType": "IncidentStateChanged",
+            "Detail": "{% {'event_id': $uuid(), 'correlation_id': $cid, 'occurred_at': $now(), 'version': 1, 'data': {'incident_id': $incidentId, 'from': 'in_progress', 'to': 'resolved', 'event_type': 'incident.resolved', 'actor': {'type': $actor.type, 'user_id': $actor.user_id, 'role': $actor.role}, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'technician_id': $technicianId}} %}"
+          }
+        ]
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "ResumenIA"
+        }
+      ],
+      "Next": "ResumenIA"
+    },
+    "ResumenIA": {
+      "Type": "Task",
+      "Comment": "RF-16.8: resumen IA (fallback determinista si Gemini falla)",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_ia_gemini}",
+        "Payload": "{% {'task': 'summarize_chat', 'correlation_id': $cid, 'payload': {'incident_id': $incidentId, 'messages': [{'author_id': $actor.user_id, 'role': $actor.role, 'text': $resolution.resolution_notes, 'created_at': $now(), 'correlation_id': $cid}]}} %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 25,
+      "Assign": {
+        "summary": "{% $states.result.Payload %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Assign": {
+            "summary": null
+          },
+          "Next": "Cerrar"
+        }
+      ],
+      "Next": "Cerrar"
+    },
+    "Cerrar": {
+      "Type": "Task",
+      "Comment": "resolved → closed: corrective en maintenance-records, inventario, libera máquina",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% $merge([{'action': 'cerrar', 'incident_id': $incidentId, 'correlation_id': $cid}, {'summary': $summary}]) %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 30,
+      "Assign": {
+        "status": "closed",
+        "closeResult": "{% $states.result.Payload %}"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "LiberarYFallar"
+        }
+      ],
+      "Next": "EmitirCerrado"
+    },
+    "EmitirCerrado": {
+      "Type": "Task",
+      "Comment": "resolved → closed (incident.closed)",
+      "Resource": "arn:aws:states:::events:putEvents",
+      "Arguments": {
+        "Entries": [
+          {
+            "EventBusName": "${event_bus_name}",
+            "Source": "arquifusion.incident",
+            "DetailType": "IncidentStateChanged",
+            "Detail": "{% {'event_id': $uuid(), 'correlation_id': $cid, 'occurred_at': $now(), 'version': 1, 'data': {'incident_id': $incidentId, 'from': 'resolved', 'to': 'closed', 'event_type': 'incident.closed', 'actor': {'type': 'system', 'user_id': null, 'role': null}, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'technician_id': $technicianId}} %}"
+          }
+        ]
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "FaltanteAlCierre"
+        }
+      ],
+      "Next": "FaltanteAlCierre"
+    },
+    "FaltanteAlCierre": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $closeResult.shortage = true %}",
+          "Next": "NotificarFaltanteCierre"
+        }
+      ],
+      "Default": "Fin"
+    },
+    "NotificarFaltanteCierre": {
+      "Type": "Task",
+      "Comment": "stock < stock_min tras el descuento (§10)",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_notificar}",
+        "Payload": "{% {'event_type': 'parts.shortage', 'incident_id': $incidentId, 'machine_id': $machineId, 'zone': $zone, 'severity': $severity, 'components': $closeResult.low_stock, 'correlation_id': $cid} %}",
+        "InvocationType": "Event"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Fin"
+        }
+      ],
+      "Next": "Fin"
+    },
+    "Fin": {
+      "Type": "Succeed"
+    },
+    "LiberarYFallar": {
+      "Type": "Task",
+      "Comment": "Libera open_incident_id para no bloquear nuevas anomalías",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${fn_incidente}",
+        "Payload": "{% {'action': 'liberar', 'incident_id': $incidentId, 'machine_id': $machineId} %}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "TimeoutSeconds": 10,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Fallo"
+        }
+      ],
+      "Next": "Fallo"
+    },
+    "Fallo": {
+      "Type": "Fail",
+      "Error": "IncidenteFallido",
+      "Cause": "Error no recuperable en GestionIncidente"
     }
   }
 }

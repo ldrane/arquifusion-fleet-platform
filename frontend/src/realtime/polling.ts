@@ -3,7 +3,7 @@ import type { Me } from "@/api/types";
 import { can } from "@/auth/permissions";
 import type { FleetUpdate, RealtimeSource } from "./types";
 
-/** Respaldo sin Firebase: lee GET /v1/* cada `intervalMs`. El chat requiere Firestore. */
+/** Respaldo sin Firebase: lee GET (API) cada `intervalMs`. El chat requiere Firestore. */
 export class PollingRealtime implements RealtimeSource {
   readonly kind = "polling" as const;
   readonly canChat = false;

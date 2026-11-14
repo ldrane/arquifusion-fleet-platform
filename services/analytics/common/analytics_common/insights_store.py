@@ -5,9 +5,12 @@ from arquifusion_ml.insights import items
 from analytics_common.dynamo import to_dynamo
 
 
-def write_insight(table, kind: str, data, run_at_iso: str, correlation_id: str) -> None:
-    """Escribe el histórico del día y `LATEST`. `data` debe tener la forma exacta del endpoint del OpenAPI."""
+def write_insight(table, kind: str, data, run_at_iso: str, correlation_id: str, zone: str | None = None) -> None:
+    """Escribe el histórico del día y `LATEST` (o `…#<zone>` con `zone`, solo `kpis#*`).
+
+    `data` debe tener la forma exacta del endpoint del OpenAPI.
+    """
     day = run_at_iso[:10]
     with table.batch_writer() as batch:
-        for item in items(kind, day, data, run_at_iso, correlation_id):
+        for item in items(kind, day, data, run_at_iso, correlation_id, zone):
             batch.put_item(Item=to_dynamo(item))

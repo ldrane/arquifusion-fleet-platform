@@ -9,7 +9,7 @@
     "content_profile": "operational",
     "throttle_minutes": 10,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.detected",
@@ -22,7 +22,7 @@
     "content_profile": "technical",
     "throttle_minutes": 15,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.detected",
@@ -35,7 +35,7 @@
     "content_profile": "operational",
     "throttle_minutes": 15,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.detected",
@@ -47,7 +47,7 @@
     "content_profile": "executive",
     "throttle_minutes": 60,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.assigned",
@@ -60,7 +60,7 @@
     "content_profile": "technical",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.assigned",
@@ -72,7 +72,7 @@
     "content_profile": "technical",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.in_progress",
@@ -84,7 +84,7 @@
     "content_profile": "operational",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.in_progress",
@@ -96,7 +96,7 @@
     "content_profile": "technical",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.escalated",
@@ -108,7 +108,7 @@
     "content_profile": "technical",
     "throttle_minutes": 5,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.escalated",
@@ -121,7 +121,7 @@
     "content_profile": "technical",
     "throttle_minutes": 5,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.escalated",
@@ -133,7 +133,7 @@
     "content_profile": "operational",
     "throttle_minutes": 15,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.resolved",
@@ -145,7 +145,7 @@
     "content_profile": "operational",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.resolved",
@@ -157,7 +157,7 @@
     "content_profile": "technical",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.closed",
@@ -169,7 +169,7 @@
     "content_profile": "technical",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.closed",
@@ -181,7 +181,7 @@
     "content_profile": "operational",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "incident.closed",
@@ -193,7 +193,7 @@
     "content_profile": "executive",
     "throttle_minutes": 60,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "machine.silent",
@@ -206,7 +206,7 @@
     "content_profile": "technical",
     "throttle_minutes": 30,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "machine.silent",
@@ -218,7 +218,7 @@
     "content_profile": "operational",
     "throttle_minutes": 30,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "parts.shortage",
@@ -230,7 +230,7 @@
     "content_profile": "technical",
     "throttle_minutes": 60,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "parts.shortage",
@@ -242,7 +242,7 @@
     "content_profile": "executive",
     "throttle_minutes": 240,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "report.daily",
@@ -254,7 +254,7 @@
     "content_profile": "executive",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   },
   {
     "event_type": "report.daily",
@@ -266,6 +266,6 @@
     "content_profile": "executive",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 2
+    "seed_version": 3
   }
 ]

@@ -4,10 +4,10 @@
 data "aws_region" "current" {}
 
 locals {
-  # Stage del REST API que despliega la Persona B (contratos.md §9).
+  # Stage del REST API que despliega la Persona B (contratos.md §9). Las rutas NO llevan prefijo /v1: el stage ya es
+  # `v1`, así que la URL del simulador es https://{api}.execute-api.{region}.amazonaws.com/v1/telemetry.
   api_stage_name = "v1"
-  # Topic de alarmas de plataforma que crea infra/base (convención de nombres, contratos.md §9).
-  alarm_topic_arn = "arn:aws:sns:${data.aws_region.current.name}:${local.account_id}:${local.prefix}-platform-alarms"
+  telemetry_url  = "https://${data.aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${local.api_stage_name}/telemetry"
 }
 
 # ---------------------------------------------------------------- colas
@@ -200,6 +200,25 @@ resource "aws_api_gateway_usage_plan_key" "simulator" {
   key_id        = aws_api_gateway_api_key.simulator.id
   key_type      = "API_KEY"
   usage_plan_id = aws_api_gateway_usage_plan.simulator.id
+}
+
+# La API key del simulador vive en Secrets Manager (docs/arquitectura-solucion-aws.md: `simulator/api-key`), nunca en
+# el repo. El simulador la lee con:
+#   aws secretsmanager get-secret-value --secret-id arquifusion/<stage>/simulator/api-key --query SecretString
+# El JSON trae `api_key` y `api_url` (base del stage, lo que espera SIMULATOR_API_URL).
+resource "aws_secretsmanager_secret" "simulator_api_key" {
+  name                    = "arquifusion/${var.stage}/simulator/api-key"
+  description             = "API key de POST /telemetry para el simulador (${var.default_operation_id})"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "simulator_api_key" {
+  secret_id = aws_secretsmanager_secret.simulator_api_key.id
+  secret_string = jsonencode({
+    api_key      = aws_api_gateway_api_key.simulator.value
+    api_url      = "https://${data.aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${local.api_stage_name}"
+    operation_id = var.default_operation_id
+  })
 }
 
 # ---------------------------------------------------------------- alarmas (MH-OBS-03)

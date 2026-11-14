@@ -63,19 +63,20 @@ resource "aws_lambda_function" "ia_gemini" {
       TABLE_MACHINES          = local.tables.machines
       TABLE_INCIDENTS         = local.tables.incidents
       TABLE_INSIGHTS          = local.tables.insights
+      CORS_ORIGIN             = var.cors_origin
     })
   }
 
   depends_on = [aws_cloudwatch_log_group.ia_gemini]
 }
 
-# B cablea POST /v1/assistant/chat a esta Lambda (contratos.md §9); el permiso de invocación vive aquí.
+# B cablea POST /assistant/chat (stage v1, sin prefijo /v1 en la ruta) a esta Lambda; el permiso vive aquí.
 resource "aws_lambda_permission" "ia_gemini_apigw" {
   statement_id  = "AllowApiGatewayAssistantChat"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.ia_gemini.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${data.aws_api_gateway_rest_api.api.execution_arn}/*/POST/v1/assistant/chat"
+  source_arn    = "${data.aws_api_gateway_rest_api.api.execution_arn}/*/POST/assistant/chat"
 }
 
 resource "aws_ssm_parameter" "ia_gemini_arn" {
@@ -97,4 +98,5 @@ resource "aws_cloudwatch_metric_alarm" "ia_gemini_errors" {
   threshold           = 1
   comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "notBreaching"
+  alarm_actions       = [local.alarm_topic_arn]
 }

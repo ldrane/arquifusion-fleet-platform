@@ -88,6 +88,8 @@ export interface AiDiagnosis {
 
 export interface Incident {
   incident_id: string;
+  /** Máquina principal (GSI by_machine). La API y Firestore la traen; el demo usa machine_ids[0]. */
+  machine_id?: string;
   parent_incident_id: string | null;
   child_incident_ids: string[];
   machine_ids: string[];
@@ -136,6 +138,8 @@ export interface Me {
   email: string | null;
   role: Role;
   zone: Zone | null;
+  /** custom:technician_id (solo rol tecnico, contratos.md §2.1). Opcional: sesiones guardadas antes del cambio no lo traen. */
+  technician_id?: string | null;
 }
 
 export interface TelemetryPoint {

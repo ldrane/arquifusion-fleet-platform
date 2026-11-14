@@ -4,8 +4,9 @@
 
 locals {
   procesar_name = "${local.prefix}-procesar"
-  # Umbrales por defecto de la capa 1; luego se ajustan en SSM sin redeploy.
-  thresholds_default = jsondecode(file("${path.module}/../../services/ingest/procesar/thresholds_default.json"))
+  # Umbrales de la capa 1 POR MODELO, derivados del nominal del seed (μ+3σ / μ+4σ, #2). Se regeneran con
+  # `python services/ingest/procesar/ingest_procesar/rules.py` y se ajustan luego en SSM sin redeploy.
+  thresholds_by_model = jsondecode(file("${path.module}/../../services/ingest/procesar/thresholds_default.json")).models
 }
 
 resource "aws_cloudwatch_log_group" "procesar" {
@@ -34,10 +35,8 @@ resource "aws_lambda_function" "procesar" {
       TABLE_MACHINE_STATE     = local.tables.machine_state
       TABLE_IDEMPOTENCY       = local.tables.idempotency
       TABLE_ANOMALIES         = local.tables.anomalies
-      EVENT_BUS_NAME          = local.event_bus_name
       FIREHOSE_STREAM         = aws_kinesis_firehose_delivery_stream.telemetry.name
       MODEL_BUCKET            = aws_s3_bucket.artifacts.bucket
-      DEFAULT_OPERATION_ID    = var.default_operation_id
     })
   }
 
@@ -56,11 +55,12 @@ resource "aws_lambda_event_source_mapping" "procesar_sqs" {
   }
 }
 
-# Umbrales de la capa 1 por tipo de máquina. Terraform solo los crea: los ajustes posteriores en SSM se respetan.
+# Umbrales de la capa 1 por modelo (contratos.md §9: /arquifusion/{stage}/thresholds/{model}). Terraform solo los
+# crea: los ajustes posteriores en SSM se respetan. Sin parámetro, procesar usa thresholds_default.json.
 resource "aws_ssm_parameter" "thresholds" {
-  for_each    = local.thresholds_default
+  for_each    = local.thresholds_by_model
   name        = "${local.ssm_prefix}/thresholds/${each.key}"
-  description = "Umbrales de la capa 1 de procesar para ${each.key} (RF-02.1)"
+  description = "Umbrales de la capa 1 de procesar para el modelo ${each.key} (RF-02.1)"
   type        = "String"
   value       = jsonencode(each.value)
 
@@ -75,6 +75,21 @@ resource "aws_cloudwatch_metric_alarm" "procesar_errors" {
   namespace           = "AWS/Lambda"
   metric_name         = "Errors"
   dimensions          = { FunctionName = aws_lambda_function.procesar.function_name }
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [local.alarm_topic_arn]
+}
+
+resource "aws_cloudwatch_metric_alarm" "procesar_unknown_machines" {
+  alarm_name          = "${local.procesar_name}-unknown-machines"
+  alarm_description   = "Llegan lecturas de máquinas que no están en el seed: se descartan (#1)"
+  namespace           = "ArquiFusion"
+  metric_name         = "ReadingsUnknownMachine"
+  dimensions          = { service = "procesar" }
   statistic           = "Sum"
   period              = 300
   evaluation_periods  = 1

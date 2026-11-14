@@ -21,7 +21,7 @@ const SUGGESTIONS = [
   "¿Qué máquinas consumen más combustible que sus pares?",
 ];
 
-/** POST /v1/assistant/chat (RF-14): tool-calling sobre datos reales, nunca SQL libre. */
+/** POST /assistant/chat (RF-14): tool-calling sobre datos reales, nunca SQL libre. */
 export function Assistant() {
   // La conversación se conserva al navegar a otra vista y volver
   const [turns, setTurns] = useViewState<Turn[]>("assistant.turns", []);

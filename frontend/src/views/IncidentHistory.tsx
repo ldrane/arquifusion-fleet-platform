@@ -64,7 +64,7 @@ export function IncidentHistory() {
       <Panel
         icon="history_toggle_off"
         title="Historial de incidentes"
-        subtitle="GET /v1/incidents · réplica en vivo"
+        subtitle="GET /incidents · réplica en vivo"
         bodyClassName="p-0"
         actions={
           <div className="flex flex-wrap items-center gap-2">
