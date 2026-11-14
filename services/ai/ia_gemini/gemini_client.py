@@ -5,19 +5,40 @@ HTTP, respuesta bloqueada o JSON inválido) se convierte en GeminiError para que
 """
 
 import json
+import os
+import socket
 import urllib.error
 import urllib.request
 from collections.abc import Callable
 
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+# Única fuente del modelo: env GEMINI_MODEL (lo fija infra/ingest/ai.tf) con este default.
 DEFAULT_MODEL = "gemini-2.5-flash"
 DEFAULT_TIMEOUT_S = 8.0
 
 Transport = Callable[[str, dict, dict, float], dict]
 
 
+# Enum público de `degraded_reason` (openapi.yaml / contratos.md). Nunca incluye llaves ni texto de excepciones.
+DEGRADED_REASONS = ("secret_missing", "http_4xx", "timeout", "model_not_found", "other")
+
+
 class GeminiError(Exception):
-    """Falla al obtener una respuesta útil de Gemini."""
+    """Falla al obtener una respuesta útil de Gemini. `reason` ∈ DEGRADED_REASONS."""
+
+    def __init__(self, message: str = "", reason: str = "other"):
+        super().__init__(message)
+        self.reason = reason if reason in DEGRADED_REASONS else "other"
+
+
+def degraded_reason(exc: BaseException) -> str:
+    """Motivo seguro (enum) de una falla de la IA; cualquier excepción ajena a GeminiError es `other`."""
+    reason = getattr(exc, "reason", None) if isinstance(exc, GeminiError) else None
+    return reason if reason in DEGRADED_REASONS else "other"
+
+
+def default_model() -> str:
+    return os.environ.get("GEMINI_MODEL") or DEFAULT_MODEL
 
 
 def urllib_transport(url: str, headers: dict, body: dict, timeout_s: float) -> dict:
@@ -27,9 +48,18 @@ def urllib_transport(url: str, headers: dict, body: dict, timeout_s: float) -> d
         with urllib.request.urlopen(request, timeout=timeout_s) as resp:  # noqa: S310 (URL fija https)
             return json.loads(resp.read())
     except urllib.error.HTTPError as exc:
-        raise GeminiError(f"HTTP {exc.code} de Gemini") from exc
+        if exc.code == 404:
+            reason = "model_not_found"
+        elif 400 <= exc.code < 500:  # key inválida (400/403), cuota (429), etc.
+            reason = "http_4xx"
+        else:
+            reason = "other"
+        raise GeminiError(f"HTTP {exc.code} de Gemini", reason) from exc
     except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
-        raise GeminiError(f"Gemini no respondió: {exc}") from exc
+        timed_out = isinstance(exc, (TimeoutError, socket.timeout)) or isinstance(
+            getattr(exc, "reason", None), (TimeoutError, socket.timeout)
+        )
+        raise GeminiError(f"Gemini no respondió: {exc}", "timeout" if timed_out else "other") from exc
 
 
 class GeminiClient:
@@ -38,11 +68,11 @@ class GeminiClient:
     def __init__(
         self,
         api_key_provider: Callable[[], str],
-        model: str = DEFAULT_MODEL,
+        model: str | None = None,
         timeout_s: float = DEFAULT_TIMEOUT_S,
         transport: Transport = urllib_transport,
     ):
-        self.model = model
+        self.model = model or default_model()
         self.timeout_s = timeout_s
         self._api_key_provider = api_key_provider
         self._transport = transport
@@ -70,7 +100,7 @@ class GeminiClient:
         try:
             headers = {"Content-Type": "application/json", "x-goog-api-key": self._api_key_provider()}
         except Exception as exc:  # el secreto no está disponible: se trata como falla de Gemini
-            raise GeminiError("API key de Gemini no disponible") from exc
+            raise GeminiError("API key de Gemini no disponible", "secret_missing") from exc
 
         timeout = min(timeout_s or self.timeout_s, self.timeout_s)
         raw = self._transport(API_URL.format(model=self.model), headers, body, timeout)

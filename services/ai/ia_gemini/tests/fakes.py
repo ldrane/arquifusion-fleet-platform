@@ -33,5 +33,5 @@ def client(*replies) -> tuple[GeminiClient, ScriptedTransport]:
     return GeminiClient(api_key_provider=lambda: "test-key", transport=transport), transport
 
 
-TIMEOUT = GeminiError("Gemini no respondió: timed out")
+TIMEOUT = GeminiError("Gemini no respondió: timed out", "timeout")
 HTTP_503 = GeminiError("HTTP 503 de Gemini")

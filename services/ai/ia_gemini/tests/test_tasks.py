@@ -122,3 +122,20 @@ def test_common_cause_fallback_uses_dominant_factor():
 def test_unknown_task_is_a_programming_error():
     with pytest.raises(ValueError):
         service.handle_task({"task": "adivinar"}, None)
+
+
+def test_degraded_reason_en_tareas():
+    from gemini_client import GeminiClient, GeminiError
+
+    def no_key():
+        raise RuntimeError("AIzaSECRETO no existe")
+
+    out = service.handle_task(diagnose_event(), GeminiClient(api_key_provider=no_key))
+    assert out["degraded"] is True and out["degraded_reason"] == "secret_missing"
+    assert "AIza" not in json.dumps(out)
+    assert service.handle_task(diagnose_event(), client(TIMEOUT)[0])["degraded_reason"] == "timeout"
+    assert service.handle_task(diagnose_event(), client(json_reply("no json"))[0])["degraded_reason"] == "other"
+    nf = GeminiError("HTTP 404 de Gemini", "model_not_found")
+    assert service.handle_task(diagnose_event(), client(nf)[0])["degraded_reason"] == "model_not_found"
+    assert service.handle_task(diagnose_event(), None)["degraded_reason"] == "other"
+
