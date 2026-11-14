@@ -5,6 +5,11 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/build/layer-c-gcp"
+ZIP="$ROOT/build/layer-c-gcp.zip"
+# F-39: solo se salta si el zip es más nuevo que los requirements y este script
+if [[ -f "$ZIP" && "$ZIP" -nt "$ROOT/services/query/common/requirements.txt" && "$ZIP" -nt "$0" ]]; then
+  echo "OK (sin cambios): build/layer-c-gcp.zip"; exit 0
+fi
 rm -rf "$OUT" "$ROOT/build/layer-c-gcp.zip" && mkdir -p "$OUT/python"
 pip install --quiet --target "$OUT/python" \
   --platform manylinux2014_x86_64 --implementation cp --python-version 3.12 --only-binary=:all: \

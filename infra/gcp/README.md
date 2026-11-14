@@ -5,6 +5,11 @@
 - **State:** `s3://<bucket-tfstate>/arquifusion/gcp/terraform.tfstate` (uno solo: Firestore `(default)` es único por proyecto).
 - **Desplegar:** `terraform -chdir=infra/gcp init -backend-config=../backend.hcl && terraform -chdir=infra/gcp apply -var stage=<stage> -var gcp_project_id=<id>` (runbook `docs/h0-persona-c.md` §5).
   Requiere `infra/base` aplicado antes (lee el SSM `/arquifusion/<stage>/api/url` para la suscripción push).
+- **`-var` obligatorios:** `gcp_project_id` y `stage` (sin default; `terraform apply` los pedirá o fallará en CI). Los demás
+  (`gcp_billing`, `push_subscription`, ...) tienen default.
+- **Credenciales AWS necesarias** al aplicar este stack: el provider `aws` lee SSM (`/arquifusion/<stage>/api/url`), así que
+  hace falta una sesión AWS válida (Learner Lab, no expirada) además de `gcloud auth application-default login`.
+  `scripts/deploy_infra.sh` **no** aplica este stack: se despliega aparte.
 
 ## Facturación: `gcp_billing` (por defecto `false`)
 

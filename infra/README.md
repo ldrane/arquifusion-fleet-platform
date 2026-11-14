@@ -1,8 +1,20 @@
 # Infraestructura (Terraform)
 
-Orden de despliegue: `base` → `ingest` / `incidents` / `query` (en paralelo) → `gcp`. `frontend` es independiente.
+Orden real de despliegue (detalle en [`docs/RUNBOOK-DEPLOY.md`](../docs/RUNBOOK-DEPLOY.md)):
+`base` → `ingest` (primero repo ECR + imágenes, luego apply completo) → redeploy del stage `v1` de base → `incidents` / `query` → `gcp`.
+`frontend` es independiente y **no** va en el despliegue por defecto.
 
-Atajo AWS: `STAGE=dev scripts/deploy_infra.sh` (crea el bucket de tfstate y `backend.hcl`, construye layers, aplica en orden y redeploya el stage `v1`). Front: `STAGE=dev scripts/deploy_frontend.sh`.
+- `ingest` depende de `base` (API, tablas, bus) y no se puede aplicar de golpe en limpio: las Lambdas `procesar`/`retrain`
+  usan imágenes ECR (`procesar-<tag>`, `retrain-<tag>`) que deben existir antes del apply completo.
+- `incidents` y `query` leen de `base` (e `ingest` para tablas/bus); entre sí no dependen, pero después del redeploy de `v1`.
+- **Redeploy por `/telemetry`:** `POST /telemetry` lo crea `ingest` sobre la API de `base`, pero el deployment de `base` solo se
+  invalida con sus propias rutas. Hay que reaplicar base con `-var api_redeploy=$(date +%s)` **repitiendo los demás `-var`**
+  de base (`alert_emails`, `cors_origin`, ...) o vuelven a su default. `deploy_infra.sh` lo hace con `TF_ARGS_base`.
+
+Atajo AWS: `STAGE=dev scripts/deploy_infra.sh` (crea el bucket de tfstate y `backend.hcl`, construye layers si cambió el código,
+aplica `base ingest incidents query` — con ECR/docker para `ingest` — y redeploya el stage `v1`). Requiere **docker** para `ingest`.
+**`frontend` solo se despliega si se pasa explícito** (`scripts/deploy_infra.sh frontend`): CloudFront + OAC no está garantizado en
+Learner Lab y un fallo abortaría la secuencia. Front: `STAGE=dev scripts/deploy_frontend.sh`.
 
 | Stack | Dueño |
 |---|---|

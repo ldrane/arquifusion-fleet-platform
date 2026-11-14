@@ -51,7 +51,7 @@ resource "aws_lambda_event_source_mapping" "procesar_sqs" {
   function_response_types            = ["ReportBatchItemFailures"]
 
   scaling_config {
-    maximum_concurrency = 10 # acota el costo y la presión sobre DynamoDB en picos
+    maximum_concurrency = 3 # acota el costo y la presión sobre DynamoDB en picos
   }
 }
 

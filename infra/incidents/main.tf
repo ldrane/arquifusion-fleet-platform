@@ -274,7 +274,7 @@ resource "aws_sfn_state_machine" "gestion_incidente" {
 
   logging_configuration {
     log_destination        = "${aws_cloudwatch_log_group.sfn.arn}:*"
-    include_execution_data = true
+    include_execution_data = false
     level                  = "ERROR"
   }
 
