@@ -1,14 +1,14 @@
 {
-  "seed_version": 1,
+  "seed_version": 2,
   "reference_date": "2026-11-14",
   "counts": {
     "machines": 100,
     "machine_models": 10,
     "technicians": 12,
     "catalog": 25,
-    "inventory": 75,
-    "notification_rules": 16,
-    "warehouses": 3
+    "inventory": 100,
+    "notification_rules": 22,
+    "warehouses": 4
   },
   "machine_id_prefixes": {
     "excavator": "EX",

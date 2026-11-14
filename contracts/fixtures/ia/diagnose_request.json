@@ -4,15 +4,141 @@
   "payload": {
     "machine_id": "EX-023",
     "machine_type": "excavator",
-    "model": "EX-350",
+    "model": "CAT-336",
+    "zone": "norte",
     "severity": "high",
     "health_score": 42,
     "top_factors": [
-      { "variable": "vibration_mm_s", "z_score": 3.1, "direction": "high" },
-      { "variable": "temperature_c", "z_score": 2.4, "direction": "high" },
-      { "variable": "fuel_rate_lph", "z_score": 1.9, "direction": "high" }
+      {
+        "variable": "vibration_mm_s",
+        "z_score": 3.1,
+        "direction": "high"
+      },
+      {
+        "variable": "temperature_c",
+        "z_score": 2.4,
+        "direction": "high"
+      },
+      {
+        "variable": "fuel_rate_lph",
+        "z_score": 1.9,
+        "direction": "high"
+      }
     ],
-    "latest_reading": { "temperature_c": 98.4, "vibration_mm_s": 7.2, "fuel_rate_lph": 38.5, "rpm": 1850 },
-    "recent_incidents": []
+    "latest_reading": {
+      "temperature_c": 98.4,
+      "vibration_mm_s": 7.2,
+      "pressure_bar": 305,
+      "fuel_rate_lph": 46.5,
+      "rpm": 1850
+    },
+    "recent_incidents": [],
+    "candidate_parts": [
+      {
+        "component_id": "CMP-001",
+        "name": "Filtro de aceite de motor",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-002",
+        "name": "Filtro de combustible",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-003",
+        "name": "Filtro de aire primario",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-004",
+        "name": "Inyector de combustible",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-005",
+        "name": "Turbocompresor",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-006",
+        "name": "Bomba de agua",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-007",
+        "name": "Radiador",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-008",
+        "name": "Correa de accesorios",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-009",
+        "name": "Bomba hidráulica principal",
+        "specialty": "hidraulica"
+      },
+      {
+        "component_id": "CMP-010",
+        "name": "Cilindro hidráulico de brazo",
+        "specialty": "hidraulica"
+      },
+      {
+        "component_id": "CMP-011",
+        "name": "Manguera hidráulica de alta presión",
+        "specialty": "hidraulica"
+      },
+      {
+        "component_id": "CMP-012",
+        "name": "Kit de sellos de cilindro hidráulico",
+        "specialty": "hidraulica"
+      },
+      {
+        "component_id": "CMP-013",
+        "name": "Válvula de control hidráulico",
+        "specialty": "hidraulica"
+      },
+      {
+        "component_id": "CMP-014",
+        "name": "Kit de rodamientos de motor",
+        "specialty": "motor"
+      },
+      {
+        "component_id": "CMP-015",
+        "name": "Alternador",
+        "specialty": "electrica"
+      },
+      {
+        "component_id": "CMP-016",
+        "name": "Motor de arranque",
+        "specialty": "electrica"
+      },
+      {
+        "component_id": "CMP-017",
+        "name": "Batería 12 V servicio pesado",
+        "specialty": "electrica"
+      },
+      {
+        "component_id": "CMP-018",
+        "name": "Sensor de temperatura de refrigerante",
+        "specialty": "electrica"
+      },
+      {
+        "component_id": "CMP-019",
+        "name": "Sensor de vibración (acelerómetro)",
+        "specialty": "electrica"
+      },
+      {
+        "component_id": "CMP-020",
+        "name": "Módulo de control electrónico (ECU)",
+        "specialty": "electrica"
+      },
+      {
+        "component_id": "CMP-023",
+        "name": "Zapata de oruga",
+        "specialty": "neumaticos"
+      }
+    ]
   }
 }

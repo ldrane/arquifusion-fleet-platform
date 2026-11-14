@@ -83,7 +83,7 @@
 | C3 | GET analíticos: `/parts/ranking`, `/parts/forecast`, `/maintenance/plan`, `/analytics/*`, `/reports/latest`, `/ml/model`. **Lee lo que escribe A7.** Mientras tanto devuelve datos seed con el shape exacto del OpenAPI | GET del OpenAPI | RF-03/04/07/08 | Should |
 | C4 | **Proyecto GCP base**: Firestore, service account para AWS (secreto en Secrets Manager), Security Rules por `role`/`zone` | `contratos.md` §5 | MH-MC-01, RNF-08 | **Must** |
 | C5 | **Lambda `replicar`**: Streams de `Machines`, `Incidents` y `Technicians` → Firestore, con el mismo esquema que la API | `contratos.md` §5 | RF-05, RF-15.3, MH-HA-03 | **Must** |
-| C6 | `POST /v1/auth/firebase-token` (custom token con claims `role` y `zone`). Va en `api-comandos`, pero **lo escribe C** como handler aparte porque lo necesita su front | OpenAPI | RF-16 | **Must** |
+| C6 | `POST /v1/auth/firebase-token` (custom token con claims `role`, `zone` y `technician_id`; guarda `fcm_token` en Firestore `users/{uid}`). **Decisión 2026-11-14: lo implementa C dentro de `api-lectura`** (sale de `api-comandos`; ver `contratos.md` §2 y §5) | OpenAPI | RF-16 | **Must** |
 | C7 | Frontend: mapa, cola de incidentes, detalle, chat Firestore (offline) y vistas por rol | — | RF-15, RF-16 | (fuera de este documento) |
 
 ### 3.2 Cómo trabaja sin depender de nadie

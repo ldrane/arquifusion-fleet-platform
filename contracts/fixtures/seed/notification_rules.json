@@ -1,19 +1,6 @@
 [
   {
     "event_type": "incident.detected",
-    "role": "tecnico",
-    "severity_min": "medium",
-    "channels": [
-      "push",
-      "email"
-    ],
-    "content_profile": "technical",
-    "throttle_minutes": 10,
-    "enabled": true,
-    "seed_version": 1
-  },
-  {
-    "event_type": "incident.detected",
     "role": "operador",
     "severity_min": "high",
     "channels": [
@@ -22,7 +9,7 @@
     "content_profile": "operational",
     "throttle_minutes": 10,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "incident.detected",
@@ -35,7 +22,7 @@
     "content_profile": "technical",
     "throttle_minutes": 15,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "incident.detected",
@@ -48,7 +35,7 @@
     "content_profile": "operational",
     "throttle_minutes": 15,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "incident.detected",
@@ -60,19 +47,68 @@
     "content_profile": "executive",
     "throttle_minutes": 60,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
+  },
+  {
+    "event_type": "incident.assigned",
+    "role": "tecnico",
+    "severity_min": "info",
+    "channels": [
+      "push",
+      "email"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 2
+  },
+  {
+    "event_type": "incident.assigned",
+    "role": "mantenimiento",
+    "severity_min": "medium",
+    "channels": [
+      "dashboard"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 2
+  },
+  {
+    "event_type": "incident.in_progress",
+    "role": "operador",
+    "severity_min": "medium",
+    "channels": [
+      "push"
+    ],
+    "content_profile": "operational",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 2
+  },
+  {
+    "event_type": "incident.in_progress",
+    "role": "mantenimiento",
+    "severity_min": "info",
+    "channels": [
+      "dashboard"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 2
   },
   {
     "event_type": "incident.escalated",
     "role": "tecnico",
-    "severity_min": "medium",
+    "severity_min": "info",
     "channels": [
       "push"
     ],
     "content_profile": "technical",
     "throttle_minutes": 5,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "incident.escalated",
@@ -85,7 +121,7 @@
     "content_profile": "technical",
     "throttle_minutes": 5,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "incident.escalated",
@@ -97,7 +133,31 @@
     "content_profile": "operational",
     "throttle_minutes": 15,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
+  },
+  {
+    "event_type": "incident.resolved",
+    "role": "operador",
+    "severity_min": "info",
+    "channels": [
+      "push"
+    ],
+    "content_profile": "operational",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 2
+  },
+  {
+    "event_type": "incident.resolved",
+    "role": "mantenimiento",
+    "severity_min": "info",
+    "channels": [
+      "dashboard"
+    ],
+    "content_profile": "technical",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 2
   },
   {
     "event_type": "incident.closed",
@@ -109,7 +169,19 @@
     "content_profile": "technical",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
+  },
+  {
+    "event_type": "incident.closed",
+    "role": "supervisor",
+    "severity_min": "medium",
+    "channels": [
+      "dashboard"
+    ],
+    "content_profile": "operational",
+    "throttle_minutes": 0,
+    "enabled": true,
+    "seed_version": 2
   },
   {
     "event_type": "incident.closed",
@@ -121,19 +193,20 @@
     "content_profile": "executive",
     "throttle_minutes": 60,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "machine.silent",
     "role": "mantenimiento",
     "severity_min": "low",
     "channels": [
-      "dashboard"
+      "dashboard",
+      "email"
     ],
     "content_profile": "technical",
     "throttle_minutes": 30,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "machine.silent",
@@ -145,7 +218,7 @@
     "content_profile": "operational",
     "throttle_minutes": 30,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "parts.shortage",
@@ -157,7 +230,7 @@
     "content_profile": "technical",
     "throttle_minutes": 60,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "parts.shortage",
@@ -169,7 +242,7 @@
     "content_profile": "executive",
     "throttle_minutes": 240,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "report.daily",
@@ -181,7 +254,7 @@
     "content_profile": "executive",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "event_type": "report.daily",
@@ -193,6 +266,6 @@
     "content_profile": "executive",
     "throttle_minutes": 0,
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   }
 ]

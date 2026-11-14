@@ -28,7 +28,7 @@ def test_diagnose_with_gemini_matches_contract():
 
 def test_diagnose_drops_parts_not_in_candidates():
     gemini, _ = client(json_reply({**json.loads((FIXTURES / "diagnose_response.json").read_text())["result"]}))
-    out = service.handle_task(diagnose_event(), gemini)  # sin candidate_parts
+    out = service.handle_task(diagnose_event(candidate_parts=[]), gemini)  # sin candidatos (la fixture sí los trae)
     assert out["result"]["parts_suggested"] == []
 
 

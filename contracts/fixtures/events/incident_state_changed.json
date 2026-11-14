@@ -2,7 +2,7 @@
   {
     "Source": "arquifusion.incident",
     "DetailType": "IncidentStateChanged",
-    "EventBusName": "fleet-events",
-    "Detail": "{\"event_id\": \"01JC8ZK5T7Y2N4Q8R3W6X9A1B2\", \"correlation_id\": \"7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11\", \"occurred_at\": \"2026-11-13T10:15:00Z\", \"version\": 1, \"data\": {\"incident_id\": \"INC-01JC8ZK\", \"from\": \"detected\", \"to\": \"assigned\", \"actor\": \"system\", \"technician_id\": \"TEC-07\"}}"
+    "EventBusName": "arquifusion-dev-fleet-events",
+    "Detail": "{\"event_id\": \"01JC8ZK5T7Y2N4Q8R3W6X9A1B2\", \"correlation_id\": \"7c1e4b1a-0d2f-4a55-9c50-3b3f0a6f1e11\", \"occurred_at\": \"2026-11-13T10:15:00Z\", \"version\": 1, \"data\": {\"incident_id\": \"INC-01JC8ZK\", \"from\": \"detected\", \"to\": \"assigned\", \"actor\": {\"type\": \"system\", \"user_id\": null, \"role\": null}, \"technician_id\": \"TEC-07\", \"machine_id\": \"EX-023\", \"zone\": \"norte\", \"severity\": \"high\", \"event_type\": \"incident.assigned\"}}"
   }
 ]

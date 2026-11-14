@@ -28,5 +28,15 @@
       "lon": -76.36,
       "zone": "este"
     }
+  },
+  {
+    "warehouse_id": "WH-04",
+    "name": "Almacén Oeste",
+    "zone": "oeste",
+    "location": {
+      "lat": -11.948,
+      "lon": -76.44,
+      "zone": "oeste"
+    }
   }
 ]

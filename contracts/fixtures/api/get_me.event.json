@@ -11,7 +11,7 @@
   "requestContext": {
     "resourcePath": "/v1/me",
     "httpMethod": "GET",
-    "stage": "dev",
+    "stage": "v1",
     "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
     "authorizer": {
       "claims": {
@@ -20,6 +20,7 @@
         "cognito:groups": "tecnico",
         "email": "tec07@demo.arquifusion.local",
         "custom:zone": "norte",
+        "custom:technician_id": "TEC-07",
         "token_use": "id"
       }
     }
