@@ -41,7 +41,7 @@ function StatusBar() {
       const me = await api.me();
       const ms = Math.round(performance.now() - t0);
       setLatency(ms);
-      toast(`Enlace verificado: GET /v1/me respondió en ${ms} ms (${me.role})`, "good");
+      toast(`Enlace verificado: GET /me respondió en ${ms} ms (${me.role})`, "good");
     } catch (e) {
       toast(errorMessage(e), "bad");
     } finally {

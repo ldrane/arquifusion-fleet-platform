@@ -91,7 +91,7 @@ export const ZONES = ["norte", "sur", "este", "oeste"];
 export const DEMO_USERS = [
   { user_id: "u-op-01", name: "Rosa Quispe", email: "op01@demo.arquifusion.local", role: "operador", zone: "norte" },
   // El técnico demo ES TEC-07 de los seeds: mismo nombre (Technicians.user_id = u-tec-07)
-  { user_id: "u-tec-07", name: SEED.technicians.find((t) => t.user_id === "u-tec-07")?.name ?? "TEC-07", email: "tec07@demo.arquifusion.local", role: "tecnico", zone: "norte" },
+  { user_id: "u-tec-07", name: SEED.technicians.find((t) => t.user_id === "u-tec-07")?.name ?? "TEC-07", email: "tec07@demo.arquifusion.local", role: "tecnico", zone: "norte", technician_id: "TEC-07" },
   { user_id: "u-mant-01", name: "Carmen Rojas", email: "mant01@demo.arquifusion.local", role: "mantenimiento", zone: null },
   { user_id: "u-sup-01", name: "Luis Paredes", email: "sup01@demo.arquifusion.local", role: "supervisor", zone: "norte" },
   { user_id: "u-adm-01", name: "Elena Rostova", email: "adm01@demo.arquifusion.local", role: "admin", zone: null },
@@ -99,12 +99,19 @@ export const DEMO_USERS = [
 ] as const;
 
 /**
- * Escenarios de falla, alineados con simulator/scenarios.py (A) y con el diagnóstico de ia-gemini.
- * `vars` = variable -> z-score que deja la anomalía (top_factors).
+ * Patrones de falla del modo demo.
+ * - `simulator: true`: MISMO nombre y efecto que `simulator/scenarios.py` (A): `degradacion`, `falla_subita`,
+ *   `combustible` (+ `grupal_zona`, ver GROUP_CAUSE). Son los únicos que se pueden inyectar desde el panel
+ *   "Simulador", que equivale a `python -m simulator stream --scenario <key>` (#27).
+ * - `simulator: false`: patrones de fondo para que el historial y el piloto automático muestren las 4 especialidades
+ *   (hidráulica, eléctrica, neumáticos). No existen en el simulador y no llevan `sim_scenario` en la telemetría.
+ * `vars` = variable -> z-score que deja la anomalía (top_factors, máx. 3). `specialty` sigue la regla de
+ * contratos.md §8.2 (variable dominante -> especialidad) salvo que el repuesto sugerido diga otra cosa.
  */
 export interface Scenario {
   key: string;
   label: string;
+  simulator: boolean;
   severity: Severity;
   specialty: Specialty;
   vars: Record<string, number>;
@@ -117,8 +124,10 @@ export interface Scenario {
 export const SCENARIOS: Scenario[] = [
   {
     key: "degradacion",
-    label: "Degradación térmica progresiva",
-    severity: "critical",
+    label: "Degradación progresiva (temperatura, vibración, combustible)",
+    simulator: true,
+    // Golden path (contratos.md §8.3): EX-023 high/motor -> TEC-07 (0.98), 2.º TEC-01
+    severity: "high",
     specialty: "motor",
     vars: { temperature_c: 4.1, vibration_mm_s: 3.2, fuel_rate_lph: 2.1 },
     cause: "Desgaste de rodamiento del motor con falla de refrigeración asociada",
@@ -127,18 +136,20 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     key: "falla_subita",
-    label: "Falla súbita hidráulica",
+    label: "Falla súbita (salto de temperatura y vibración, caída de presión)",
+    simulator: true,
     severity: "critical",
-    specialty: "hidraulica",
-    vars: { pressure_bar: -4.6, temperature_c: 2.4, vibration_mm_s: 2.2 },
-    cause: "Rotura de manguera hidráulica de alta presión",
-    action: "Detener el equipo, aislar el circuito y reemplazar la manguera; revisar nivel de aceite",
-    summary: "Se cambió la manguera de alta presión y se repuso aceite hidráulico. Presión estabilizada en el nominal.",
-    types: ["excavator", "loader", "bulldozer", "drill"],
+    specialty: "motor",
+    // simulator: temperatura +40 °C, vibración x3.5, presión x0.55
+    vars: { temperature_c: 4.8, vibration_mm_s: 4.2, pressure_bar: -3.9 },
+    cause: "Sobrecalentamiento súbito del motor con pérdida de presión de aceite (falla de bomba de lubricación)",
+    action: "Detener el equipo de inmediato, revisar bomba y nivel de aceite y el estado de los rodamientos",
+    summary: "Se reemplazó la bomba de aceite y se cambió el aceite contaminado. Temperatura y presión volvieron al nominal.",
   },
   {
     key: "presion",
     label: "Pico de presión hidráulica",
+    simulator: false,
     severity: "high",
     specialty: "hidraulica",
     vars: { pressure_bar: 3.4, temperature_c: 1.9 },
@@ -149,10 +160,12 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     key: "combustible",
-    label: "Consumo de combustible anómalo",
+    label: "Consumo de combustible anómalo con carga normal",
+    simulator: true,
     severity: "medium",
     specialty: "motor",
-    vars: { fuel_rate_lph: 3.1, temperature_c: 1.2 },
+    // simulator: combustible x1.5 progresivo, sin otras variables
+    vars: { fuel_rate_lph: 3.4 },
     cause: "Inyectores obstruidos y filtro de combustible saturado",
     action: "Reemplazar filtro de combustible y limpiar inyectores en la próxima parada",
     summary: "Se cambió el filtro de combustible y se limpiaron inyectores; consumo −11% frente a la semana previa.",
@@ -160,6 +173,7 @@ export const SCENARIOS: Scenario[] = [
   {
     key: "electrico",
     label: "Falla eléctrica intermitente",
+    simulator: false,
     severity: "high",
     specialty: "electrica",
     vars: { rpm: -3.2, temperature_c: 1.6 },
@@ -170,6 +184,7 @@ export const SCENARIOS: Scenario[] = [
   {
     key: "neumaticos",
     label: "Vibración por neumático",
+    simulator: false,
     severity: "medium",
     specialty: "neumaticos",
     vars: { vibration_mm_s: 3.0, speed_kmh: -1.8 },
@@ -181,6 +196,10 @@ export const SCENARIOS: Scenario[] = [
 ];
 
 export const SCENARIO_BY_KEY = new Map(SCENARIOS.map((s) => [s.key, s]));
+/** Escenarios inyectables = los de `simulator/scenarios.py` (sin `normal` ni `ociosa`, que no abren incidentes). */
+export const SIMULATOR_SCENARIOS = SCENARIOS.filter((s) => s.simulator);
+/** Máquina por defecto de cada escenario en el smoke/pitch (scripts/smoke_golden_path.sh usa EX-023). */
+export const DEMO_MACHINE = "EX-023";
 
 /** Causa común del incidente grupal por zona (RF-12, escenario grupal_zona del simulador). */
 export const GROUP_CAUSE = {

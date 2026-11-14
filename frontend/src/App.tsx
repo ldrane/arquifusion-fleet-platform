@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createBrowserRouter, Link, Navigate, RouterProvider, useRouteError } from "react-router-dom";
+import { createBrowserRouter, Link, Navigate, RouterProvider, useParams, useRouteError } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
 import { type Capability, can } from "./auth/permissions";
 import { AppShell } from "./components/layout/AppShell";
@@ -15,6 +15,12 @@ import { Inventory } from "./views/Inventory";
 import { Login } from "./views/Login";
 import { MachineDetail } from "./views/MachineDetail";
 import { PredictiveHealth } from "./views/PredictiveHealth";
+
+/** `deep_link` de los push (contratos.md §4: `/incidents/{id}`) -> ruta de la consola (`/incidentes/:id`). */
+function IncidentDeepLink() {
+  const { id = "" } = useParams();
+  return <Navigate to={`/incidentes/${encodeURIComponent(id)}`} replace />;
+}
 
 /** Protege una vista por capacidad (x-roles del OpenAPI). El backend vuelve a validar. */
 function Guard({ caps, children }: { caps: Capability[]; children: ReactNode }) {
@@ -66,6 +72,7 @@ const router = createBrowserRouter([
         { path: "eficiencia", element: <Guard caps={["fuel"]}><Efficiency /></Guard> },
         { path: "incidentes", element: <Guard caps={["incidents"]}><IncidentHistory /></Guard> },
         { path: "incidentes/:id", element: <Guard caps={["incidents"]}><IncidentDetail /></Guard> },
+        { path: "incidents/:id", element: <IncidentDeepLink /> },
         { path: "asistente", element: <Guard caps={["assistant"]}><Assistant /></Guard> },
         { path: "login", element: <Navigate to="/" replace /> },
         { path: "*", element: <RouteError /> },

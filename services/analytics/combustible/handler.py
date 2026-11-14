@@ -14,4 +14,9 @@ _dynamodb = boto3.resource("dynamodb")
 @logger.inject_lambda_context(correlation_id_path="correlation_id")
 @tracer.capture_lambda_handler
 def handler(event, context):
-    return service.run(parse_event(event), athena=_athena, insights_table=_dynamodb.Table(os.environ["TABLE_INSIGHTS"]))
+    return service.run(
+        parse_event(event),
+        athena=_athena,
+        insights_table=_dynamodb.Table(os.environ["TABLE_INSIGHTS"]),
+        catalog_table=_dynamodb.Table(os.environ["TABLE_CATALOG"]),
+    )

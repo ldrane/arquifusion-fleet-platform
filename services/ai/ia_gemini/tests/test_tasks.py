@@ -16,14 +16,30 @@ def diagnose_event(**payload_overrides) -> dict:
 def test_diagnose_with_gemini_matches_contract():
     expected = json.loads((FIXTURES / "diagnose_response.json").read_text())
     gemini, transport = client(json_reply(expected["result"]))
-    out = service.handle_task(diagnose_event(candidate_parts=[{"component_id": "CMP-014"}]), gemini)
+    out = service.handle_task(DIAGNOSE, gemini)  # request de la fixture tal cual (con candidate_parts §8.1)
 
-    assert set(out) == {"result", "model", "degraded", "prompt_version", "latency_ms"}
+    assert set(out) == set(expected)
     assert out["result"] == expected["result"]
-    assert out["degraded"] is False and out["model"] == "gemini-2.5-flash"
-    assert out["prompt_version"] == "diagnose-v1"
+    assert out["degraded"] is expected["degraded"] is False and out["model"] == expected["model"]
+    assert out["prompt_version"] == expected["prompt_version"]
     config = transport.bodies[0]["generationConfig"]
     assert config["responseMimeType"] == "application/json" and "responseSchema" in config
+
+
+def test_diagnose_request_fixture_follows_contract():
+    payload = DIAGNOSE["payload"]
+    assert payload["model"] == "CAT-336" and payload["machine_id"] == "EX-023"
+    assert all(set(p) == {"component_id", "name", "specialty"} for p in payload["candidate_parts"])
+    assert "CMP-014" in {p["component_id"] for p in payload["candidate_parts"]}
+
+
+def test_diagnose_prompt_receives_candidate_parts_with_name_and_specialty():
+    expected = json.loads((FIXTURES / "diagnose_response.json").read_text())
+    gemini, transport = client(json_reply(expected["result"]))
+    noisy = [{**p, "stock": 3} for p in DIAGNOSE["payload"]["candidate_parts"]]
+    service.handle_task(diagnose_event(candidate_parts=noisy), gemini)
+    prompt = transport.bodies[0]["contents"][0]["parts"][0]["text"]
+    assert "Kit de rodamientos de motor" in prompt and '"specialty": "motor"' in prompt and "stock" not in prompt
 
 
 def test_diagnose_drops_parts_not_in_candidates():
@@ -43,6 +59,14 @@ def test_diagnose_falls_back_on_any_gemini_failure(failure):
     assert out["prompt_version"].endswith("+fallback")
     assert "rodamientos" in out["result"]["probable_cause"].lower()  # temperatura + vibración
     assert set(out["result"]) == {"probable_cause", "suggested_action", "confidence", "parts_suggested"}
+    # §8.2: el fallback sugiere repuestos solo de candidate_parts, así required_specialty sale de un repuesto.
+    assert out["result"]["parts_suggested"] == ["CMP-014"]
+
+
+def test_fallback_without_candidates_suggests_no_parts():
+    gemini, _ = client(TIMEOUT)
+    out = service.handle_task(diagnose_event(candidate_parts=[]), gemini)
+    assert out["degraded"] is True and out["result"]["parts_suggested"] == []
 
 
 def test_missing_api_key_falls_back():

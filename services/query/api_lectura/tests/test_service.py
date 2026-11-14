@@ -164,6 +164,8 @@ def test_firebase_token_global_sin_body(deps):
     data, meta = service.run(ev("POST", "/auth/firebase-token", groups="gerencia", zone="*", tech=None), deps)
     assert deps.firebase.minted[-1][1] == {"role": "gerencia", "zone": None, "technician_id": None}
     assert deps.firebase.registered == [] and meta == {}
+    service.run(ev("POST", "/auth/firebase-token", groups="gerencia", zone="*", tech=None, body={"fcm_token": "g"}), deps)
+    assert deps.firebase.registered[-1][1]["zone"] == "*"  # notify_bridge: zone in [z, "*"]
 
 
 def test_firebase_token_fcm_falla_no_rompe_login(deps):

@@ -79,3 +79,12 @@ def test_rendered_definition_is_valid_json(file):
     states = json.loads(rendered)["States"]
     task = "EstadisticasDiarias" if var == "sql_daily_stats" else "ExtraerDatos"
     assert states[task]["Parameters"]["QueryString"] == sql
+
+
+@pytest.mark.parametrize(
+    "sql", [Path(__file__).parents[1] / "analytics_common/sql/daily_machine_stats.sql",
+            Path(__file__).parents[2] / "retrain/training.sql"]
+)
+def test_sql_filters_injected_operation_partition(sql):
+    """#10: `operation_id` tiene proyección `injected`; sin filtro de igualdad Athena falla."""
+    assert "operation_id = 'OP-01'" in sql.read_text()

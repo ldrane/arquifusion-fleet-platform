@@ -75,40 +75,40 @@ export class HttpApi implements FleetApi {
     return (await this.request<T>(method, path, { body: body ?? {} })).data;
   }
 
-  me = () => this.get<any>("/v1/me");
-  firebaseToken = (fcm_token?: string) => this.post<any>("/v1/auth/firebase-token", fcm_token ? { fcm_token } : {});
+  me = () => this.get<any>("/me");
+  firebaseToken = (fcm_token?: string) => this.post<any>("/auth/firebase-token", fcm_token ? { fcm_token } : {});
 
   listMachines = (q: MachineQuery = {}, limit = 100, cursor?: string) =>
-    this.page<any>("/v1/machines", { ...q, limit, cursor });
-  getMachine = (id: string) => this.get<any>(`/v1/machines/${encodeURIComponent(id)}`);
+    this.page<any>("/machines", { ...q, limit, cursor });
+  getMachine = (id: string) => this.get<any>(`/machines/${encodeURIComponent(id)}`);
   getTelemetry = (id: string, from: string, to: string, resolution: "1m" | "1h" = "1m") =>
-    this.get<any>(`/v1/machines/${encodeURIComponent(id)}/telemetry`, { from, to, resolution });
-  getTimeline = (id: string) => this.get<any>(`/v1/machines/${encodeURIComponent(id)}/timeline`);
+    this.get<any>(`/machines/${encodeURIComponent(id)}/telemetry`, { from, to, resolution });
+  getTimeline = (id: string) => this.get<any>(`/machines/${encodeURIComponent(id)}/timeline`);
 
   listIncidents = (q: IncidentQuery = {}, limit = 100, cursor?: string) =>
-    this.page<any>("/v1/incidents", { ...q, limit, cursor });
-  getIncident = (id: string) => this.get<any>(`/v1/incidents/${encodeURIComponent(id)}`);
+    this.page<any>("/incidents", { ...q, limit, cursor });
+  getIncident = (id: string) => this.get<any>(`/incidents/${encodeURIComponent(id)}`);
   ack = (id: string, decision: "accept" | "reject", reason?: string) =>
-    this.post<any>(`/v1/incidents/${encodeURIComponent(id)}/ack`, { decision, ...(reason ? { reason } : {}) });
+    this.post<any>(`/incidents/${encodeURIComponent(id)}/ack`, { decision, ...(reason ? { reason } : {}) });
   assign = (id: string, technician_id: string, reason?: string) =>
-    this.post<any>(`/v1/incidents/${encodeURIComponent(id)}/assign`, { technician_id, ...(reason ? { reason } : {}) });
-  resolve = (id: string, body: any) => this.post<any>(`/v1/incidents/${encodeURIComponent(id)}/resolve`, body);
+    this.post<any>(`/incidents/${encodeURIComponent(id)}/assign`, { technician_id, ...(reason ? { reason } : {}) });
+  resolve = (id: string, body: any) => this.post<any>(`/incidents/${encodeURIComponent(id)}/resolve`, body);
 
-  listTechnicians = (q: Query = {}) => this.get<any>("/v1/technicians", q);
-  updateMyStatus = (body: any) => this.post<any>("/v1/technicians/me/status", body, "PUT");
+  listTechnicians = (q: Query = {}) => this.get<any>("/technicians", q);
+  updateMyStatus = (body: any) => this.post<any>("/technicians/me/status", body, "PUT");
 
-  listInventory = (q: Query = {}) => this.get<any>("/v1/inventory", q);
-  partsRanking = () => this.get<any>("/v1/parts/ranking");
-  partsForecast = (q: Query = {}) => this.get<any>("/v1/parts/forecast", q);
-  maintenancePlan = (q: Query = {}) => this.get<any>("/v1/maintenance/plan", q);
+  listInventory = (q: Query = {}) => this.get<any>("/inventory", q);
+  partsRanking = () => this.get<any>("/parts/ranking");
+  partsForecast = (q: Query = {}) => this.get<any>("/parts/forecast", q);
+  maintenancePlan = (q: Query = {}) => this.get<any>("/maintenance/plan", q);
 
-  fuel = (q: Query = {}) => this.get<any>("/v1/analytics/fuel", q);
-  productivity = (q: Query = {}) => this.get<any>("/v1/analytics/productivity", q);
-  kpis = (q: Query = {}) => this.get<any>("/v1/analytics/kpis", q);
-  latestReport = (type: "daily" | "weekly" = "daily") => this.get<any>("/v1/reports/latest", { type });
+  fuel = (q: Query = {}) => this.get<any>("/analytics/fuel", q);
+  productivity = (q: Query = {}) => this.get<any>("/analytics/productivity", q);
+  kpis = (q: Query = {}) => this.get<any>("/analytics/kpis", q);
+  latestReport = (type: "daily" | "weekly" = "daily") => this.get<any>("/reports/latest", { type });
 
-  mlModel = () => this.get<any>("/v1/ml/model");
-  retrain = () => this.post<any>("/v1/ml/retrain");
+  mlModel = () => this.get<any>("/ml/model");
+  retrain = () => this.post<any>("/ml/retrain");
   assistant = (message: string, session_id?: string) =>
-    this.post<any>("/v1/assistant/chat", { message, ...(session_id ? { session_id } : {}) });
+    this.post<any>("/assistant/chat", { message, ...(session_id ? { session_id } : {}) });
 }

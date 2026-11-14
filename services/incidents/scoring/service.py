@@ -52,7 +52,8 @@ def score_technicians(techs: list[dict], location: dict, severity: str, specialt
     for t in techs:
         if t.get("technician_id") in exclude or not t.get("location"):
             continue
-        eta = eta_minutes(t["location"], location)
+        # Sin ubicación de la máquina (contexto falló): ETA neutro = tope, decide especialidad/carga
+        eta = eta_minutes(t["location"], location) if location and location.get("lat") is not None else ETA_CAP_MIN
         b = {
             "specialty": 0.5 if not specialty else (1 if specialty in (t.get("specialties") or []) else 0),
             "eta": _r2(max(0.0, 1 - eta / ETA_CAP_MIN)),
@@ -71,7 +72,7 @@ def rank(request: dict, techs: list[dict]) -> dict:
     severity = request.get("severity") or "medium"
     candidates = score_technicians(
         techs,
-        request["location"],
+        request.get("location"),
         severity,
         request.get("required_specialty"),
         set(request.get("exclude_technician_ids") or []),

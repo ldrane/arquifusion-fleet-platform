@@ -44,7 +44,6 @@ resource "aws_lambda_function" "heartbeat" {
     variables = merge(local.common_env, {
       POWERTOOLS_SERVICE_NAME = "heartbeat"
       TABLE_MACHINES          = local.tables.machines
-      EVENT_BUS_NAME          = local.event_bus_name
       DEFAULT_INTERVAL_S      = "60"
       SILENCE_FACTOR          = "3"
     })

@@ -45,6 +45,19 @@ class TaskSpec:
 
 
 # ---------------------------------------------------------------- diagnose
+CANDIDATE_FIELDS = ("component_id", "name", "specialty")
+
+
+def _prepare_diagnose(payload: dict) -> dict:
+    """`candidate_parts[] = {component_id, name, specialty}` (contratos.md §8.1): solo esos campos llegan al prompt."""
+    candidates = [
+        {k: p[k] for k in CANDIDATE_FIELDS if p.get(k)}
+        for p in payload.get("candidate_parts") or []
+        if isinstance(p, dict) and p.get("component_id")
+    ]
+    return {**payload, "candidate_parts": candidates}
+
+
 def _normalize_diagnose(raw: dict, payload: dict) -> dict:
     allowed = {p.get("component_id") for p in payload.get("candidate_parts") or [] if isinstance(p, dict)}
     parts = [p for p in _str_list(raw.get("parts_suggested", [])) if p in allowed]  # nunca IDs inventados
@@ -119,7 +132,7 @@ TASKS: dict[str, TaskSpec] = {
         schema=lambda _p: _obj(
             {"probable_cause": STRING, "suggested_action": STRING, "confidence": NUMBER, "parts_suggested": STRING_LIST}
         ),
-        prepare=_identity,
+        prepare=_prepare_diagnose,
         normalize=_normalize_diagnose,
         fallback=ia_fallbacks.diagnose,
     ),

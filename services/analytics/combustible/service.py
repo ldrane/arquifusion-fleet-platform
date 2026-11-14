@@ -4,6 +4,10 @@ Normaliza el consumo (L/h en operación y L/t movida), lo compara con máquinas 
 historial (días 31-90), detecta aumentos progresivos (pendiente de los últimos 30 días) y sugiere causas probables
 con reglas sobre carga, RPM, temperatura y ralentí.
 Salida: `insights` `fuel#7d` y `fuel#30d` (forma de GET /v1/analytics/fuel).
+
+Pares = máquinas del mismo MODELO (un KOM-PC2000 consume ~3× un CAT-336, #13). Si el modelo tiene menos de
+MIN_PEERS máquinas, la referencia es el `nominal` de `fuel_rate_lph` del catálogo `MODEL#…`, y si tampoco existe,
+la mediana del tipo. L/t usa la capacidad derivada de `payload_t` del catálogo.
 """
 
 from datetime import date
@@ -23,6 +27,7 @@ HIGH_LOAD_PCT = 85.0
 HIGH_RPM_VS_PEERS = 1.10
 HIGH_TEMPERATURE_C = 95.0
 HIGH_IDLE_SHARE = 0.35
+MIN_PEERS = 3
 
 
 def _pct(value: float | None, reference: float | None) -> float:
@@ -63,30 +68,46 @@ def probable_causes(current: list[daily.DailyStat], peer_rpm: float | None, prog
     return causes
 
 
-def analyze(stats: list[daily.DailyStat], today: date, period_days: int) -> list[dict]:
+def _peer_reference(
+    mid: str,
+    model: dict[str, str | None],
+    machine_type: dict[str, str],
+    values: dict[str, float | None],
+    catalog: fleet.Catalog,
+    variable: str,
+) -> float | None:
+    """Mediana de las máquinas del mismo modelo; si son pocas, el nominal del catálogo; si no, el tipo."""
+    same_model = [values[m] for m in values if model[m] == model[mid] and model[mid] and values[m] is not None]
+    if len(same_model) >= MIN_PEERS:
+        return daily.median(same_model)
+    nominal = catalog.nominal_mean(model[mid], variable)
+    if nominal is not None:
+        return nominal
+    return daily.median([values[m] for m in values if machine_type[m] == machine_type[mid] and values[m] is not None])
+
+
+def analyze(
+    stats: list[daily.DailyStat], today: date, period_days: int, catalog: fleet.Catalog | None = None
+) -> list[dict]:
     """Una fila por máquina con datos en el periodo, ordenada de mayor a menor desvío frente a sus pares."""
+    catalog = catalog or fleet.Catalog()
     grouped = daily.by_machine(stats)
     current = {mid: daily.window(s, today, period_days) for mid, s in grouped.items()}
     current = {mid: s for mid, s in current.items() if s}
     lph = {mid: daily.weighted_avg(s, "fuel_lph") for mid, s in current.items()}
+    rpm = {mid: daily.weighted_avg(s, "avg_rpm") for mid, s in current.items()}
     machine_type = {mid: s[0].machine_type for mid, s in current.items()}
-
-    peers_lph: dict[str, float | None] = {}
-    peers_rpm: dict[str, float | None] = {}
-    for mtype in set(machine_type.values()):
-        same = [mid for mid, t in machine_type.items() if t == mtype]
-        peers_lph[mtype] = daily.median([lph[m] for m in same if lph[m] is not None])
-        peers_rpm[mtype] = daily.median(
-            [r for m in same if (r := daily.weighted_avg(current[m], "avg_rpm")) is not None]
-        )
+    model = {mid: s[-1].model for mid, s in current.items()}
 
     rows = []
     for mid, period_stats in current.items():
         value = lph[mid] or 0.0
         load = daily.weighted_avg(period_stats, "avg_load_pct") or 0.0
-        tons_per_hour = load / 100 * fleet.capacity_tph(machine_type[mid])
+        tons_per_hour = load / 100 * catalog.capacity_tph(model[mid], machine_type[mid])
         history = daily.window(grouped[mid], today, HISTORY_DAYS - period_days, offset=period_days)
-        vs_peers = _pct(value, peers_lph[machine_type[mid]])
+        peer_lph = _peer_reference(mid, model, machine_type, lph, catalog, "fuel_rate_lph")
+        peer_rpm = _peer_reference(mid, model, machine_type, rpm, catalog, "rpm")
+        vs_peers = _pct(value, peer_lph)
         vs_history = _pct(value, daily.weighted_avg(history, "fuel_lph"))
         progressive = progressive_increase(grouped[mid], today)
         flagged = vs_peers >= FLAG_VS_PEERS_PCT or vs_history >= FLAG_VS_HISTORY_PCT or progressive
@@ -100,7 +121,7 @@ def analyze(stats: list[daily.DailyStat], today: date, period_days: int) -> list
                 "vs_own_history_pct": vs_history,
                 "progressive_increase": progressive,
                 "probable_causes": (
-                    probable_causes(period_stats, peers_rpm[machine_type[mid]], progressive) if flagged else []
+                    probable_causes(period_stats, peer_rpm, progressive) if flagged else []
                 ),
             }
         )
@@ -108,11 +129,12 @@ def analyze(stats: list[daily.DailyStat], today: date, period_days: int) -> list
     return rows
 
 
-def run(ctx: RunContext, athena, insights_table) -> dict:
+def run(ctx: RunContext, athena, insights_table, catalog_table=None) -> dict:
     stats = daily.from_rows(fetch_rows(athena, ctx.query_execution_id))
+    catalog = fleet.load_catalog(catalog_table) if catalog_table is not None else fleet.Catalog()
     flagged = 0
     for period, days in PERIODS.items():
-        rows = analyze(stats, ctx.today, days)
+        rows = analyze(stats, ctx.today, days, catalog)
         write_insight(insights_table, f"fuel#{period}", rows, ctx.run_at_iso, ctx.correlation_id)
         if period == "7d":
             flagged = sum(1 for r in rows if r["probable_causes"])

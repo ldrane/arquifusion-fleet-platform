@@ -52,7 +52,7 @@ function healthAt(m: TelemetryMachine, t: number, d: DegradationSource | null): 
   return Math.round(clamp(m.baseHealth - (m.baseHealth - m.health) * r + (rand() - 0.5) * 2, 0, 100));
 }
 
-/** Serie de GET /v1/machines/{id}/telemetry (buckets de 1 min o 1 h, máx. 720 puntos). */
+/** Serie de GET /machines/{id}/telemetry (buckets de 1 min o 1 h, máx. 720 puntos). */
 export function telemetrySeries(
   m: TelemetryMachine,
   fromIso: string,
@@ -98,7 +98,8 @@ export function latestReading(m: TelemetryMachine, t: number, d: DegradationSour
     speed_kmh: get("speed_kmh"),
     rpm: Math.round(get("rpm")),
     state,
-    sim_scenario: d?.scenario ?? null,
+    // Solo los escenarios del simulador etiquetan la lectura (igual que simulator/generator.py)
+    sim_scenario: d && SCENARIO_BY_KEY.get(d.scenario)?.simulator ? d.scenario : null,
   };
 }
 

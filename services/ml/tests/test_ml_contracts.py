@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from arquifusion_ml.features import FEATURES, to_vector
 from arquifusion_ml.insights import LATEST, items
 from arquifusion_ml.lake import LAKE_COLUMNS, flatten_reading, partition_prefix
@@ -39,3 +41,10 @@ def test_model_metadata_api_view():
 def test_insights_items_write_latest():
     out = items("ml_model", "2026-11-13", {}, "2026-11-13T05:00:00Z", "cid")
     assert [i["sk"] for i in out] == ["2026-11-13", LATEST]
+
+
+def test_insights_items_by_zone_only_for_kpis():
+    out = items("kpis#7d", "2026-11-14", {}, "2026-11-14T05:00:00Z", "cid", zone="norte")
+    assert [i["sk"] for i in out] == ["2026-11-14#norte", "LATEST#norte"] and out[0]["zone"] == "norte"
+    with pytest.raises(ValueError):
+        items("fuel#7d", "2026-11-14", [], "2026-11-14T05:00:00Z", "cid", zone="norte")

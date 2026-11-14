@@ -42,3 +42,15 @@ resource "google_firebaserules_release" "firestore" {
     replace_triggered_by = [google_firebaserules_ruleset.firestore]
   }
 }
+
+# users/{uid} (contratos.md §5): perfil push que escribe api-lectura en POST /auth/firebase-token.
+# Las colecciones no se crean con Terraform; aquí solo se ajusta el índice: fcm_tokens no se consulta nunca
+# (notify_bridge filtra por role/zone y lee el arreglo), así que no se indexa (menos escrituras de índice).
+resource "google_firestore_field" "users_fcm_tokens" {
+  project    = var.gcp_project_id
+  database   = google_firestore_database.default.name
+  collection = "users"
+  field      = "fcm_tokens"
+
+  index_config {}
+}

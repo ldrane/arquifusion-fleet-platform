@@ -30,15 +30,23 @@ locals {
     technicians         = "${local.prefix}-technicians"
     inventory           = "${local.prefix}-inventory"
     catalog             = "${local.prefix}-catalog"
+    warehouses          = "${local.prefix}-warehouses"
     maintenance_records = "${local.prefix}-maintenance-records"
     insights            = "${local.prefix}-insights"
   }
   event_bus_name = "${local.prefix}-fleet-events"
   rest_api_name  = "${local.prefix}-api"
 
-  # Variables comunes a todas las Lambdas de este stack.
+  # SNS de alarmas de plataforma que crea infra/base (contratos.md §9). Se arma el ARN por nombre (sin data source)
+  # para que este stack no dependa del orden de despliegue.
+  alarm_topic_arn = "arn:aws:sns:${var.aws_region}:${local.account_id}:${local.prefix}-platform-alarms"
+
+  # Variables comunes a todas las Lambdas de este stack (contratos.md §1.1, #23): STAGE, EVENT_BUS_NAME y
+  # DEFAULT_OPERATION_ID. Las tablas van como TABLE_<NOMBRE> con el nombre completo, solo las que usa cada Lambda.
   common_env = {
     STAGE                        = var.stage
+    EVENT_BUS_NAME               = local.event_bus_name
+    DEFAULT_OPERATION_ID         = var.default_operation_id
     POWERTOOLS_LOG_LEVEL         = "INFO"
     POWERTOOLS_METRICS_NAMESPACE = "ArquiFusion"
   }

@@ -163,7 +163,7 @@ export function MachineDetail() {
       </section>
 
       {can(me?.role, "timeline") && (
-        <Panel icon="timeline" title="Línea de tiempo y confiabilidad" subtitle="GET /v1/machines/{id}/timeline · últimos 90 días">
+        <Panel icon="timeline" title="Línea de tiempo y confiabilidad" subtitle="GET /machines/{id}/timeline · últimos 90 días">
           {timeline.error ? (
             <ErrorBox error={timeline.error} onRetry={timeline.refetch} />
           ) : !timeline.data ? (

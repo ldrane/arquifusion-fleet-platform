@@ -114,7 +114,7 @@ function CognitoLogin() {
       <Button type="submit" variant="primary" icon="login" busy={busy}>
         {challenge ? "Guardar y entrar" : "Ingresar"}
       </Button>
-      <p className="text-[11px] text-outline">Autenticación con Amazon Cognito (ID token). El rol y la zona salen de GET /v1/me.</p>
+      <p className="text-[11px] text-outline">Autenticación con Amazon Cognito (ID token). El rol y la zona salen de GET /me.</p>
     </form>
   );
 }

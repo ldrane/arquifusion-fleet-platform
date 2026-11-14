@@ -314,7 +314,9 @@ def post_firebase_token(event: dict, deps: Deps, user: User):
 
     meta: dict[str, Any] = {}
     if fcm_token:
-        profile = {**claims, "user_id": user.user_id, "updated_at": _iso(datetime.now(UTC))}
+        # En users/{uid} la zona global se guarda como "*": notify_bridge filtra `zone in [target.zone, "*"]` (§4).
+        profile = {**claims, "zone": user.zone or ALL_ZONES, "user_id": user.user_id,
+                   "updated_at": _iso(datetime.now(UTC))}
         try:
             firebase.register_fcm_token(user.user_id, profile, fcm_token)
             meta["fcm_registered"] = True

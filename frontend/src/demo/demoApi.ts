@@ -4,7 +4,7 @@ import type { IncidentQuery, Machine, MachineQuery, Me, Page } from "@/api/types
 import { type Capability, can } from "@/auth/permissions";
 import { SEVERITY_RANK } from "@/lib/format";
 import { etaMinutes } from "@/lib/geo";
-import { newCorrelationId, technicianIdFromUser } from "@/lib/ids";
+import { myTechnicianId, newCorrelationId } from "@/lib/ids";
 import * as analytics from "./analytics";
 import { answer } from "./assistant";
 import { DEMO_USERS } from "./data";
@@ -43,7 +43,7 @@ export class DemoApi implements FleetApi {
 
   private actor(me: Me): Actor {
     const demo = DEMO_USERS.find((u) => u.user_id === me.user_id);
-    return { user_id: me.user_id, role: me.role, name: demo?.name ?? me.user_id, technician_id: technicianIdFromUser(me.user_id) };
+    return { user_id: me.user_id, role: me.role, name: demo?.name ?? me.user_id, technician_id: myTechnicianId(me) };
   }
 
   private paginate<T>(rows: T[], limit = 50, cursor?: string): Page<T> {
@@ -178,7 +178,7 @@ export class DemoApi implements FleetApi {
 
   async updateMyStatus(body: { available?: boolean; location?: { lat: number; lon: number } }) {
     const me = await this.guard("myStatus");
-    const techId = technicianIdFromUser(me.user_id);
+    const techId = myTechnicianId(me);
     return this.world.publicTech(this.world.cmdMyStatus(techId ?? "", body));
   }
 

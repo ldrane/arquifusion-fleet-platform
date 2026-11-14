@@ -14,6 +14,9 @@ export const config = {
     authDomain: clean(env.VITE_FIREBASE_AUTH_DOMAIN),
     projectId: clean(env.VITE_FIREBASE_PROJECT_ID),
     appId: clean(env.VITE_FIREBASE_APP_ID),
+    /** FCM (push web, RF-16): Firebase > Configuración > Cloud Messaging. Sin ellos no se registra push. */
+    messagingSenderId: clean(env.VITE_FIREBASE_MESSAGING_SENDER_ID),
+    vapidKey: clean(env.VITE_FIREBASE_VAPID_KEY),
   },
   forceDemo: clean(env.VITE_FORCE_DEMO) === "true",
 };
@@ -22,3 +25,4 @@ export const config = {
 export const isDemo = config.forceDemo || !config.apiUrl;
 export const hasFirebase = Boolean(config.firebase.apiKey && config.firebase.projectId);
 export const hasCognito = Boolean(config.cognito.clientId);
+export const hasPush = hasFirebase && Boolean(config.firebase.messagingSenderId && config.firebase.vapidKey && config.firebase.appId);

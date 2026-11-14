@@ -23,7 +23,7 @@ import type {
 } from "./types";
 
 /**
- * Contrato del front con el backend: una operación por ruta de openapi.yaml (familia /v1).
+ * Contrato del front con el backend: una operación por ruta de openapi.yaml (stage v1, rutas sin prefijo).
  * Dos implementaciones: HttpApi (API Gateway real) y DemoApi (seeds + simulación).
  * Las vistas solo conocen esta interfaz, así que pasar de demo a real no toca ninguna pantalla.
  */

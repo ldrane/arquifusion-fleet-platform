@@ -22,8 +22,18 @@ export function shortUlid(now = Date.now()): string {
   return time + rand;
 }
 
-/** user_id de Cognito (u-tec-07) -> technician_id (TEC-07). Mismo mapeo que los seeds (Technicians.user_id). */
+/**
+ * RESPALDO: user_id de Cognito (u-tec-07) -> technician_id (TEC-07), mismo mapeo que los seeds.
+ * La fuente de verdad es el claim `custom:technician_id` que devuelve GET /me (contratos.md §2.1, #8):
+ * usa `myTechnicianId(me)`.
+ */
 export function technicianIdFromUser(userId: string): string | null {
   const m = /^u-tec-(\d+)$/i.exec(userId);
   return m ? `TEC-${m[1].padStart(2, "0")}` : null;
+}
+
+/** technician_id del usuario: `me.technician_id` (GET /me) y, solo si falta, el mapeo por user_id. */
+export function myTechnicianId(me: { user_id: string; technician_id?: string | null } | null | undefined): string | null {
+  if (!me) return null;
+  return me.technician_id ?? technicianIdFromUser(me.user_id);
 }

@@ -47,14 +47,14 @@ locals {
       description = "GET de la API + POST /auth/firebase-token (C). RF-05, RF-11, RF-16"
       timeout     = 10
       memory      = 512
-      env         = { POWERTOOLS_SERVICE_NAME = "api-lectura" }
+      env         = tomap({ POWERTOOLS_SERVICE_NAME = "api-lectura" })
     }
     replicar = {
       name        = "${local.prefix}-replicar"
       description = "DynamoDB Streams -> Firestore (C). RF-05, RF-15.3, MH-HA-03"
       timeout     = 60
       memory      = 256
-      env         = { POWERTOOLS_SERVICE_NAME = "replicar", REPLICA_HEARTBEAT_S = tostring(var.replica_heartbeat_s) }
+      env         = tomap({ POWERTOOLS_SERVICE_NAME = "replicar", REPLICA_HEARTBEAT_S = tostring(var.replica_heartbeat_s) })
     }
   }
 }
@@ -129,7 +129,7 @@ resource "aws_lambda_function" "fn" {
     variables = merge(local.common_env, each.value.env)
   }
 
-  tags = { owner = "C", rf = each.key == "replicar" ? "RF-05,RF-15" : "RF-05,RF-11,RF-16" }
+  tags = { owner = "C", rf = each.key == "replicar" ? "RF-05 RF-15" : "RF-05 RF-11 RF-16" }
 
   depends_on = [aws_cloudwatch_log_group.fn]
 }
@@ -211,9 +211,9 @@ data "aws_sns_topic" "platform_alarms" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "fn_errors" {
-  for_each            = var.alarms_enabled ? local.functions : {}
-  alarm_name          = "${each.value.name}-errors"
-  alarm_description   = "Errores de ${each.value.name} (C)"
+  for_each            = { for k, v in local.functions : k => v.name if var.alarms_enabled }
+  alarm_name          = "${each.value}-errors"
+  alarm_description   = "Errores de ${each.value} (C)"
   namespace           = "AWS/Lambda"
   metric_name         = "Errors"
   dimensions          = { FunctionName = aws_lambda_function.fn[each.key].function_name }

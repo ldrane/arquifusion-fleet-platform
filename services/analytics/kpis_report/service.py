@@ -4,6 +4,8 @@ Cierra `AnalisisDiario`: calcula disponibilidad, MTBF, MTTR, incidentes abiertos
 utilización y costo de combustible por tonelada para 7 y 30 días, y pide a `ia-gemini` (task
 `executive_report`) el resumen para gerencia. Si `ia-gemini` falla, usa un resumen determinista.
 Salida: `insights` `kpis#7d`, `kpis#30d` (GET /v1/analytics/kpis) y `report#daily` (GET /v1/reports/latest).
+Los KPIs se escriben para toda la flota (`sk=LATEST`) y por zona (`sk=LATEST#<zone>`, contratos.md §9.1), así
+`GET /v1/analytics/kpis?zone=norte` tiene su ítem. Las toneladas usan `payload_t` del catálogo `MODEL#…` (#13).
 """
 
 import json
@@ -29,8 +31,16 @@ def _ts(value) -> datetime | None:
         return None
 
 
-def kpis(stats: list[daily.DailyStat], incidents: list[dict], machines: list[dict], today: date, days: int) -> dict:
+def kpis(
+    stats: list[daily.DailyStat],
+    incidents: list[dict],
+    machines: list[dict],
+    today: date,
+    days: int,
+    catalog: fleet.Catalog | None = None,
+) -> dict:
     """KPIs de un periodo. MTBF sin fallas en el periodo = horas operadas totales (cota inferior)."""
+    catalog = catalog or fleet.Catalog()
     period = daily.window(stats, today, days)
     since = today - timedelta(days=days)
     detected = [i for i in incidents if (t := _ts(i.get("detected_at"))) and since < t.date() <= today]
@@ -49,7 +59,10 @@ def kpis(stats: list[daily.DailyStat], incidents: list[dict], machines: list[dic
     hours_operated = sum(s.hours_operated for s in period)
     readings = sum(s.readings for s in period)
     fuel_l = sum((s.fuel_lph or 0.0) * s.hours_operated for s in period)
-    tons = sum((s.avg_load_pct or 0.0) / 100 * fleet.capacity_tph(s.machine_type) * s.hours_operated for s in period)
+    tons = sum(
+        (s.avg_load_pct or 0.0) / 100 * catalog.capacity_tph(s.model, s.machine_type) * s.hours_operated
+        for s in period
+    )
     return {
         "availability_pct": round(max(0.0, 100 * (1 - downtime_h / (fleet_size * days * 24))), 2),
         "mtbf_hours": round(hours_operated / len(detected) if detected else hours_operated, 1),
@@ -96,15 +109,58 @@ def lambda_invoker(lambda_client, function_name: str):
     return invoke
 
 
-def run(ctx: RunContext, athena, machines_table, incidents_table, insights_table, invoke_ia, branches=None) -> dict:
+def _zone_of(item: dict) -> str | None:
+    return item.get("zone") or (item.get("location") or {}).get("zone")
+
+
+def zones(machines: list[dict], stats: list[daily.DailyStat]) -> list[str]:
+    return sorted({z for z in (_zone_of(m) for m in machines) if z} | {s.zone for s in stats if s.zone})
+
+
+def kpis_by_zone(
+    stats: list[daily.DailyStat],
+    incidents: list[dict],
+    machines: list[dict],
+    today: date,
+    days: int,
+    catalog: fleet.Catalog | None = None,
+) -> dict[str, dict]:
+    """KPIs de cada zona con las máquinas, lecturas e incidentes de esa zona."""
+    return {
+        zone: kpis(
+            [s for s in stats if s.zone == zone],
+            [i for i in incidents if i.get("zone") == zone],
+            [m for m in machines if _zone_of(m) == zone],
+            today,
+            days,
+            catalog,
+        )
+        for zone in zones(machines, stats)
+    }
+
+
+def run(
+    ctx: RunContext,
+    athena,
+    machines_table,
+    incidents_table,
+    insights_table,
+    invoke_ia,
+    branches=None,
+    catalog_table=None,
+) -> dict:
     stats = daily.from_rows(fetch_rows(athena, ctx.query_execution_id))
     machines = scan_all(machines_table, FilterExpression=Attr("machine_id").exists())
+    # Solo ítems META (los EVT# no llevan incident_id/status en la raíz, contratos.md §9.1).
     incidents = scan_all(incidents_table, FilterExpression=Attr("incident_id").exists() & Attr("status").exists())
+    catalog = fleet.load_catalog(catalog_table) if catalog_table is not None else fleet.Catalog()
 
     figures = {}
     for period, days in PERIODS.items():
-        figures[f"kpis_{period}"] = kpis(stats, incidents, machines, ctx.today, days)
+        figures[f"kpis_{period}"] = kpis(stats, incidents, machines, ctx.today, days, catalog)
         write_insight(insights_table, f"kpis#{period}", figures[f"kpis_{period}"], ctx.run_at_iso, ctx.correlation_id)
+        for zone, zone_kpis in kpis_by_zone(stats, incidents, machines, ctx.today, days, catalog).items():
+            write_insight(insights_table, f"kpis#{period}", zone_kpis, ctx.run_at_iso, ctx.correlation_id, zone)
     figures["branches"] = [b for b in branches or [] if isinstance(b, dict)]
 
     text, prompt_version = executive_report(figures, invoke_ia, ctx.correlation_id)

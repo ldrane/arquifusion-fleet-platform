@@ -11,7 +11,7 @@ import { Badge, Button, cx, Empty, Icon, IncidentStatusBadge, KpiCard, Panel, Se
 import { useToast } from "@/components/ui/Toast";
 import { isDemo } from "@/config";
 import { initials, SPECIALTY_LABEL, timeAgo } from "@/lib/format";
-import { technicianIdFromUser } from "@/lib/ids";
+import { myTechnicianId } from "@/lib/ids";
 import { api } from "@/services";
 import { useFleet, useZoned } from "@/state/FleetContext";
 import { useViewState } from "@/state/viewState";
@@ -22,7 +22,7 @@ function TechnicianDesk() {
   const { incidents, technicians, machines } = useFleet();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
-  const techId = me ? technicianIdFromUser(me.user_id) : null;
+  const techId = myTechnicianId(me);
   const self = technicians.find((t) => t.technician_id === techId);
   const mine = incidents.filter((i) => i.assigned_technician_id === techId && !i.parent_incident_id);
   const open = mine.filter((i) => i.status !== "closed");

@@ -87,7 +87,7 @@ export function Inventory() {
         icon="inventory_2"
         iconTone="tertiary"
         title="Inventario y repuestos"
-        subtitle="GET /v1/inventory · /parts/forecast · /parts/ranking · /maintenance/plan"
+        subtitle="GET /inventory · /parts/forecast · /parts/ranking · /maintenance/plan"
         bodyClassName="p-0"
         actions={<Segmented label="Sección" value={tab} onChange={setTab} options={tabs} />}
       >

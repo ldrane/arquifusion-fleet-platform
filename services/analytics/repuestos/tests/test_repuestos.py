@@ -64,6 +64,9 @@ def test_run_writes_ranking_and_three_horizons():
         t["records"] = create_table("records", pk="record_id", sk=None)
         t["inventory"] = create_table("inventory", pk="location_id", sk="component_id")
         t["catalog"] = create_table("catalog", pk="component_id", sk="sk")
+        t["warehouses"] = create_table("warehouses")
+        for w in WAREHOUSES:
+            t["warehouses"].put_item(Item={"pk": w["warehouse_id"], "sk": "META", **w})
         t["records"].put_item(
             Item={"record_id": "R1", "machine_id": "EX-1", "performed_at": "2026-11-10", "components": ["CMP-1"]}
         )
@@ -79,6 +82,7 @@ def test_run_writes_ranking_and_three_horizons():
             t["inventory"],
             t["catalog"],
             t["insights"],
+            t["warehouses"],
         )
 
         assert out["kind"] == "parts"
@@ -86,3 +90,27 @@ def test_run_writes_ranking_and_three_horizons():
         assert kinds == {"parts_ranking", "parts_forecast#7", "parts_forecast#30", "parts_forecast#90"}
         ranking = t["insights"].get_item(Key={"pk": "parts_ranking", "sk": "LATEST"})["Item"]["data"]
         assert ranking[0]["name"] == "Filtro"
+        forecast = t["insights"].get_item(Key={"pk": "parts_forecast#30", "sk": "LATEST"})["Item"]["data"]
+        assert "WH-04" in {r["warehouse_id"] for r in forecast}
+
+
+WAREHOUSES = [
+    {"warehouse_id": f"WH-0{i}", "zone": z, "location": {"lat": 0, "lon": 0, "zone": z}}
+    for i, z in enumerate(("norte", "sur", "este", "oeste"), start=1)
+]
+
+
+def test_forecast_covers_west_warehouse_without_inventory():
+    """#19: WH-04 (oeste) recibe pronóstico aunque todavía no tenga stock cargado."""
+    inventory = [{"location_id": "WH-01", "component_id": "CMP-1", "stock": 5, "zone": "norte"}]
+    machines = [{"machine_id": "CM-1", "type": "excavator", "zone": "oeste", "health_score": 20}]
+    history = service.demand_history(recs(), TODAY)
+    mix = service.component_mix(recs(), {"EX-1": "excavator", "EX-2": "excavator"})
+    active = {"norte": 6, "sur": 3, "este": 4, "oeste": 10}
+    rows = service.forecast(30, history, mix, machines, inventory, {}, active, TODAY, WAREHOUSES)
+    by_key = {(r["warehouse_id"], r["component_id"]): r for r in rows}
+
+    assert {r["warehouse_id"] for r in rows} == {"WH-01", "WH-02", "WH-03", "WH-04"}
+    west = by_key[("WH-04", "CMP-1")]
+    assert west["stock"] == 0 and west["shortage_for_planned_maintenance"] is True  # CM-1 de oeste en riesgo
+    assert west["expected_demand"] > by_key[("WH-02", "CMP-1")]["expected_demand"]

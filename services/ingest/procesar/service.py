@@ -240,7 +240,9 @@ class Processor:
             "severity": assessment.severity,
         }
         agg_key = (machine_id, _agg_sk(reading["timestamp"]))
-        state[agg_key] = dirty[agg_key] = self._aggregate(state.get(agg_key), agg_key, values)
+        # `health_score` también se agrega (min/avg/max): lo expone GET /machines/{machine_id}/telemetry (pedido de C).
+        agg_values = {**values, "health_score": float(assessment.health_score)}
+        state[agg_key] = dirty[agg_key] = self._aggregate(state.get(agg_key), agg_key, agg_values)
         return Evaluated(reading, assessment, ml.model_version if ml else NO_MODEL)
 
     def _score_ml(self, reading: dict):

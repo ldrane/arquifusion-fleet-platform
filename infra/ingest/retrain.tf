@@ -9,7 +9,10 @@ locals {
   retrain_name  = "${local.prefix}-retrain"
   promote_name  = "${local.prefix}-retrain-promote"
   retrain_image = "${aws_ecr_repository.ml.repository_url}:retrain-${var.image_tag}"
-  sql_training  = trimsuffix(trimprefix(jsonencode(file("${path.module}/../../services/analytics/retrain/training.sql")), "\""), "\"")
+  sql_training = trimsuffix(trimprefix(jsonencode(replace(
+    file("${path.module}/../../services/analytics/retrain/training.sql"),
+    "operation_id = 'OP-01'", "operation_id = '${var.default_operation_id}'"
+  )), "\""), "\"")
   retrain_env = merge(local.common_env, {
     ARTIFACTS_BUCKET = aws_s3_bucket.artifacts.bucket
     LAKE_BUCKET      = aws_s3_bucket.lake.bucket

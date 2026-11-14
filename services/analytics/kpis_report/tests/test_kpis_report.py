@@ -24,10 +24,14 @@ INCIDENTS = [
         "detected_at": "2026-11-12T10:00:00Z",
         "resolved_at": "2026-11-12T14:00:00Z",
         "downtime_minutes": 240,
+        "zone": "norte",
     },
-    {"incident_id": "INC-2", "status": "assigned", "detected_at": "2026-11-13T08:00:00Z"},
+    {"incident_id": "INC-2", "status": "assigned", "detected_at": "2026-11-13T08:00:00Z", "zone": "norte"},
 ]
-MACHINES = [{"machine_id": "EX-1", "health_score": 40}, {"machine_id": "EX-2", "health_score": 90}]
+MACHINES = [
+    {"machine_id": "EX-1", "health_score": 40, "zone": "norte"},
+    {"machine_id": "EX-2", "health_score": 90, "zone": "sur"},
+]
 
 
 def test_kpis():
@@ -56,7 +60,7 @@ def tables():
 
 def run(tables, invoke_ia):
     ctx = parse_event({"query_execution_id": "q", "correlation_id": "cid", "run_at": "2026-11-14T10:00:00Z"})
-    rows = series("EX-1", TODAY, 30) + series("EX-2", TODAY, 30)
+    rows = series("EX-1", TODAY, 30) + series("EX-2", TODAY, 30, zone="sur")
     return service.run(
         ctx,
         FakeAthena(rows),
@@ -83,6 +87,14 @@ def test_run_writes_kpis_and_ai_report(tables):
     assert calls[0]["task"] == "executive_report" and calls[0]["payload"]["figures"]["kpis_7d"]["open_incidents"] == 1
     for kind in ("kpis#7d", "kpis#30d"):
         assert set(tables["insights"].get_item(Key={"pk": kind, "sk": "LATEST"})["Item"]["data"]) == KPI_FIELDS
+        for zone in ("norte", "sur"):
+            item = tables["insights"].get_item(Key={"pk": kind, "sk": f"LATEST#{zone}"})["Item"]
+            assert set(item["data"]) == KPI_FIELDS and item["zone"] == zone
+            assert tables["insights"].get_item(Key={"pk": kind, "sk": f"2026-11-14#{zone}"}).get("Item")
+    norte = tables["insights"].get_item(Key={"pk": "kpis#7d", "sk": "LATEST#norte"})["Item"]["data"]
+    sur = tables["insights"].get_item(Key={"pk": "kpis#7d", "sk": "LATEST#sur"})["Item"]["data"]
+    assert (norte["open_incidents"], norte["machines_at_risk"]) == (1, 1)
+    assert (sur["open_incidents"], sur["machines_at_risk"]) == (0, 0)
 
 
 def test_report_survives_ia_failure(tables):

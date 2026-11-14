@@ -5,7 +5,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { can } from "@/auth/permissions";
 import { COMPONENT_BY_ID, SEED } from "@/demo/data";
 import { fmtUsd, SPECIALTY_LABEL } from "@/lib/format";
-import { technicianIdFromUser } from "@/lib/ids";
+import { myTechnicianId } from "@/lib/ids";
 import { scoreTechnicians } from "@/lib/scoring";
 import { api } from "@/services";
 import { invalidate, useQuery } from "@/state/queryCache";
@@ -14,7 +14,7 @@ import { Button, cx, Loading } from "../ui";
 import { Modal } from "../ui/Modal";
 import { useToast } from "../ui/Toast";
 
-/** Acciones de comando sobre un incidente (POST /v1/incidents/{id}/ack|assign|resolve), filtradas por rol. */
+/** Acciones de comando sobre un incidente (POST /incidents/{id}/ack|assign|resolve), filtradas por rol. */
 export function IncidentActions({ incident, compact }: { incident: Incident; compact?: boolean }) {
   const { me } = useAuth();
   const toast = useToast();
@@ -22,7 +22,7 @@ export function IncidentActions({ incident, compact }: { incident: Incident; com
   const [dialog, setDialog] = useState<null | "assign" | "resolve" | "reject">(null);
   if (!me || incident.parent_incident_id || incident.status === "closed" || incident.status === "resolved") return null;
 
-  const myTech = technicianIdFromUser(me.user_id);
+  const myTech = myTechnicianId(me);
   const mine = incident.assigned_technician_id != null && incident.assigned_technician_id === myTech;
   const canAck = can(me.role, "ack") && incident.status === "assigned" && (me.role !== "tecnico" || mine);
   const canResolve = can(me.role, "resolve") && incident.status === "in_progress" && (me.role !== "tecnico" || mine);

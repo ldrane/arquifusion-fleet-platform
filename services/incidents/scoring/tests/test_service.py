@@ -44,3 +44,10 @@ def test_no_disponible_no_es_elegido():
     techs = [{**t, "available": t["technician_id"] != "TEC-07"} for t in techs_zone("norte")]
     resp = service.run(load("internal/scoring_request.json"), {"load": lambda z: techs})
     assert resp["selected"] != "TEC-07"
+
+
+def test_sin_ubicacion_de_maquina_igual_puntua():
+    req = {**load("internal/scoring_request.json"), "location": None}
+    resp = service.run(req, {"load": techs_zone})
+    assert resp["selected"] in {"TEC-07", "TEC-01"}
+    assert all(c["eta_min"] == 45 for c in resp["candidates"])

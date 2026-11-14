@@ -1,3 +1,5 @@
+# Tablas DynamoDB (contracts/dynamodb.md, contratos.md §9.1). On-demand, PITR y Streams NEW_AND_OLD_IMAGES.
+
 # ---------- machines ----------
 resource "aws_dynamodb_table" "machines" {
   name             = "${local.prefix}-machines"
@@ -299,6 +301,75 @@ resource "aws_dynamodb_table" "idempotency" {
 # ---------- audit-events ----------
 resource "aws_dynamodb_table" "audit_events" {
   name             = "${local.prefix}-audit-events"
+  billing_mode     = "PAY_PER_REQUEST"
+  hash_key         = "pk"
+  range_key        = "sk"
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+}
+
+# ---------- warehouses (seed de C, #19) ----------
+resource "aws_dynamodb_table" "warehouses" {
+  name             = "${local.prefix}-warehouses"
+  billing_mode     = "PAY_PER_REQUEST"
+  hash_key         = "pk"
+  range_key        = "sk"
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+}
+
+# ---------- maintenance-records (B escribe el corrective al cerrar; A y C leen) ----------
+resource "aws_dynamodb_table" "maintenance_records" {
+  name             = "${local.prefix}-maintenance-records"
+  billing_mode     = "PAY_PER_REQUEST"
+  hash_key         = "pk"
+  range_key        = "sk"
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+}
+
+# ---------- insights (A escribe, C lee) ----------
+resource "aws_dynamodb_table" "insights" {
+  name             = "${local.prefix}-insights"
   billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "pk"
   range_key        = "sk"

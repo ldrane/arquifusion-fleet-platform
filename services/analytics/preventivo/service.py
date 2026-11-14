@@ -4,6 +4,9 @@ La próxima fecha de cada máquina depende de las horas reales desde el último 
 la intensidad de uso (carga y temperatura) y por el health score. Se compara con el calendario fijo tradicional
 para marcar mantenimientos atrasados (`overdue`) e innecesarios (`unnecessary`).
 Salida: `insights` `maintenance_plan` (forma de GET /v1/maintenance/plan) y `next_maintenance_at` en `machines`.
+
+El intervalo sale de `catalog MODEL#<model>.maintenance_interval_h` (#13) y el calendario fijo usa las 16 h/día
+del seed. Solo se actualizan máquinas existentes (`attribute_exists(pk)`, nunca se crean, contratos.md §9).
 """
 
 import math
@@ -16,6 +19,7 @@ from analytics_common.dynamo import key_of, scan_all
 from analytics_common.insights_store import write_insight
 from analytics_common.run_context import RunContext
 from boto3.dynamodb.conditions import Attr
+from botocore.exceptions import ClientError
 
 INTENSITY_WINDOW_DAYS = 30
 OVERDUE_HEALTH = 40
@@ -45,9 +49,16 @@ def intensity(stats: list[daily.DailyStat]) -> float:
     return round(min(factor, 2.0), 2)
 
 
-def plan_machine(machine: dict, stats: list[daily.DailyStat], last: records.Record | None, today: date) -> PlanItem:
+def plan_machine(
+    machine: dict,
+    stats: list[daily.DailyStat],
+    last: records.Record | None,
+    today: date,
+    catalog: fleet.Catalog | None = None,
+) -> PlanItem:
     machine_type = machine.get("type") or (stats[0].machine_type if stats else None)
-    interval = fleet.service_interval(machine_type)
+    model = machine.get("model") or (stats[0].model if stats else None)
+    interval = (catalog or fleet.Catalog()).service_interval(model, machine_type)
     recent = daily.window(stats, today, INTENSITY_WINDOW_DAYS)
     newest = daily.latest(stats)
     hours_now = float(
@@ -98,7 +109,11 @@ def _date(value) -> date | None:
 
 
 def build_plan(
-    machines: list[dict], stats: list[daily.DailyStat], recs: list[records.Record], today: date
+    machines: list[dict],
+    stats: list[daily.DailyStat],
+    recs: list[records.Record],
+    today: date,
+    catalog: fleet.Catalog | None = None,
 ) -> list[dict]:
     """Plan priorizado: atrasadas primero, luego por días restantes y health score."""
     by_machine = daily.by_machine(stats)
@@ -111,7 +126,7 @@ def build_plan(
         {"machine_id": mid, "type": s[0].machine_type} for mid, s in by_machine.items() if mid not in known
     ]
     items = [
-        plan_machine(m, by_machine.get(m["machine_id"], []), last_by_machine.get(m["machine_id"]), today)
+        plan_machine(m, by_machine.get(m["machine_id"], []), last_by_machine.get(m["machine_id"]), today, catalog)
         for m in machines
     ]
     items.sort(key=lambda i: (i.flag != "overdue", i.days_to_next, i.health_score))
@@ -128,10 +143,11 @@ def build_plan(
     ]
 
 
-def run(ctx: RunContext, athena, machines_table, records_table, insights_table) -> dict:
+def run(ctx: RunContext, athena, machines_table, records_table, insights_table, catalog_table=None) -> dict:
     stats = daily.from_rows(fetch_rows(athena, ctx.query_execution_id))
     machines_raw = scan_all(machines_table, FilterExpression=Attr("machine_id").exists())
-    plan = build_plan(machines_raw, stats, records.normalize(scan_all(records_table)), ctx.today)
+    catalog = fleet.load_catalog(catalog_table) if catalog_table is not None else fleet.Catalog()
+    plan = build_plan(machines_raw, stats, records.normalize(scan_all(records_table)), ctx.today, catalog)
     write_insight(insights_table, "maintenance_plan", plan, ctx.run_at_iso, ctx.correlation_id)
 
     next_by_machine = {p["machine_id"]: p["next_maintenance_at"] for p in plan}
@@ -148,8 +164,14 @@ def run(ctx: RunContext, athena, machines_table, records_table, insights_table) 
 
 def machine_table_update(table, machine: dict, next_at: str) -> None:
     """Actualiza solo `next_maintenance_at` (RF-03.3); el resto del ítem es de procesar y de B."""
-    table.update_item(
-        Key=key_of(table, machine),
-        UpdateExpression="SET next_maintenance_at = :n",
-        ExpressionAttributeValues={":n": next_at},
-    )
+    key = key_of(table, machine)
+    try:
+        table.update_item(
+            Key=key,
+            UpdateExpression="SET next_maintenance_at = :n",
+            ConditionExpression=f"attribute_exists({next(iter(key))})",
+            ExpressionAttributeValues={":n": next_at},
+        )
+    except ClientError as exc:  # la máquina se borró entre el scan y la escritura: no se recrea
+        if exc.response["Error"]["Code"] != "ConditionalCheckFailedException":
+            raise

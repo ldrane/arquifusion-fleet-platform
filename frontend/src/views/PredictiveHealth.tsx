@@ -35,7 +35,7 @@ function MlModelCard() {
     <Panel
       icon="model_training"
       title="Modelo de detección (IsolationForest)"
-      subtitle="GET /v1/ml/model · SFN Reentrenamiento"
+      subtitle="GET /ml/model · SFN Reentrenamiento"
       actions={can(me?.role, "retrain") && <Button icon="replay" busy={busy} onClick={retrain}>Reentrenar</Button>}
     >
       {q.error ? (

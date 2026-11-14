@@ -3,6 +3,8 @@
 Usa el simulador real (flota cargada de `contracts/fixtures/seed`) para que umbrales y simulador no diverjan.
 """
 
+import dataclasses
+import json
 import sys
 from collections import Counter
 from datetime import UTC, datetime, timedelta
@@ -10,6 +12,7 @@ from pathlib import Path
 
 import pytest
 from ingest_procesar import rules
+from service import Processor
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))  # raíz del repo: paquete `simulator`
 
@@ -55,3 +58,17 @@ def test_degradation_of_ex023_triggers_layer_one(provider):
     assert levels.count(rules.CRIT) >= 10
     early = ex023[:3]
     assert all(not rules.evaluate(r, provider.get("CAT-336", "excavator")) for r in early)
+
+
+def test_pipeline_flags_only_ex023_in_its_zone(aws, thresholds, settings, no_model, sqs):
+    """Capas 1+2 completas sobre la zona norte del seed: solo EX-023 (degradación) emite AnomalyDetected."""
+    norte = [m for m in build_fleet() if m.zone == "norte"]
+    cfg = dataclasses.replace(settings, warmup_readings=20)
+    processor = Processor(cfg, aws["repo"], thresholds, no_model, clock=lambda: T0 + timedelta(hours=2))
+    sim = FleetSimulator(norte, SCENARIOS["degradacion"].effect, {"EX-023"}, started_at=T0, seed=5, speedup=60)
+    for i in range(40):
+        processor.handle(sqs(sim.tick(T0 + timedelta(minutes=i))))
+
+    emitted = [json.loads(e["Detail"])["data"]["machine_id"] for e in aws["events"].entries]
+    assert "EX-023" in emitted
+    assert len(set(emitted) - {"EX-023"}) <= 1, emitted  # a lo sumo un falso positivo aislado en 920 lecturas

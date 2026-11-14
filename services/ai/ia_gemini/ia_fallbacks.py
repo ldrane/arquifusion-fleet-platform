@@ -46,9 +46,35 @@ COMMON_CAUSE_BY_VARIABLE: dict[str, str] = {
 }
 GENERIC = ("Comportamiento anómalo multivariable sin causa dominante", "Programar una inspección general de la máquina")
 
+# Repuestos probables por variable dominante: palabras clave sobre `candidate_parts[].name` (contratos.md §8.1).
+# Solo se devuelven IDs presentes en `candidate_parts`, así la regla de `required_specialty` (§8.2) también
+# funciona en modo degradado.
+PART_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "vibration_mm_s": ("rodamiento",),
+    "temperature_c": ("rodamiento", "radiador", "bomba de agua"),
+    "pressure_bar": ("manguera hidráulica", "válvula de control hidráulico", "bomba hidráulica"),
+    "fuel_rate_lph": ("inyector", "filtro de combustible"),
+    "rpm": ("alternador", "módulo de control"),
+    "speed_kmh": ("neumático", "zapata"),
+}
+MAX_FALLBACK_PARTS = 2
+
 
 def _factor_names(factors) -> list[str]:
     return [f.get("variable") for f in factors or [] if isinstance(f, dict) and f.get("variable")]
+
+
+def _parts_for(variables: list[str], candidates) -> list[str]:
+    parts = [p for p in candidates or [] if isinstance(p, dict) and p.get("component_id") and p.get("name")]
+    chosen: list[str] = []
+    for variable in variables:
+        for keyword in PART_KEYWORDS.get(variable, ()):
+            for part in parts:
+                if keyword in part["name"].lower() and part["component_id"] not in chosen:
+                    chosen.append(part["component_id"])
+        if chosen:
+            break
+    return chosen[:MAX_FALLBACK_PARTS]
 
 
 def diagnose(payload: dict) -> dict:
@@ -65,7 +91,7 @@ def diagnose(payload: dict) -> dict:
         "probable_cause": cause,
         "suggested_action": action,
         "confidence": 0.4 if names else 0.2,
-        "parts_suggested": [],
+        "parts_suggested": _parts_for(names[:2], payload.get("candidate_parts")),
     }
 
 

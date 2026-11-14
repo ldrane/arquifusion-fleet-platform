@@ -28,6 +28,8 @@ def test_normal_batch_updates_state_and_lake(processor, aws, reading, sqs, setti
     assert state.get_item(Key={"pk": "EX-023", "sk": "BASELINE"})["Item"]["stats"]["temperature_c"]["n"] == 3
     agg = state.get_item(Key={"pk": "EX-023", "sk": "AGG#1h#2026-11-13T02"})["Item"]
     assert agg["count"] == 3 and agg["vars"]["rpm"]["min"] <= agg["vars"]["rpm"]["avg"] <= agg["vars"]["rpm"]["max"]
+    hs = agg["vars"]["health_score"]
+    assert hs["min"] <= hs["avg"] <= hs["max"] <= 100
     rows = aws["firehose"].records
     assert len(rows) == 3
     assert (

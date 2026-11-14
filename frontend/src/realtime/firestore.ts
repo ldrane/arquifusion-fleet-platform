@@ -1,17 +1,20 @@
 /**
  * Tiempo real con Firestore (contratos.md §5, reglas en infra/gcp/firestore.rules).
- * 1. POST /v1/auth/firebase-token -> custom token con claims role / zone / technician_id.
+ * 1. POST /auth/firebase-token -> custom token con claims role / zone / technician_id.
  * 2. signInWithCustomToken -> las Security Rules ven esos claims.
  * 3. onSnapshot sobre machines / incidents / technicians (filtrados por zona: las reglas exigen
  *    que la consulta no pueda devolver documentos de otra zona) y sobre el chat.
  * Caché persistente en IndexedDB: el chat se lee y se escribe sin conexión (RF-15, offline).
+ * Push (RF-16): después de conectar se registra FCM (realtime/push.ts) y el token viaja en el body de
+ * POST /auth/firebase-token (`fcm_token`), sin bloquear el arranque del tiempo real.
  * El SDK de Firebase se carga bajo demanda para no pesar en el modo demo.
  */
 import type { FleetApi } from "@/api/client";
 import type { ChatMessage, Incident, Machine, Me, Technician } from "@/api/types";
 import { can } from "@/auth/permissions";
 import { config } from "@/config";
-import { newCorrelationId, technicianIdFromUser } from "@/lib/ids";
+import { myTechnicianId, newCorrelationId } from "@/lib/ids";
+import { registerPush } from "./push";
 import type { FleetUpdate, RealtimeSource } from "./types";
 
 type FirestoreMod = typeof import("firebase/firestore");
@@ -65,12 +68,16 @@ export class FirestoreRealtime implements RealtimeSource {
       const a = auth.getAuth(app);
       const cred = await auth.signInWithCustomToken(a, firebase_token);
       const claims = (await cred.user.getIdTokenResult()).claims;
+      // Push en segundo plano: si hay token FCM, se registra con un segundo POST /auth/firebase-token.
+      void registerPush(app)
+        .then((fcmToken) => (fcmToken ? this.api.firebaseToken(fcmToken) : null))
+        .catch(() => null);
       return {
         fs,
         db,
         uid: cred.user.uid,
         role: String(claims.role ?? me.role),
-        techId: (claims.technician_id as string | undefined) ?? technicianIdFromUser(me.user_id),
+        techId: (claims.technician_id as string | null | undefined) ?? myTechnicianId(me),
       };
     })();
     this.ready.catch(() => (this.ready = null));
