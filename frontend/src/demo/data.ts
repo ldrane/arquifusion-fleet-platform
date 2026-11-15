@@ -34,6 +34,8 @@ export interface SeedModel {
   maintenance_interval_h: number;
   nominal: Record<string, [number, number]>;
   component_ids: string[];
+  /** TAREA-11: costo del paro no planificado (USD/h). Supuesto por tipo de equipo. */
+  downtime_cost_usd_h?: number;
 }
 
 export interface SeedTechnician {

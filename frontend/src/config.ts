@@ -19,6 +19,8 @@ export const config = {
     vapidKey: clean(env.VITE_FIREBASE_VAPID_KEY),
   },
   forceDemo: clean(env.VITE_FORCE_DEMO) === "true",
+  /** Tablero de Gerencia en Looker Studio sobre BigQuery (TAREA-13). Vacío = no se muestra el botón. */
+  lookerUrl: clean(env.VITE_LOOKER_URL),
 };
 
 /** Demo si no hay API configurada (o si se fuerza). Ver frontend/README.md. */

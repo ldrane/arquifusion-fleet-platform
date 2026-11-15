@@ -50,6 +50,12 @@ export function CommandCenter() {
     ok: machines.filter((m) => m.severity === "info" && m.status === "operational").length,
   };
   const banner = open.find((i) => i.child_incident_ids.length > 0) ?? open.find((i) => i.severity === "critical");
+  const usdProtected = useMemo(() => {
+    const cutoff = Date.now() - 30 * 86_400_000;
+    return incidents
+      .filter((i) => i.status === "closed" && i.closed_at && new Date(i.closed_at).getTime() >= cutoff)
+      .reduce((a, i) => a + (i.value_protected_usd ?? 0), 0);
+  }, [incidents]);
   const sel = machines.find((m) => m.machine_id === selected);
   const selIncident = sel?.open_incident_id ? incidents.find((i) => i.incident_id === sel.open_incident_id) : undefined;
   const lowStock = inventory.data ?? [];
@@ -150,6 +156,19 @@ export function CommandCenter() {
             }
           />
         )}
+        <KpiCard
+          label="USD protegidos (30 d)"
+          tone="good"
+          badge={<Badge tone="good">Valor</Badge>}
+          value={`$${Math.round(usdProtected).toLocaleString("es-PE")}`}
+          unit="paro evitado"
+          description={
+            <span className="block truncate" title="Supuestos: paro esperado por severidad × costo/h del modelo">
+              Cierre real vs. paro esperado por severidad
+            </span>
+          }
+          footer={<span>Supuestos: baseline por severidad × costo/h del modelo</span>}
+        />
       </section>
 
       <section className="stagger grid w-full grid-cols-1 items-start gap-5 xl:grid-cols-12">

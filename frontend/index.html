@@ -6,6 +6,11 @@
     <meta name="theme-color" content="#0b0c10" />
     <title>ArquiFusion · Centro Táctico de Mina</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ArquiFusion" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
     <link
@@ -20,5 +25,14 @@
   <body class="bg-background font-sans text-body-md text-on-surface antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // PWA (TAREA-17): registra el app-shell solo en producción (HTTPS, sin puerto). En `vite dev`
+      // se omite para no cachear el HMR. Ver public/sw.js (no intercepta googleapis ni execute-api).
+      if ("serviceWorker" in navigator && !location.port) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/sw.js").catch(function () {});
+        });
+      }
+    </script>
   </body>
 </html>

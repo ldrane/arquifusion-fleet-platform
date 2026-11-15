@@ -15,8 +15,12 @@ import type {
   PartForecast,
   PartRanking,
   ProductivityItem,
+  Precursors,
+  Pulse,
   Report,
   ResolveRequest,
+  SimStartRequest,
+  SimState,
   Technician,
   TelemetryPoint,
   Timeline,
@@ -61,12 +65,21 @@ export interface FleetApi {
   fuel(q?: { zone?: string; period?: "7d" | "30d" }): Promise<FuelItem[]>;
   productivity(q?: { zone?: string; period?: "7d" | "30d" }): Promise<ProductivityItem[]>;
   kpis(q?: { zone?: string; period?: "7d" | "30d" }): Promise<Kpis>;
+  precursors(): Promise<Precursors>;
   latestReport(type?: "daily" | "weekly"): Promise<Report>;
 
   // IA
   mlModel(): Promise<MlModel>;
   retrain(): Promise<{ execution_arn: string }>;
   assistant(message: string, sessionId?: string): Promise<AssistantAnswer>;
+
+  // Simulador serverless (AWS real; en demo inyecta en el mundo local)
+  simState(): Promise<SimState>;
+  simStart(body: SimStartRequest): Promise<SimState>;
+  simStop(): Promise<SimState>;
+
+  // Pulso del sistema (TAREA-14)
+  pulse(): Promise<Pulse>;
 }
 
 /** Recorre todas las páginas de una lista paginada por cursor (las listas son chicas: ~100 máquinas). */

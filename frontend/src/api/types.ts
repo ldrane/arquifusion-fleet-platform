@@ -84,6 +84,8 @@ export interface AiDiagnosis {
   model_version: string;
   prompt_version: string;
   degraded: boolean;
+  /** Proveedor LLM que produjo el diagnóstico (TAREA-06): gemini | bedrock | fallback. */
+  provider?: "gemini" | "bedrock" | "fallback";
   /** "fallback" cuando el diagnóstico es determinista (sin Gemini). */
   model?: string;
 }
@@ -114,6 +116,11 @@ export interface Incident {
   accepted_at: string | null;
   resolved_at: string | null;
   downtime_minutes: number | null;
+  /** Paro real: closed_at − detected_at (TAREA-11). */
+  downtime_h?: number | null;
+  /** USD protegidos = max(0, paro esperado por severidad − paro real) × costo/h del modelo. */
+  value_protected_usd?: number | null;
+  value_assumptions?: { baseline_h: number; cost_usd_h: number } | null;
   components_replaced: string[];
   cost_usd: number | null;
   chat_channel_id: string | null;
@@ -227,6 +234,42 @@ export interface Kpis {
   fuel_cost_per_ton_usd: number;
 }
 
+/** Firma pre-falla de una variable dentro de un modelo (GET /analytics/precursors, TAREA-12). */
+export interface PrecursorSignature {
+  variable: string;
+  /** Proporción de fallas del modelo precedidas por esta variable (0-1). */
+  share: number;
+  median_lead_time_h: number;
+  median_z: number;
+}
+
+export interface PrecursorGroup {
+  model: string;
+  n_incidents: number;
+  headline: string;
+  signatures: PrecursorSignature[];
+}
+
+export interface Precursors {
+  precursors: PrecursorGroup[];
+}
+
+/**
+ * Pulso del sistema (GET /system/pulse, TAREA-14): prueba de vida LIVE.
+ * `mode` es `live` en AWS y `demo` en el modo demo del front.
+ */
+export interface Pulse {
+  mode: "live" | "demo";
+  region: string | null;
+  last_reading_at: string | null;
+  machines_reporting_5m: number;
+  open_incidents: number;
+  model_version: string | null;
+  last_report_at: string | null;
+  ai: { last_provider: string | null; degraded: boolean };
+  generated_at: string;
+}
+
 export interface Report {
   generated_at: string;
   summary_text: string;
@@ -241,6 +284,29 @@ export interface MlModel {
   recall: number;
   mean_lead_time_hours: number;
   promoted: boolean;
+}
+
+/** Estado del gemelo de flota serverless (`/sim/*`, TAREA-08). */
+export interface SimState {
+  enabled: boolean;
+  scenario?: string | null;
+  machines?: string[];
+  zone?: string | null;
+  speedup?: number;
+  interval_s?: number;
+  started_at?: string;
+  expires_at?: string;
+  requested_by?: string;
+  correlation_id?: string;
+}
+
+export interface SimStartRequest {
+  scenario: string;
+  machines?: string[];
+  zone?: string | null;
+  speedup?: number;
+  duration_min?: number;
+  interval_s?: number;
 }
 
 export interface AssistantAnswer {

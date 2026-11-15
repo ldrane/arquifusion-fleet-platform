@@ -73,6 +73,9 @@ describe("DemoWorld: ciclo de vida de GestionIncidente", () => {
     expect(inc.closed_at).toBeTruthy();
     expect((w.messages.get(id) ?? []).some((m) => m.text === "Cambio de rodamientos")).toBe(false);
     expect(inc.downtime_minutes).not.toBeNull();
+    expect(inc.downtime_h).not.toBeNull();
+    expect(inc.value_protected_usd).toBeGreaterThan(0);
+    expect(inc.value_assumptions?.cost_usd_h).toBeGreaterThan(0);
     expect(w.machines.get("EX-023")!.open_incident_id).toBeNull();
     expect(w.machines.get("EX-023")!.status).toBe("operational");
     expect(w.inventory.find((i) => i.warehouse_id === tech.home_warehouse_id && i.component_id === "CMP-014")!.stock).toBe(stock - 1);
@@ -125,7 +128,7 @@ describe("DemoWorld: ciclo de vida de GestionIncidente", () => {
       "incident_id", "parent_incident_id", "child_incident_ids", "machine_ids", "zone", "severity", "status", "escalated",
       "is_recurrence", "assigned_technician_id", "technician_score", "ai_diagnosis", "resolution_summary", "detected_at",
       "assigned_at", "accepted_at", "resolved_at", "downtime_minutes", "components_replaced", "cost_usd", "chat_channel_id",
-      "resolution_notes", "resolved_by", "closed_at",
+      "downtime_h", "value_protected_usd", "value_assumptions", "resolution_notes", "resolved_by", "closed_at",
     ]);
     for (const inc of w.incidents.values()) {
       for (const k of Object.keys(w.publicIncident(inc))) expect(allowed.has(k), k).toBe(true);

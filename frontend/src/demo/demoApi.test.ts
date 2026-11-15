@@ -60,6 +60,43 @@ describe("DemoApi aplica las mismas reglas que api-lectura / api-comandos", () =
     as("u-adm-01", "admin", null);
     expect(await status(api.getTelemetry("EX-023", "2026-11-14T02:00:00Z", "2026-11-14T01:00:00Z"))).toBe(400);
   });
+
+  it("simStart (TAREA-08) enciende el simulador y respeta el RBAC", async () => {
+    as("u-adm-01", "admin", null);
+    const state = await api.simStart({ scenario: "falla_subita", machines: ["CM-004"], duration_min: 20 });
+    expect(state.enabled).toBe(true);
+    expect(state.scenario).toBe("falla_subita");
+    expect(state.requested_by).toBe("u-adm-01");
+    expect(await api.simState()).toMatchObject({ enabled: true });
+    expect((await api.simStop()).enabled).toBe(false);
+    as("u-op-01", "operador", "norte");
+    expect(await status(api.simStart({ scenario: "falla_subita" }))).toBe(403);
+  });
+
+  it("precursors (TAREA-12) devuelve firmas y respeta el RBAC", async () => {
+    as("u-adm-01", "admin", null);
+    const { precursors } = await api.precursors();
+    expect(precursors.length).toBeGreaterThan(0);
+    expect(precursors.length).toBeLessThanOrEqual(3);
+    for (const g of precursors) {
+      expect(g.n_incidents).toBeGreaterThanOrEqual(3);
+      expect(g.signatures.length).toBeGreaterThan(0);
+      expect(g.headline).toContain(g.model);
+    }
+    as("u-op-01", "operador", "norte");
+    expect(await status(api.precursors())).toBe(403);
+  });
+
+  it("pulse (TAREA-14) responde mode demo y lo ve cualquier rol", async () => {
+    as("u-op-01", "operador", "norte");
+    const p = await api.pulse();
+    expect(p.mode).toBe("demo");
+    expect(p.machines_reporting_5m).toBeGreaterThan(0);
+    expect(p.open_incidents).toBeGreaterThan(0);
+    expect(p.model_version).toBe("v3");
+    expect(p.ai.last_provider).toBe("gemini");
+    expect(p.generated_at).toBeTruthy();
+  });
 });
 
 describe("navegación y scoring", () => {

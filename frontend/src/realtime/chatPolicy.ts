@@ -9,7 +9,7 @@ import { myTechnicianId } from "@/lib/ids";
 
 export type ChatWriteState = "ok" | "closed" | "role" | "not_assigned";
 
-/** create en incidents/{id}/messages: rol tecnico|mantenimiento|supervisor, incidente abierto y,
+/** create en incidents/{id}/messages: rol operador|tecnico|mantenimiento|supervisor, incidente abierto y,
  *  si es técnico, asignado a él (assigned_technician_id == claim technician_id). */
 export function chatWriteState(me: Pick<Me, "role" | "user_id" | "technician_id"> | null | undefined, incident: Incident): ChatWriteState {
   if (incident.status === "closed") return "closed";

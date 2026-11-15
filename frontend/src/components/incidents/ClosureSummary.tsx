@@ -21,6 +21,9 @@ export function ClosureSummary({ incident: inc }: { incident: Incident }) {
   if (!closed && !showNotes) return null;
   const by = inc.resolved_by;
   const role = by?.role && by.role in ROLE_LABEL ? ROLE_LABEL[by.role as Role] : by?.role;
+  const downtimeH = inc.downtime_h;
+  const baselineH = inc.value_assumptions?.baseline_h;
+  const avoidedH = downtimeH != null && baselineH != null ? Math.max(0, baselineH - downtimeH) : null;
 
   return (
     <>
@@ -29,6 +32,13 @@ export function ClosureSummary({ incident: inc }: { incident: Incident }) {
           <p className="text-sm leading-relaxed text-on-surface" data-testid="chat-summary">
             {inc.resolution_summary?.trim() || "Sin resumen del chat."}
           </p>
+          {downtimeH != null && (
+            <p className="mt-2 font-mono text-[11px] text-secondary" data-testid="value-protected">
+              Paro real {downtimeH.toFixed(2)} h
+              {avoidedH != null ? ` · paro evitado ≈ ${avoidedH.toFixed(2)} h` : ""}
+              {inc.value_protected_usd != null ? ` · USD ${Math.round(inc.value_protected_usd).toLocaleString("es-PE")}` : ""}
+            </p>
+          )}
         </Panel>
       )}
       {showNotes && (

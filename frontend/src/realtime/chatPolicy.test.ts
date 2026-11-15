@@ -5,17 +5,21 @@ import { chatWriteState, settleWrite } from "./chatPolicy";
 const inc = (over: Partial<Incident> = {}) => ({ status: "in_progress", assigned_technician_id: "TEC-07", ...over }) as Incident;
 
 describe("chatWriteState (espejo de firestore.rules, RF-15)", () => {
-  it("técnico asignado, mantenimiento y supervisor escriben", () => {
+  it("técnico asignado, operador, mantenimiento y supervisor escriben", () => {
     expect(chatWriteState({ user_id: "u-tec-07", role: "tecnico", technician_id: "TEC-07" }, inc())).toBe("ok");
+    expect(chatWriteState({ user_id: "u-op-01", role: "operador" }, inc())).toBe("ok");
     expect(chatWriteState({ user_id: "u-mant-01", role: "mantenimiento" }, inc())).toBe("ok");
     expect(chatWriteState({ user_id: "u-sup-01", role: "supervisor" }, inc())).toBe("ok");
+  });
+  it("operador con el incidente cerrado queda en solo lectura", () => {
+    expect(chatWriteState({ user_id: "u-op-01", role: "operador" }, inc({ status: "closed" }))).toBe("closed");
   });
   it("técnico no asignado no escribe (antes la UI lo permitía y las reglas lo descartaban)", () => {
     expect(chatWriteState({ user_id: "u-tec-02", role: "tecnico", technician_id: "TEC-02" }, inc())).toBe("not_assigned");
     expect(chatWriteState({ user_id: "u-tec-07", role: "tecnico" }, inc())).toBe("ok"); // technician_id derivado del user_id
   });
-  it("operador, admin y gerencia solo leen; cerrado es solo lectura", () => {
-    for (const role of ["operador", "admin", "gerencia"] as const) expect(chatWriteState({ user_id: "x", role }, inc())).toBe("role");
+  it("admin y gerencia solo leen; cerrado es solo lectura", () => {
+    for (const role of ["admin", "gerencia"] as const) expect(chatWriteState({ user_id: "x", role }, inc())).toBe("role");
     expect(chatWriteState({ user_id: "u-mant-01", role: "mantenimiento" }, inc({ status: "closed" }))).toBe("closed");
     expect(chatWriteState(null, inc())).toBe("role");
   });

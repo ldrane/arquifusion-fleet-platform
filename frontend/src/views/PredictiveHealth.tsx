@@ -54,6 +54,58 @@ function MlModelCard() {
   );
 }
 
+function PrecursorsCard() {
+  const q = useQuery("analytics:precursors", () => api.precursors(), { staleMs: 60_000 });
+  return (
+    <Panel
+      icon="timeline"
+      title="Firmas pre-falla"
+      subtitle="GET /analytics/precursors · patrones que preceden a las fallas, por modelo (AnalisisDiario)"
+    >
+      {q.error ? (
+        <ErrorBox error={q.error} onRetry={q.refetch} />
+      ) : !q.data ? (
+        <p className="text-xs text-on-surface-variant">Cargando...</p>
+      ) : q.data.precursors.length === 0 ? (
+        <Empty icon="insights" title="Aún no hay suficientes incidentes">
+          La rama Precursores necesita al menos 3 incidentes cerrados por modelo.
+        </Empty>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-3">
+          {q.data.precursors.map((g) => (
+            <div key={g.model} className="rounded-xl border border-hairline bg-surface-container p-4">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="font-mono text-sm font-semibold text-on-surface">{g.model}</span>
+                <span className="text-[11px] text-outline">{g.n_incidents} fallas</span>
+              </div>
+              <p className="mt-1 text-sm text-on-surface">{g.headline}</p>
+              <div className="mt-3 space-y-2.5">
+                {g.signatures.map((s) => (
+                  <div key={s.variable}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-mono text-on-surface-variant">{s.variable}</span>
+                      <span className="text-outline">{Math.round(s.share * 100)}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round(s.share * 100)}%` }} />
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-[11px] text-outline">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-secondary">
+                        <Icon name="schedule" className="text-[13px]" /> {s.median_lead_time_h} h de anticipación
+                      </span>
+                      <span>z {s.median_z >= 0 ? "+" : ""}{s.median_z.toFixed(1)}σ</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 export function PredictiveHealth() {
   const { me } = useAuth();
   const { machines, incidents } = useZoned();
@@ -86,6 +138,8 @@ export function PredictiveHealth() {
       </section>
 
       {(can(me?.role, "mlModel")) && <MlModelCard />}
+
+      {can(me?.role, "precursors") && <PrecursorsCard />}
 
       <Panel
         icon="vital_signs"

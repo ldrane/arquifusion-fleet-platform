@@ -105,10 +105,16 @@ export class HttpApi implements FleetApi {
   fuel = (q: Query = {}) => this.get<any>("/analytics/fuel", q);
   productivity = (q: Query = {}) => this.get<any>("/analytics/productivity", q);
   kpis = (q: Query = {}) => this.get<any>("/analytics/kpis", q);
+  precursors = () => this.get<any>("/analytics/precursors");
   latestReport = (type: "daily" | "weekly" = "daily") => this.get<any>("/reports/latest", { type });
 
   mlModel = () => this.get<any>("/ml/model");
   retrain = () => this.post<any>("/ml/retrain");
   assistant = (message: string, session_id?: string) =>
     this.post<any>("/assistant/chat", { message, ...(session_id ? { session_id } : {}) });
+
+  simState = () => this.get<any>("/sim/state");
+  simStart = (body: any) => this.post<any>("/sim/scenario", body);
+  simStop = () => this.post<any>("/sim/stop");
+  pulse = () => this.get<any>("/system/pulse");
 }

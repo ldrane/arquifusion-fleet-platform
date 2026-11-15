@@ -1,6 +1,6 @@
 import type { FleetApi } from "@/api/client";
 import { ApiError } from "@/api/errors";
-import type { IncidentQuery, Machine, MachineQuery, Me, Page } from "@/api/types";
+import type { IncidentQuery, Machine, MachineQuery, Me, Page, SimStartRequest, SimState } from "@/api/types";
 import { type Capability, can } from "@/auth/permissions";
 import { SEVERITY_RANK } from "@/lib/format";
 import { etaMinutes } from "@/lib/geo";
@@ -220,6 +220,11 @@ export class DemoApi implements FleetApi {
     return analytics.kpis(this.world, this.zoneFor(me, q.zone), q.period ?? "7d");
   }
 
+  async precursors() {
+    await this.guard("precursors");
+    return analytics.precursors(this.world);
+  }
+
   async latestReport() {
     await this.guard("report");
     return analytics.report(this.world);
@@ -253,5 +258,68 @@ export class DemoApi implements FleetApi {
       throw new ApiError(400, "VALIDATION_ERROR", "El mensaje debe tener entre 1 y 1000 caracteres", null, [{ field: "message", issue: "length" }]);
     }
     return answer(this.world, me, message, sessionId);
+  }
+
+  // ---------------------------------------------------------------- simulador serverless (demo)
+  private sim: SimState = { enabled: false };
+
+  async simState() {
+    await this.guard("simulate");
+    return { ...this.sim };
+  }
+
+  async simStart(body: SimStartRequest) {
+    const me = await this.guard("simulate");
+    if (!body.scenario) throw new ApiError(400, "VALIDATION_ERROR", "scenario es obligatorio", newCorrelationId(), [{ field: "scenario" }]);
+    // En demo el efecto es inmediato en el mundo local (mismo botón que en AWS real).
+    this.world.inject(body.scenario, body.machines?.[0], body.zone ?? undefined);
+    const now = Date.now();
+    const minutes = body.duration_min ?? 20;
+    this.sim = {
+      enabled: true,
+      scenario: body.scenario,
+      machines: body.machines ?? [],
+      zone: body.zone ?? null,
+      speedup: body.speedup ?? 240,
+      interval_s: body.interval_s ?? 10,
+      started_at: new Date(now).toISOString(),
+      expires_at: new Date(now + minutes * 60_000).toISOString(),
+      requested_by: me.user_id,
+      correlation_id: newCorrelationId(),
+    };
+    return { ...this.sim };
+  }
+
+  async simStop() {
+    await this.guard("simulate");
+    this.sim = { ...this.sim, enabled: false };
+    return { ...this.sim };
+  }
+
+  // ---------------------------------------------------------------- pulso del sistema (TAREA-14)
+  async pulse() {
+    await this.guard("pulse");
+    const now = Date.now();
+    const machines = [...this.world.machines.values()];
+    const seen = machines.map((m) => m.last_seen_at).filter((s): s is string => !!s).sort();
+    const cutoff = new Date(now - 5 * 60_000).toISOString();
+    const incidents = [...this.world.incidents.values()];
+    const lastAi = incidents
+      .filter((i) => i.ai_diagnosis)
+      .sort((a, b) => (a.detected_at < b.detected_at ? 1 : -1))[0];
+    return {
+      mode: "demo" as const, // el badge del Header lo pinta gris: en el navegador no hay AWS real
+      region: "demo",
+      last_reading_at: seen.length ? seen[seen.length - 1]! : null,
+      machines_reporting_5m: machines.filter((m) => (m.last_seen_at ?? "") >= cutoff).length,
+      open_incidents: incidents.filter((i) => i.status !== "closed" && !i.parent_incident_id).length,
+      model_version: this.model.model_version,
+      last_report_at: analytics.report(this.world).generated_at,
+      ai: {
+        last_provider: lastAi?.ai_diagnosis?.provider ?? null,
+        degraded: Boolean(lastAi?.ai_diagnosis?.degraded),
+      },
+      generated_at: new Date(now).toISOString(),
+    };
   }
 }

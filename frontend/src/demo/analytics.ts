@@ -2,7 +2,7 @@
  * Analítica del modo demo: misma forma que los `data` que AnalisisDiario (A7) deja en `{p}-insights`
  * y que api-lectura devuelve tal cual (contratos.md §9). Determinista por máquina (hash del ID).
  */
-import type { FuelItem, Kpis, MaintenancePlanItem, PartForecast, PartRanking, ProductivityItem, Report, Timeline } from "@/api/types";
+import type { FuelItem, Kpis, MaintenancePlanItem, PartForecast, PartRanking, Precursors, ProductivityItem, Report, Timeline } from "@/api/types";
 import { COMPONENT_BY_ID, MODEL_BY_ID, SEED } from "./data";
 import { clamp, hash, mulberry32 } from "./rng";
 import type { DemoWorld } from "./world";
@@ -10,6 +10,7 @@ import type { DemoWorld } from "./world";
 const DAY = 86400_000;
 const today = () => new Date().toISOString().slice(0, 10);
 const r1 = (n: number) => Math.round(n * 10) / 10;
+const r2 = (n: number) => Math.round(n * 100) / 100;
 
 function machineRand(id: string, salt: string) {
   return mulberry32(hash(`${id}|${salt}`));
@@ -169,6 +170,38 @@ export function kpis(w: DemoWorld, zone?: string, period: "7d" | "30d" = "7d"): 
     machines_at_risk: machines.filter((m) => m.health_score < 70 || m.severity === "high" || m.severity === "critical").length,
     fleet_utilization_pct: r1(util.reduce((a, u) => a + u.utilization_pct, 0) / Math.max(1, util.length)),
     fuel_cost_per_ton_usd: Math.round(avgLpt * 1.15 * 100) / 100,
+  };
+}
+
+/**
+ * Firmas pre-falla (TAREA-12): mismas llaves que el insight `precursors` (GET /analytics/precursors).
+ * Demo: para los 3 modelos más comunes de la flota genera 3 firmas deterministas por modelo.
+ */
+export function precursors(w: DemoWorld): Precursors {
+  const count = new Map<string, number>();
+  for (const m of w.machines.values()) count.set(m.model, (count.get(m.model) ?? 0) + 1);
+  const top = [...count.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 3);
+  const variables = ["vibration_mm_s", "temperature_c", "fuel_rate_lph"];
+  return {
+    precursors: top.map(([model, machines]) => {
+      const rand = machineRand(model, "precursors");
+      const signatures = variables
+        .map((variable, i) => ({
+          variable,
+          share: Math.max(0.2, r2(0.78 - i * 0.19 - rand() * 0.05)),
+          median_lead_time_h: r1(18 + i * 4 + rand() * 5),
+          median_z: r1(1.7 - i * 0.3 + rand() * 0.4),
+        }))
+        .sort((a, b) => b.share - a.share);
+      const best = signatures[0];
+      const sign = best.median_z >= 0 ? "+" : "";
+      return {
+        model,
+        n_incidents: 6 + Math.floor(rand() * 6) + Math.round(machines / 4),
+        signatures,
+        headline: `En ${model}, ${Math.round(best.share * 100)} % de las fallas fueron precedidas por ${best.variable} (${sign}${best.median_z.toFixed(1)}σ) ~${Math.round(best.median_lead_time_h)} h antes`,
+      };
+    }),
   };
 }
 

@@ -26,6 +26,22 @@ import { type Candidate, scoreTechnicians } from "@/lib/scoring";
 import { COMPONENT_BY_ID, GROUP_CAUSE, MODEL_BY_ID, SCENARIO_BY_KEY, SCENARIOS, SEED, type Scenario, ZONES } from "./data";
 import { clamp, gaussian, hash, mulberry32, pick } from "./rng";
 
+// TAREA-11: mismas constantes que `arquifusion_shared.config.UNPLANNED_DOWNTIME_H` y default de costo del backend.
+const UNPLANNED_DOWNTIME_H: Record<Severity, number> = { critical: 24, high: 16, medium: 8, low: 4, info: 2 };
+const DEFAULT_DOWNTIME_COST_USD_H = 800;
+
+/** Valor protegido en USD al cerrar (paro esperado por severidad − paro real) × costo/h del modelo. */
+function valueProtected(model: string | undefined, detectedMs: number, closedMs: number, severity: Severity) {
+  const downtime_h = Math.round(Math.max(0, (closedMs - detectedMs) / 3_600_000) * 100) / 100;
+  const cost_usd_h = MODEL_BY_ID.get(model ?? "")?.downtime_cost_usd_h ?? DEFAULT_DOWNTIME_COST_USD_H;
+  const baseline_h = UNPLANNED_DOWNTIME_H[severity] ?? 2;
+  return {
+    downtime_h,
+    value_protected_usd: Math.round(Math.max(0, baseline_h - downtime_h) * cost_usd_h),
+    value_assumptions: { baseline_h, cost_usd_h },
+  };
+}
+
 // ------------------------------------------------------------------ tiempos de la simulación (ms)
 // Acelerados para ver el flujo completo en menos tiempo (todo.md "actualizaciones más rápidas"); antes → después:
 // tick 2500→1500, ai 2500→2000, assign 5000→3500, ackTimeout 150→120 s, autoAck 18→12 s, autoResolve 70→45 s,
@@ -275,6 +291,7 @@ export class DemoWorld {
         accepted_at: iso(accepted),
         resolved_at: iso(resolved),
         downtime_minutes: Math.round((resolved - detected) / 60000),
+        ...valueProtected(m.model, detected, resolved, sc.severity),
         components_replaced: comps,
         cost_usd: cost,
         chat_channel_id: id,
@@ -378,6 +395,7 @@ export class DemoWorld {
       model_version: "gemini-3.8-flash",
       prompt_version: "diagnose@1.3",
       degraded: false,
+      provider: "gemini",
     };
   }
 
@@ -633,6 +651,10 @@ export class DemoWorld {
     inc.closeAt = Infinity;
     inc.downtime_minutes = Math.round((new Date(inc.resolved_at!).getTime() - new Date(inc.detected_at).getTime()) / 60000);
     inc.closed_at = iso(at);
+    Object.assign(
+      inc,
+      valueProtected(this.machines.get(inc.machine_ids[0]!)?.model, new Date(inc.detected_at).getTime(), at, inc.severity),
+    );
     // ≈ summarize_chat: SOLO la conversación del chat (sin mensajes del sistema ni notas de resolución)
     const chat = (this.messages.get(inc.incident_id) ?? []).filter((x) => x.role !== "sistema");
     inc.resolution_summary = chat.length

@@ -23,12 +23,16 @@ export const CAN = {
   fuel: ["supervisor", "admin", "gerencia"],
   productivity: ["supervisor", "admin", "gerencia"],
   kpis: ["supervisor", "admin", "gerencia"],
+  precursors: ["mantenimiento", "supervisor", "admin", "gerencia"],
   report: ["admin", "gerencia", "supervisor"],
   mlModel: ["admin", "mantenimiento"],
   retrain: ["admin"],
+  simulate: ["admin", "mantenimiento"],
+  pulse: ALL,
   assistant: ["tecnico", "mantenimiento", "supervisor", "admin", "gerencia"],
-  // Firestore (infra/gcp/firestore.rules): quién escribe en el chat del incidente
-  chatWrite: ["tecnico", "mantenimiento", "supervisor"],
+  // Firestore (infra/gcp/firestore.rules): quién escribe en el chat del incidente.
+  // El operador también participa del canal (docs/requerimientos.md §2).
+  chatWrite: ["operador", "tecnico", "mantenimiento", "supervisor"],
 } satisfies Record<string, Role[]>;
 
 export type Capability = keyof typeof CAN;

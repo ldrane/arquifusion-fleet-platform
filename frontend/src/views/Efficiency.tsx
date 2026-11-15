@@ -7,6 +7,7 @@ import { Arqui } from "@/components/brand/Arqui";
 import { Badge, Empty, ErrorBox, Icon, KpiCard, Loading, Panel, Segmented } from "@/components/ui";
 import { fmt1, fmtDateTime, fmtSigned, ZONE_LABEL } from "@/lib/format";
 import { api } from "@/services";
+import { config } from "@/config";
 import { useFleet } from "@/state/FleetContext";
 import { useQuery } from "@/state/queryCache";
 import { useViewState } from "@/state/viewState";
@@ -38,7 +39,20 @@ export function Efficiency() {
           <h1 className="text-headline-md font-semibold text-on-surface">Eficiencia operativa</h1>
           <p className="font-mono text-xs text-outline">{ZONE_LABEL(zone)} · AnalisisDiario (A7) · KPIs, combustible y productividad</p>
         </div>
-        <Segmented label="Periodo" value={period} onChange={setPeriod} options={[{ value: "7d", label: "Últimos 7 días" }, { value: "30d", label: "Últimos 30 días" }]} />
+        <div className="flex flex-wrap items-center gap-3">
+          <Segmented label="Periodo" value={period} onChange={setPeriod} options={[{ value: "7d", label: "Últimos 7 días" }, { value: "30d", label: "Últimos 30 días" }]} />
+          {config.lookerUrl && (
+            <a
+              href={config.lookerUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-8 select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-hairline-strong bg-white/[0.04] px-3.5 text-[13px] font-medium text-on-surface transition-[background-color,border-color] hover:border-white/20 hover:bg-white/[0.07]"
+            >
+              <Icon name="open_in_new" className="text-[16px]" />
+              Tablero de Gerencia (BigQuery · Looker Studio)
+            </a>
+          )}
+        </div>
       </div>
 
       {kpis.error ? (

@@ -4,7 +4,10 @@ import { useAuth } from "@/auth/AuthContext";
 import { isDemo } from "@/config";
 import { DEMO_USERS, ZONES } from "@/demo/data";
 import { ROLE_LABEL, timeAgo, ZONE_LABEL } from "@/lib/format";
+import { pulseLabel, pulseState } from "@/lib/pulse";
+import { api } from "@/services";
 import { useFleet } from "@/state/FleetContext";
+import { useQuery } from "@/state/queryCache";
 import { resetViewState } from "@/state/viewState";
 import { Logo } from "../brand/Logo";
 import { cx, Icon, sevStyle } from "../ui";
@@ -21,6 +24,72 @@ function useOutside(ref: React.RefObject<HTMLElement>, onOut: () => void, active
 
 /** Popover flotante: vidrio oscuro con anillo de 1px y sombra difusa. */
 const POPOVER = "absolute right-0 top-11 overflow-hidden rounded-xl bg-surface-container/95 shadow-pop backdrop-blur-xl animate-dialog-in";
+
+/** Badge de pulso del sistema (TAREA-14): prueba visible de si la demo habla con AWS o con datos simulados. */
+function PulseBadge() {
+  const q = useQuery("system:pulse", () => api.pulse(), { staleMs: 10_000, refreshMs: 15_000 });
+  const { link, machines } = useFleet();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useOutside(ref, () => setOpen(false), open);
+  const p = q.data;
+  const state = p ? pulseState(p) : "demo"; // sin datos aún: gris, para no destellar verde
+  const dot = state === "live" ? "bg-secondary" : state === "stale" ? "bg-tertiary" : "bg-outline";
+  const text = state === "live" ? "text-secondary" : state === "stale" ? "text-tertiary" : "text-outline";
+  const label = p ? pulseLabel(p, state) : "…";
+  const firestoreS = link.lastUpdate ? Math.max(0, Math.round((Date.now() - link.lastUpdate) / 1000)) : null;
+  const rows: [string, string][] = p
+    ? [
+        ["Modo", p.mode === "live" ? "LIVE (AWS)" : "DEMO (navegador)"],
+        ["Región", p.region ?? "—"],
+        ["Última lectura", timeAgo(p.last_reading_at)],
+        ["Reportando (5 min)", `${p.machines_reporting_5m} de ${machines.length}`],
+        ["Incidentes abiertos", String(p.open_incidents)],
+        ["Modelo", p.model_version ?? "—"],
+        ["Último reporte", timeAgo(p.last_report_at)],
+        ["IA", `${p.ai.last_provider ?? "sin diagnóstico"}${p.ai.degraded ? " · degradada" : ""}`],
+        ["Firestore", firestoreS === null ? "sin sincronizar" : `sincronizado hace ${firestoreS}s`],
+        ["Generado", timeAgo(p.generated_at)],
+      ]
+    : [];
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-150 hover:bg-white/[0.06]"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label={`Pulso del sistema: ${label}`}
+        title={label}
+      >
+        <span className={cx("h-1.5 w-1.5 rounded-full", dot, state === "live" && "animate-pulse")} />
+        <span className={cx("hidden text-[11px] font-semibold tracking-wide sm:inline", text)}>{label}</span>
+      </button>
+      {open && p && (
+        <div className={cx(POPOVER, "w-[min(320px,calc(100vw-1.5rem))]")}>
+          <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
+            <span className="text-[13px] font-semibold text-on-surface">Pulso del sistema</span>
+            <span className={cx("flex items-center gap-1.5 text-[11px] font-semibold", text)}>
+              <span className={cx("h-1.5 w-1.5 rounded-full", dot)} />
+              {label}
+            </span>
+          </div>
+          <dl className="px-4 py-2">
+            {rows.map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between gap-3 py-1.5 text-xs">
+                <dt className="text-on-surface-variant">{k}</dt>
+                <dd className="truncate text-right font-medium tabular-nums text-on-surface">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="border-t border-hairline px-4 py-2 text-[11px] text-outline">
+            GET /system/pulse · se refresca cada 15 s
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Header({ onMenu, collapsed }: { onMenu: () => void; collapsed: boolean }) {
   const { me, name, logout, loginDemo } = useAuth();
@@ -86,6 +155,8 @@ export function Header({ onMenu, collapsed }: { onMenu: () => void; collapsed: b
           </div>
 
           {isDemo && <SimulatorControl />}
+
+          <PulseBadge />
 
           <div className="relative" ref={bellRef}>
             <button
