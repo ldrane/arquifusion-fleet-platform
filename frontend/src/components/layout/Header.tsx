@@ -154,7 +154,7 @@ export function Header({ onMenu, collapsed }: { onMenu: () => void; collapsed: b
             <span>{link.updatesPerMin} upd/min</span>
           </div>
 
-          {isDemo && <SimulatorControl />}
+          {(isDemo || me?.role === "admin") && <SimulatorControl />}
 
           <PulseBadge />
 
