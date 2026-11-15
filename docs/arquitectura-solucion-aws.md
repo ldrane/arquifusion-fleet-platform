@@ -10,7 +10,7 @@
 
 ![Arquitectura ArquiFusion](arquitectura.png)
 
-Fuente editable: [`arquitectura-arquifusion.drawio`](../arquitectura-arquifusion.drawio). En el diagrama, los íconos atenuados son **opcionales** y no se despliegan en el Learner Lab ni en el plan Spark (CloudFront + S3, Pub/Sub, Cloud Functions, Cloud Storage para adjuntos).
+Fuente editable: [`arquitectura-arquifusion.drawio`](../arquitectura-arquifusion.drawio). En el diagrama, los íconos atenuados son **opcionales** y no se despliegan en el Learner Lab ni en el plan Spark (CloudFront + S3, Cloud Functions, Cloud Storage para adjuntos).
 
 ### 1.1 Vista general (Mermaid)
 
@@ -93,6 +93,7 @@ flowchart LR
     FBH["Firebase Hosting<br/>(PWA)"]
     FAUTH["Firebase Auth<br/>(custom tokens)"]
     FS[("Firestore<br/>chat + réplica")]
+    PS["Pub/Sub<br/>notificaciones"]
     FCM["Firebase Cloud Messaging"]
     BQ[("BigQuery (sandbox)<br/>réplica DR diaria")]
     LK["Looker Studio<br/>(Gerencia)"]
@@ -126,7 +127,9 @@ flowchart LR
   SFN1 --> LNOTIF
   SFN1 --> DDB
   LNOTIF --> SNS
-  LNOTIF --> LNPUSH --> FCM --> WEB
+  LNOTIF -->|publish| PS
+  PS -.->|push OIDC · /bridge/push| APIGW
+  APIGW --> LNPUSH --> FCM --> WEB
   LNOTIF -->|críticas| LTG --> TG
   TG -.->|webhook (botones)| APIGW
   LCMD -.->|SendTaskSuccess| SFN1
@@ -201,7 +204,7 @@ flowchart LR
 | **Firebase Hosting (GCP)** | Sitio estático (`frontend/firebase.json`), HTTPS administrado, CDN global, sin costo. Sirve una **PWA instalable** (manifest + service worker que nunca intercepta `googleapis.com` ni `execute-api`) | Sirve el frontend con TLS sin bucket público y permite instalarlo en el móvil del técnico | RF-15, RNF-08, MH-SEC-05 |
 | **CloudFront + S3 (opcional)** | Alternativa fuera del Learner Lab: distribución CloudFront con origen S3 vía **OAC**, bucket privado | Hosting estático alternativo (el Learner Lab deniega CloudFront) | RF-15, RNF-02 |
 | **Amazon Cognito User Pool** | Grupos: `operador`, `tecnico`, `mantenimiento`, `supervisor`, `admin`, `gerencia`. Sin Identity Pool (requiere crear roles) | Autenticación y RBAC por rol | RNF-08, RF-15.1, MH-SEC-02 |
-| **Amazon API Gateway (REST)** | Un solo API con varias zonas: `/telemetry` (API key + usage plan + *request validator* JSON Schema + integración directa a SQS con `LabRole`), `/v1/*` (Cognito authorizer → Lambdas), `/v1/sim/*` (control del simulador, rol admin) y `/telegram/webhook` (secret token de Telegram). Throttling por etapa | Punto único de entrada, validación previa y protección contra abuso | RF-01.1/01.3, §5.5 APIs, MH-SEC-06, MH-NET-02 |
+| **Amazon API Gateway (REST)** | Un solo API con varias zonas: `/telemetry` (API key + usage plan + *request validator* JSON Schema + integración directa a SQS con `LabRole`), `/v1/*` (Cognito authorizer → Lambdas), `/v1/sim/*` (control del simulador, rol admin), `/telegram/webhook` (secret token de Telegram) y `/bridge/push` (token OIDC de la suscripción de Pub/Sub). Throttling por etapa | Punto único de entrada, validación previa y protección contra abuso | RF-01.1/01.3, §5.5 APIs, MH-SEC-06, MH-NET-02 |
 
 ### 2.2 Ingesta y procesamiento (hot path)
 
@@ -241,8 +244,8 @@ flowchart LR
 | **Lambda `correlacion-zona`** | Consulta el GSI `zone#date` de anomalías en una ventana de 30 min. Si hay ≥ 3 máquinas en la zona, crea un incidente padre | RF-12.1/12.2 |
 | **Lambda `ia-gemini`** | Cadena de proveedores LLM **resiliente**: Gemini API (AI Studio) → Amazon Bedrock → motor determinista. La credencial sale de Secrets Manager. Hace el diagnóstico, el resumen por rol, la causa común, el resumen del chat al cierre y el tool-calling del asistente. Cada respuesta registra `provider` y `degraded`, y **nunca bloquea el flujo** | RF-02.6, RF-07.4, RF-10.3, RF-12.3, RF-14, RF-16.8, MH-MC-03 |
 | **Amazon Bedrock** | LLM de respaldo de `ia-gemini` cuando Gemini no responde (si el Learner Lab lo habilita; si no, la cadena pasa al motor determinista) | RNF-04 |
-| **Lambda `notificar`** | Enruta por la tabla `NotificationRule` (rol × severidad × tipo). Canales: SNS (email), webhook (Slack/Discord), `notify-push` (FCM) y `notify-telegram`. Dedup con TTL | RF-10.1/10.2/10.5 |
-| **Lambda `notify-push`** | Envía push FCM HTTP v1 al técnico/operador asignado (token registrado en `/auth/firebase-token`). Reemplaza a Cloud Functions, que requiere facturación | RF-10.2, RF-16.5 |
+| **Lambda `notificar`** | Enruta por la tabla `NotificationRule` (rol × severidad × tipo). Canales: SNS (email), webhook (Slack/Discord), Pub/Sub `notificaciones` (→ `notify-push` → FCM) y `notify-telegram`. Dedup con TTL | RF-10.1/10.2/10.5 |
+| **Lambda `notify-push`** | Envía push FCM HTTP v1 al técnico/operador asignado (token registrado en `/auth/firebase-token`). La invoca la suscripción push de Pub/Sub vía `/bridge/push` (OIDC). Reemplaza a la Cloud Function, que requiere facturación | RF-10.2, RF-16.5 |
 | **Lambda `notify-telegram`** | Bot de Telegram para incidentes críticos: alerta con botones inline (`ack:<id>:accept|reject`). La respuesta entra por `/telegram/webhook` (secret token) → `api-comandos` → `SendTaskSuccess` | RF-10.2, RF-16.5 |
 | **Lambda `replicar`** | DynamoDB Streams → Firestore (máquinas, incidentes, técnicos) | MH-HA-03, MH-MC-01 |
 | **Lambda `auditoria`** | Consume el bus `fleet-events` → tabla `audit-events` (append-only) y el historial `EVT#` en `incidents` (antes/después, actor, motivo). Es la **única Lambda dentro de la VPC aislada** | RNF-15, TRZ-02/06 |
@@ -288,11 +291,12 @@ Tablas físicas `{prefix}-<nombre>` (`infra/base/main.tf`); todas on-demand, PIT
 | **Gemini API (AI Studio)** | LLM primario de diagnóstico, resúmenes y asistente con function calling (primer proveedor de la cadena `gemini → bedrock → determinista`) | RF-02.6, RF-14, RF-16.8 |
 | **Firestore** | Canales de incidente (chat), estado en tiempo real del mapa, **persistencia offline** en el móvil y réplica de entidades críticas | RF-05, RF-15.3, RF-16, MH-HA-03 |
 | **Firebase Auth** | Custom tokens emitidos por `POST /auth/firebase-token` con claims `role`, `zone` y `technician_id`, que usan las Security Rules | RNF-08, RF-16 |
+| **Pub/Sub** | Topic `notificaciones` + suscripción push con OIDC hacia `/bridge/push` (funciona sin facturación) | RF-10.2, MH-MC-02 |
 | **Firebase Cloud Messaging** | Push al móvil del técnico u operador (HTTP v1 desde `notify-push`) | RF-10.2 |
 | **Firebase Hosting** | Sirve la PWA compilada (HTTPS, CDN, sin costo) | RF-15, RNF-08 |
 | **BigQuery (sandbox)** | Réplica DR diaria del lake, incidentes cerrados e insights (`export-gcp`) | RNF-04/05 |
 | **Looker Studio** | Tablero de Gerencia sobre BigQuery (enlace en `VITE_LOOKER_URL`) | RF-07, RF-15 |
-| *Opcional (requiere facturación)* | Pub/Sub, Cloud Functions y Cloud Storage para adjuntos. No se despliegan con `gcp_billing=false`; su función la cubren `notify-push` y `api-comandos` en AWS | — |
+| *Opcional (requiere facturación)* | Cloud Functions (`notify-push`, `notify-actions`) y Cloud Storage para adjuntos. No se despliegan con `gcp_billing=false`; su función la cubren `notify-push` y `api-comandos` en AWS | — |
 
 **Integración externa:** **Telegram Bot API** (no es GCP). Recibe alertas críticas con botones de decisión desde `notify-telegram` y devuelve la decisión por `/telegram/webhook` (RF-10.2, RF-16.5).
 
@@ -347,7 +351,7 @@ VPC {prefix}-vpc-audit  10.20.0.0/16   (us-east-1, DNS hostnames ON, sin IGW, si
 **Lambdas dentro de la VPC:** `auditoria` (única).
 **Lambdas fuera de la VPC:** el resto — `api-lectura`, `api-comandos`, `precursores`, `procesar`, `sim-driver`, `ia-gemini`, `notificar`, `notify-push`, `notify-telegram`, `replicar`, `scoring-tecnicos`, `correlacion-zona`, `heartbeat`, `export-gcp` y las Lambdas de `AnalisisDiario` / `Reentrenamiento` (Athena).
 
-> **Modelo *zero-trust serverless* (resto de la plataforma):** Cognito JWT en API Gateway, API keys (máquinas y puente GCP→AWS), secret token de Telegram en `/telegram/webhook`, y `LabRole` + separación por `stage` (tablas/buckets por nombre).
+> **Modelo *zero-trust serverless* (resto de la plataforma):** Cognito JWT en API Gateway, API keys (máquinas y puente GCP→AWS), OIDC de Pub/Sub en `/bridge/push`, secret token de Telegram en `/telegram/webhook`, y `LabRole` + separación por `stage` (tablas/buckets por nombre).
 
 ### 3.3 Security Groups
 
@@ -407,7 +411,7 @@ No hay más SG porque no hay otros recursos con ENI (sin EC2, RDS, ALB ni endpoi
    - Rama 3: consulta de `Inventory` y `Catalog` → disponibilidad de los repuestos probables. Si falta stock → evento `PartShortage` (RF-04.6).
 4. **`Choice` por severidad:** si es Crítica → cambia la máquina a `REQUIERE_INTERVENCION` y prioriza la asignación. Si es Baja o Info → solo registra y notifica al dashboard.
 5. **Lambda `scoring-tecnicos`** → elige el mejor técnico y guarda el puntaje de cada candidato en el incidente (TRZ-03).
-6. **`Map` de notificaciones** sobre los roles de `NotificationRules`: Lambda `notificar` genera el contenido por rol (técnico: detalle técnico; gerencia: impacto) y lo envía por SNS email, webhook, Lambda `notify-push` → **FCM** y, si es crítico, Lambda `notify-telegram` → **Telegram** (botones inline).
+6. **`Map` de notificaciones** sobre los roles de `NotificationRules`: Lambda `notificar` genera el contenido por rol (técnico: detalle técnico; gerencia: impacto) y lo envía por SNS email, webhook, Pub/Sub → `/bridge/push` → Lambda `notify-push` → **FCM** y, si es crítico, Lambda `notify-telegram` → **Telegram** (botones inline).
 7. **Crear canal de incidente** en Firestore `incidents/{id}/messages` con los participantes automáticos (operador, técnico, mantenimiento, supervisor de zona) (RF-16.1).
 8. **`EsperarAceptacion`** (`lambda:invoke.waitForTaskToken`): guarda el `task_token` en `Incidents`. `TimeoutSeconds = 900` (crítico) o `3600` (alta).
    - El técnico acepta desde la PWA (`POST /v1/incidents/{id}/ack`) o con el botón inline de Telegram (`ack:<id>:accept` → `/telegram/webhook`). En ambos casos `api-comandos` llama a **`SendTaskSuccess`**.
