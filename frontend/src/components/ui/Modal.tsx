@@ -33,11 +33,16 @@ export function Modal({ title, open, onClose, children, footer }: { title: strin
     return () => window.clearTimeout(t);
   }, [open, mounted]);
 
+  // `onClose` se recrea en cada render del padre (p. ej. `() => setOpen(false)`). Guardarlo en un ref
+  // evita que el efecto de abajo se repita en bucle: al volver a ejecutarse robaba el foco otra vez y
+  // cerraba cualquier <select> abierto (por eso los desplegables "se cerraban solos"). Ver Modal.test.ts.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
     window.addEventListener("keydown", onKey);
-    ref.current?.querySelector<HTMLElement>("input, textarea, select, button")?.focus();
     // Bloquea el scroll de la página detrás del diálogo
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -45,7 +50,17 @@ export function Modal({ title, open, onClose, children, footer }: { title: strin
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [open, onClose]);
+  }, [open]);
+
+  // Foco inicial: solo al abrir y una vez montado el portal (no en cada render). Prefiere el primer
+  // campo del cuerpo (input/select/textarea) y, si no hay, el botón de cerrar del header.
+  useEffect(() => {
+    if (!open || !mounted) return;
+    const first =
+      ref.current?.querySelector<HTMLElement>("input, select, textarea") ??
+      ref.current?.querySelector<HTMLElement>("button");
+    first?.focus();
+  }, [open, mounted]);
 
   if (!mounted) return null;
 
