@@ -56,6 +56,18 @@ locals {
       memory      = 256
       env         = tomap({ POWERTOOLS_SERVICE_NAME = "replicar", REPLICA_HEARTBEAT_S = tostring(var.replica_heartbeat_s) })
     }
+    export_gcp = {
+      name        = "${local.prefix}-export-gcp"
+      description = "AnalisisDiario -> replica el lake, incidentes y KPIs a BigQuery (C). TAREA-13"
+      timeout     = 60
+      memory      = 512
+      env = tomap({
+        POWERTOOLS_SERVICE_NAME = "export-gcp"
+        GCP_SA_SECRET_NAME      = "arquifusion/${var.stage}/gcp/service-account"
+        BQ_PROJECT              = var.gcp_project_id
+        BQ_DATASET              = "arquifusion_${replace(var.stage, "-", "_")}"
+      })
+    }
   }
 }
 
@@ -131,7 +143,11 @@ resource "aws_lambda_function" "fn" {
     variables = merge(local.common_env, each.value.env)
   }
 
-  tags = { owner = "C", rf = each.key == "replicar" ? "RF-05 RF-15" : "RF-05 RF-11 RF-16" }
+  tags = { owner = "C", rf = lookup({
+    api_lectura = "RF-05 RF-11 RF-16"
+    replicar    = "RF-05 RF-15"
+    export_gcp  = "TAREA-13"
+  }, each.key, "RF-05") }
 
   depends_on = [aws_cloudwatch_log_group.fn]
 }
@@ -153,6 +169,15 @@ resource "aws_lambda_permission" "apigw_firebase_token" {
   function_name = aws_lambda_function.fn["api_lectura"].function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "arn:aws:execute-api:${var.aws_region}:${data.aws_caller_identity.current.account_id}:*/*/POST/auth/firebase-token"
+}
+
+# AnalisisDiario (stack ingest) invoca export-gcp al final (TAREA-13); el ARN de la SFN se arma por convención.
+resource "aws_lambda_permission" "sfn_export_gcp" {
+  statement_id  = "AllowAnalisisDiarioExport"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.fn["export_gcp"].function_name
+  principal     = "states.amazonaws.com"
+  source_arn    = "arn:aws:states:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:${local.prefix}-analisis-diario"
 }
 
 # B lee estos parámetros desde infra/base (integración AWS_PROXY de las rutas de api-lectura).

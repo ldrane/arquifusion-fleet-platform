@@ -4,6 +4,7 @@
 locals {
   apis_free = [
     "firestore.googleapis.com",       # C: réplica, chat, mapa en vivo
+    "bigquery.googleapis.com",        # C: réplica DR multinube (TAREA-13, sandbox sin facturación)
     "firebase.googleapis.com",        # C: proyecto Firebase y app web
     "firebaserules.googleapis.com",   # C: Security Rules
     "identitytoolkit.googleapis.com", # C: Firebase Auth (signInWithCustomToken)

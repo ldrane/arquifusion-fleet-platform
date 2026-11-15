@@ -78,7 +78,7 @@ service cloud.firestore {
         }
 
         allow read: if canSeeIncident();
-        allow create: if hasRole(['tecnico', 'mantenimiento', 'supervisor'])
+        allow create: if hasRole(['operador', 'tecnico', 'mantenimiento', 'supervisor'])
                       && canActOnIncident() && isOpen() && validMessage();
         allow update, delete: if false;
       }

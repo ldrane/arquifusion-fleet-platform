@@ -46,5 +46,6 @@ variable "reserved_concurrency" {
     analytics       = 1
     retrain         = 1
     retrain_promote = 1
+    sim_driver      = 1
   }
 }

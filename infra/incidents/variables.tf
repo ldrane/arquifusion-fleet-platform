@@ -78,6 +78,12 @@ variable "alarms_enabled" {
   default     = true
 }
 
+variable "vpc_flow_logs" {
+  description = "TAREA-16: registra el tráfico de la VPC de auditoría en CloudWatch Logs (necesita un rol que el Learner Lab no permite crear; apagado por defecto)"
+  type        = bool
+  default     = false
+}
+
 locals {
   prefix = "arquifusion-${var.stage}"
 }
@@ -102,6 +108,16 @@ variable "telegram_event_types" {
   description = "Transiciones de incidentes CRÍTICOS que se envían a Telegram (filtro de la regla EventBridge)"
   type        = list(string)
   default     = ["incident.detected", "incident.assigned", "incident.escalated", "incident.resolved"]
+}
+
+variable "telegram_severities" {
+  description = "Severidades que se envían a Telegram (la demo puede usar [\"high\",\"critical\"])"
+  type        = list(string)
+  default     = ["critical"]
+  validation {
+    condition     = alltrue([for s in var.telegram_severities : contains(["high", "critical"], s)])
+    error_message = "telegram_severities solo admite high y critical."
+  }
 }
 
 variable "app_url" {

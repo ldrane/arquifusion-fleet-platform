@@ -21,11 +21,12 @@ locals {
 
   # Árbol de recursos (máx. 3 niveles). `/telemetry` NO va aquí: lo crea A.
   paths_l1 = toset(["me", "auth", "machines", "incidents", "technicians", "inventory", "parts", "maintenance",
-  "analytics", "reports", "ml", "assistant", "bridge"])
+  "analytics", "reports", "ml", "assistant", "bridge", "sim", "telegram", "system"])
   paths_l2 = toset([
     "auth/firebase-token", "machines/{machine_id}", "incidents/{incident_id}", "technicians/me",
     "parts/ranking", "parts/forecast", "maintenance/plan", "analytics/fuel", "analytics/productivity",
-    "analytics/kpis", "reports/latest", "ml/model", "ml/retrain", "assistant/chat", "bridge/events", "bridge/push",
+    "analytics/kpis", "analytics/precursors", "reports/latest", "ml/model", "ml/retrain", "assistant/chat", "bridge/events", "bridge/push",
+    "sim/scenario", "sim/stop", "sim/state", "telegram/webhook", "system/pulse",
   ])
   paths_l3 = toset([
     "machines/{machine_id}/telemetry", "machines/{machine_id}/timeline", "incidents/{incident_id}/ack",
@@ -55,12 +56,18 @@ locals {
     "GET analytics/fuel"                   = { fn = "lectura", auth = "cognito" }
     "GET analytics/productivity"           = { fn = "lectura", auth = "cognito" }
     "GET analytics/kpis"                   = { fn = "lectura", auth = "cognito" }
+    "GET analytics/precursors"             = { fn = "lectura", auth = "cognito" }
     "GET reports/latest"                   = { fn = "lectura", auth = "cognito" }
     "GET ml/model"                         = { fn = "lectura", auth = "cognito" }
+    "GET system/pulse"                     = { fn = "lectura", auth = "cognito" }
     "POST ml/retrain"                      = { fn = "comandos", auth = "cognito" }
     "POST assistant/chat"                  = { fn = "gemini", auth = "cognito" }
     "POST bridge/events"                   = { fn = "comandos", auth = "api_key" }
     "POST bridge/push"                     = { fn = "push", auth = "oidc" } # suscripción push de Pub/Sub
+    "POST sim/scenario"                    = { fn = "comandos", auth = "cognito" }
+    "POST sim/stop"                        = { fn = "comandos", auth = "cognito" }
+    "GET sim/state"                        = { fn = "comandos", auth = "cognito" }
+    "POST telegram/webhook"                = { fn = "comandos", auth = "oidc" } # Telegram valida el secret token
   }
 
   all_paths = setunion(local.paths_l1, local.paths_l2, local.paths_l3)

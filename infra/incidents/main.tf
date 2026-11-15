@@ -65,10 +65,13 @@ locals {
       rf      = "RF-06.4 RF-11.1 RF-16.5"
       env = {
         TABLE_INCIDENTS           = local.tables.TABLE_INCIDENTS
+        TABLE_MACHINES            = local.tables.TABLE_MACHINES
         TABLE_TECHNICIANS         = local.tables.TABLE_TECHNICIANS
         TABLE_IDEMPOTENCY         = local.tables.TABLE_IDEMPOTENCY
         CORS_ORIGIN               = var.cors_origin
         RETRAIN_STATE_MACHINE_ARN = "arn:aws:states:${var.aws_region}:${local.account_id}:stateMachine:${local.prefix}-reentrenamiento"
+        SIM_STATE_PARAM           = "/arquifusion/${var.stage}/sim/state"
+        TELEGRAM_SECRET_NAME      = aws_secretsmanager_secret.telegram.name
       }
     }
     incidente = {
@@ -158,11 +161,12 @@ locals {
       memory  = 128
       rf      = "RF-10.1 RF-10.2"
       env = {
-        TABLE_IDEMPOTENCY    = local.tables.TABLE_IDEMPOTENCY
-        TABLE_INCIDENTS      = local.tables.TABLE_INCIDENTS
-        TELEGRAM_SECRET_NAME = aws_secretsmanager_secret.telegram.name
-        TELEGRAM_EVENT_TYPES = join(",", var.telegram_event_types)
-        APP_URL              = var.app_url
+        TABLE_IDEMPOTENCY     = local.tables.TABLE_IDEMPOTENCY
+        TABLE_INCIDENTS       = local.tables.TABLE_INCIDENTS
+        TELEGRAM_SECRET_NAME  = aws_secretsmanager_secret.telegram.name
+        TELEGRAM_EVENT_TYPES  = join(",", var.telegram_event_types)
+        TELEGRAM_MIN_SEVERITY = contains(var.telegram_severities, "high") ? "high" : "critical"
+        APP_URL               = var.app_url
       }
     }
     auditoria = {
@@ -242,7 +246,16 @@ resource "aws_lambda_function" "fn" {
 
   reserved_concurrent_executions = lookup(var.reserved_concurrency, each.key, 1) # tope AWS Academy
 
-  # Fuera de VPC: llaman a Step Functions, SNS y GCP (sin NAT).
+  # Fuera de VPC por defecto: llaman a Step Functions, SNS y GCP (sin NAT). TAREA-16: `auditoria` es la
+  # excepción, vive en la VPC aislada (vpc.tf) porque solo habla con DynamoDB por el Gateway Endpoint.
+  dynamic "vpc_config" {
+    for_each = each.key == "auditoria" ? [1] : []
+    content {
+      subnet_ids         = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+      security_group_ids = [aws_security_group.lambda_data.id]
+    }
+  }
+
   tracing_config {
     mode = "Active"
   }
@@ -370,7 +383,7 @@ locals {
       pattern = {
         source        = ["arquifusion.incident"]
         "detail-type" = ["IncidentStateChanged"]
-        detail        = { data = { severity = ["critical"], event_type = var.telegram_event_types } }
+        detail        = { data = { severity = var.telegram_severities, event_type = var.telegram_event_types } }
       }
     }
     # Todos los eventos de dominio → auditoria (audit-events + historial EVT#, RNF-15)

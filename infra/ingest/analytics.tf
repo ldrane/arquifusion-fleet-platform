@@ -55,6 +55,15 @@ locals {
         IA_GEMINI_FUNCTION = aws_lambda_function.ia_gemini.function_name
       }
     }
+    precursores = {
+      description = "Firmas pre-falla: patrones de anomalías que preceden fallas (TAREA-12)"
+      env = {
+        TABLE_INCIDENTS = local.tables.incidents
+        TABLE_ANOMALIES = local.tables.anomalies
+        TABLE_MACHINES  = local.tables.machines
+        TABLE_INSIGHTS  = local.tables.insights
+      }
+    }
   }
 
   # SQL escapado para insertarlo dentro de un string JSON del ASL.
@@ -131,6 +140,8 @@ resource "aws_sfn_state_machine" "analisis_diario" {
     fn_combustible   = aws_lambda_function.analytics["combustible"].arn
     fn_productividad = aws_lambda_function.analytics["productividad"].arn
     fn_kpis_report   = aws_lambda_function.analytics["kpis_report"].arn
+    fn_precursores   = aws_lambda_function.analytics["precursores"].arn
+    fn_export_gcp    = "arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${local.prefix}-export-gcp"
   })
 
   logging_configuration {

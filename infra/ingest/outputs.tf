@@ -57,3 +57,8 @@ output "lake_bucket" {
 output "ecr_repository_url" {
   value = aws_ecr_repository.ml.repository_url
 }
+
+output "sim_state_param" {
+  description = "Parámetro SSM con el estado del simulador serverless (TAREA-07)"
+  value       = aws_ssm_parameter.sim_state.name
+}

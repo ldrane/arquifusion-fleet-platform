@@ -19,12 +19,14 @@ locals {
 }
 
 variable "llm_provider" {
-  description = "Proveedor LLM de ia-gemini: gemini | bedrock (RF-02.6, RF-14)"
+  description = "Cadena de proveedores LLM separados por coma: gemini,bedrock (RF-02.6, RF-14)"
   type        = string
-  default     = "gemini"
+  default     = "gemini,bedrock"
   validation {
-    condition     = contains(["gemini", "bedrock"], var.llm_provider)
-    error_message = "llm_provider debe ser gemini o bedrock."
+    condition = alltrue([
+      for p in split(",", var.llm_provider) : contains(["gemini", "bedrock"], trimspace(p))
+    ])
+    error_message = "llm_provider debe ser una lista separada por comas con gemini y/o bedrock."
   }
 }
 
@@ -32,6 +34,22 @@ variable "gemini_model" {
   description = "Modelo de la Gemini API (baja latencia). El alias *-latest sobrevive a retiradas de versiones fijas."
   type        = string
   default     = "gemini-flash-lite-latest"
+}
+
+variable "gemini_api_base" {
+  description = "Endpoint de Gemini: aistudio | vertex | auto (auto intenta AI Studio y cae a Vertex express)"
+  type        = string
+  default     = "auto"
+  validation {
+    condition     = contains(["aistudio", "vertex", "auto"], var.gemini_api_base)
+    error_message = "gemini_api_base debe ser aistudio, vertex o auto."
+  }
+}
+
+variable "gemini_vertex_model" {
+  description = "Modelo para Vertex AI express cuando AI Studio rechaza la clave"
+  type        = string
+  default     = "gemini-2.5-flash-lite"
 }
 
 variable "bedrock_model_id" {
@@ -94,6 +112,8 @@ resource "aws_lambda_function" "ia_gemini" {
       LLM_PROVIDER            = var.llm_provider
       LLM_TIMEOUT_S           = tostring(var.llm_timeout_s)
       GEMINI_MODEL            = var.gemini_model
+      GEMINI_API_BASE         = var.gemini_api_base
+      GEMINI_VERTEX_MODEL     = var.gemini_vertex_model
       BEDROCK_MODEL_ID        = var.bedrock_model_id
       TABLE_MACHINES          = local.tables.machines
       TABLE_INCIDENTS         = local.tables.incidents
