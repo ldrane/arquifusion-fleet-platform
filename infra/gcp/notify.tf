@@ -203,14 +203,22 @@ resource "google_service_account" "pubsub_push" {
   depends_on = [google_project_service.apis]
 }
 
-# El agente de servicio de Pub/Sub necesita crear tokens de esa SA (automático en proyectos nuevos; se fija igual)
+# Agente de servicio de Pub/Sub (service-<n>@gcp-sa-pubsub). Google lo crea de forma diferida: en un proyecto nuevo
+# aún no existe al aplicar y el binding de abajo falla con "does not exist". Esto fuerza su creación.
+resource "google_project_service_identity" "pubsub" {
+  count    = local.push_enabled ? 1 : 0
+  provider = google-beta
+  service  = "pubsub.googleapis.com"
+
+  depends_on = [google_project_service.apis]
+}
+
+# El agente de servicio de Pub/Sub necesita crear tokens de esa SA para firmar el OIDC de cada entrega
 resource "google_service_account_iam_member" "pubsub_token_creator" {
   count              = local.push_enabled ? 1 : 0
   service_account_id = google_service_account.pubsub_push[0].name
   role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
-
-  depends_on = [google_pubsub_topic.notificaciones] # el agente existe una vez usada la API
+  member             = "serviceAccount:${google_project_service_identity.pubsub[0].email}"
 }
 
 resource "google_pubsub_subscription" "notificaciones_push" {

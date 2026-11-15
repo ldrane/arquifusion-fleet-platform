@@ -53,6 +53,9 @@ def test_default_targets_exist_in_seed_and_respect_zone(fleet):
         for m in scenario.default_targets(fleet):
             assert by_id[m.machine_id] == m, name
     assert all(m.machine_id != "EX-023" for m in SCENARIOS["grupal_zona"].default_targets(fleet))
+    # seed v4: los escenarios por defecto solo toman máquinas operativas (no en taller ni en reserva)
+    for name, scenario in SCENARIOS.items():
+        assert all(m.parked_state is None for m in scenario.default_targets(fleet)), name
 
 
 def test_degradation_is_progressive():

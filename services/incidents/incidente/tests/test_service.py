@@ -178,6 +178,7 @@ def test_golden_path_completo(tables):
                 "resolution_notes": "Cambio de rodamientos",
                 "components_replaced": ["CMP-014"],
                 "cost_usd": 820.5,
+                "actor": {"type": "user", "user_id": "u-tec-07", "role": "tecnico", "technician_id": "TEC-07"},
             },
         ),
         tables,
@@ -185,6 +186,8 @@ def test_golden_path_completo(tables):
     assert out["downtime_minutes"] >= 0
     item = meta(tables)
     assert item["status"] == "resolved" and "resolve_token" not in item and item["cost_usd"] == Decimal("820.5")
+    assert item["resolution_notes"] == "Cambio de rodamientos"
+    assert item["resolved_by"] == {"user_id": "u-tec-07", "role": "tecnico"}
 
     stock_before = tables["inventory"].get_item(Key={"pk": "WH-01", "sk": "CMP-014"})["Item"]["stock"]
     out = service.run(
@@ -192,7 +195,9 @@ def test_golden_path_completo(tables):
     )
     item = meta(tables)
     assert item["status"] == "closed" and item["resolution_summary"] == "Rodamientos reemplazados"
+    assert item["resolution_notes"] == "Cambio de rodamientos"  # las notas quedan aparte del resumen del chat
     rec = tables["maintenance_records"].scan()["Items"][0]
+    assert rec["notes"] == "Cambio de rodamientos"
     assert rec["type"] == "corrective" and rec["components"] == [{"component_id": "CMP-014", "quantity": 1}]
     assert rec["pk"] == "EX-023" and rec["record_id"] == "MR-01JC8ZK"
     assert tables["inventory"].get_item(Key={"pk": "WH-01", "sk": "CMP-014"})["Item"]["stock"] == stock_before - 1
@@ -275,3 +280,40 @@ def test_abandonar_incidente_cerrado_falla(tables):
     service.run(ev("cerrar", summary={}), tables)
     with pytest.raises(service.ConditionFailed):
         service.run(ev("abandonar"), tables)
+class FakeChat:
+    def __init__(self, msgs):
+        self.msgs, self.channels = msgs, []
+
+    def messages(self, channel):
+        self.channels.append(channel)
+        return self.msgs
+
+
+def test_chat_mensajes_lee_solo_el_canal_del_incidente(tables):
+    chat = FakeChat([{"author_id": "u-tec-07", "role": "tecnico", "text": "Llegué", "created_at": "t1"}])
+    out = service.run(ev("chat_mensajes"), tables, chat=chat)
+    assert out == {"channel": "INC-01JC8ZK", "messages": chat.msgs}
+    assert chat.channels == ["INC-01JC8ZK"]
+
+
+def test_chat_mensajes_usa_chat_channel_id(tables):
+    tables["incidents"].update_item(
+        Key={"pk": "INC#INC-01JC8ZK", "sk": "META"},
+        UpdateExpression="SET chat_channel_id = :c",
+        ExpressionAttributeValues={":c": "INC-PADRE"},
+    )
+    chat = FakeChat([])
+    assert service.run(ev("chat_mensajes"), tables, chat=chat)["channel"] == "INC-PADRE"
+
+
+def test_cerrar_sin_resumen_no_copia_las_notas_al_resumen(tables):
+    tables["incidents"].update_item(
+        Key={"pk": "INC#INC-01JC8ZK", "sk": "META"},
+        UpdateExpression="SET #s = :r, resolution_notes = :n",
+        ExpressionAttributeNames={"#s": "status"},
+        ExpressionAttributeValues={":r": "resolved", ":n": "Ajuste de mangueras"},
+    )
+    service.run(ev("cerrar", summary=None), tables)
+    item = meta(tables)
+    assert item["status"] == "closed" and "resolution_summary" not in item
+    assert item["resolution_notes"] == "Ajuste de mangueras"

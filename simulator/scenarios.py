@@ -121,13 +121,18 @@ def _machine(machine_id: str) -> Callable[[list[MachineSpec]], list[MachineSpec]
 
 
 def _first(machine_types: tuple[str, ...], zone: str | None = None) -> Callable[[list[MachineSpec]], list[MachineSpec]]:
-    """Primera máquina (por ID) de esos tipos y, si se indica, de esa zona; nunca la de la demo."""
+    """Primera máquina operativa (por ID) de esos tipos y, si se indica, de esa zona; nunca la de la demo.
+
+    Las máquinas en taller o en reserva (seed v4) se saltan: el escenario solo actúa sobre máquinas operando."""
 
     def pick(fleet: list[MachineSpec]) -> list[MachineSpec]:
         return [
             m
             for m in fleet
-            if m.machine_type in machine_types and (zone is None or m.zone == zone) and m.machine_id != DEMO_MACHINE_ID
+            if m.machine_type in machine_types
+            and (zone is None or m.zone == zone)
+            and m.machine_id != DEMO_MACHINE_ID
+            and m.parked_state is None
         ][:1]
 
     return pick
@@ -135,7 +140,9 @@ def _first(machine_types: tuple[str, ...], zone: str | None = None) -> Callable[
 
 def _zone(zone: str) -> Callable[[list[MachineSpec]], list[MachineSpec]]:
     """Hasta GROUP_SIZE máquinas de una misma zona del seed (sin la de la demo, que tiene su propio incidente)."""
-    return lambda fleet: [m for m in fleet if m.zone == zone and m.machine_id != DEMO_MACHINE_ID][:GROUP_SIZE]
+    return lambda fleet: [
+        m for m in fleet if m.zone == zone and m.machine_id != DEMO_MACHINE_ID and m.parked_state is None
+    ][:GROUP_SIZE]
 
 
 def _idle_or_overused(spec: MachineSpec, hours: float) -> Effect:
@@ -144,7 +151,7 @@ def _idle_or_overused(spec: MachineSpec, hours: float) -> Effect:
 
 
 def _first_n_loaders(fleet: list[MachineSpec]) -> list[MachineSpec]:
-    return [m for m in fleet if m.machine_type == "loader"][:4]
+    return [m for m in fleet if m.machine_type == "loader" and m.parked_state is None][:4]
 
 
 SCENARIOS: dict[str, Scenario] = {

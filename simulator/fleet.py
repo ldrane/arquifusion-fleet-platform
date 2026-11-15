@@ -3,7 +3,8 @@
 La verdad de la flota son `contracts/fixtures/seed/machines.json` y `machine_models.json` (seed v2,
 generados por `scripts/seed_data.py`). El simulador NO inventa máquinas: usa los mismos IDs, modelo,
 tipo, zona, coordenadas base, horómetro y `expected_interval_s`. El baseline de cada variable es el
-`nominal` [media, desviación] del modelo (catalog `MODEL#<model>`, contratos.md §9).
+`nominal` [media, desviación] del modelo (catalog `MODEL#<model>`, contratos.md §9). Desde seed v4 también respeta
+el `status` inicial: las máquinas en taller (`maintenance`) o en reserva (`stopped`) reportan con ese estado.
 """
 
 import json
@@ -26,6 +27,9 @@ ROAMING_DEG: dict[str, float] = {
     "drill": 0.0002,
 }
 DEFAULT_EXPECTED_INTERVAL_S = 60  # contratos.md §3 (heartbeat: silencio a 3x)
+# Estado inicial del seed (MachineStatus, seed v4) -> `state` fijo de la lectura. Una máquina en taller o en reserva
+# sigue reportando (no queda "silent"), pero con state=maintenance/stopped y valores de máquina apagada.
+PARKED_STATES: dict[str, str] = {"maintenance": "maintenance", "stopped": "stopped"}
 
 
 @dataclass(frozen=True)
@@ -49,6 +53,12 @@ class MachineSpec:
     initial_operating_hours: float
     expected_interval_s: int = DEFAULT_EXPECTED_INTERVAL_S
     baselines: dict[str, Baseline] = field(default_factory=dict, hash=False)
+    initial_status: str = "operational"
+
+    @property
+    def parked_state(self) -> str | None:
+        """`maintenance`/`stopped` si el seed la deja en taller o en reserva; None si opera."""
+        return PARKED_STATES.get(self.initial_status)
 
     @property
     def roaming_deg(self) -> float:
@@ -70,7 +80,7 @@ def load_models(seed_dir: Path | str | None = None) -> dict[str, dict]:
 
 
 def build_fleet(seed_dir: Path | str | None = None) -> list[MachineSpec]:
-    """Flota completa del seed (100 máquinas, 5 tipos, 4 zonas), ordenada por `machine_id`."""
+    """Flota completa del seed (100 máquinas, 5 tipos, 19 modelos, 4 zonas), ordenada por `machine_id`."""
     base = _seed_dir(seed_dir)
     models = load_models(base)
     machines = json.loads((base / "machines.json").read_text())
@@ -89,6 +99,7 @@ def build_fleet(seed_dir: Path | str | None = None) -> list[MachineSpec]:
                 initial_operating_hours=float(m["operating_hours"]),
                 expected_interval_s=int(m.get("expected_interval_s") or DEFAULT_EXPECTED_INTERVAL_S),
                 baselines={v: Baseline(float(mu), float(sd)) for v, (mu, sd) in model["nominal"].items()},
+                initial_status=m.get("status") or "operational",
             )
         )
     return sorted(fleet, key=lambda s: s.machine_id)
@@ -113,4 +124,5 @@ def to_dict(spec: MachineSpec) -> dict:
         "location": {"lat": spec.home_lat, "lon": spec.home_lon, "zone": spec.zone},
         "operating_hours": spec.initial_operating_hours,
         "expected_interval_s": spec.expected_interval_s,
+        "status": spec.initial_status,
     }

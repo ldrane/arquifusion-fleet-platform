@@ -10,14 +10,16 @@ import boto3
 import service
 from arquifusion_shared.observability import logger, tracer
 from aws_lambda_powertools.utilities import parameters
-from gemini_client import GeminiClient
 from ia_tools import ToolBox
+from llm_client import build_client
 
 SECRET_MAX_AGE_S = 300
 
 
 def _api_key() -> str:
-    """Lee la API key de Secrets Manager con caché de 5 min. Acepta texto plano o `{"api_key": "..."}`."""
+    """Solo con LLM_PROVIDER=gemini.
+
+    Lee la API key de Secrets Manager con caché de 5 min. Acepta texto plano o `{"api_key": "..."}`."""
     secret = parameters.get_secret(os.environ["GEMINI_SECRET_NAME"], max_age=SECRET_MAX_AGE_S)
     try:
         return json.loads(secret)["api_key"]
@@ -25,10 +27,8 @@ def _api_key() -> str:
         return secret.strip()
 
 
-_gemini = GeminiClient(
-    api_key_provider=_api_key,
-    timeout_s=float(os.environ.get("GEMINI_TIMEOUT_S", "8")),
-)
+# Proveedor LLM por env (RF-02.6, RF-14): LLM_PROVIDER=gemini|bedrock, GEMINI_MODEL, BEDROCK_MODEL_ID, LLM_TIMEOUT_S.
+_llm = build_client(gemini_api_key_provider=_api_key)
 _dynamodb = boto3.resource("dynamodb")
 
 
@@ -45,5 +45,5 @@ def _tools(zone_scope: str | None) -> ToolBox:
 @tracer.capture_lambda_handler
 def handler(event, context):
     if service.is_api_event(event):
-        return service.handle_api(event, _gemini, _tools)
-    return service.handle_task(event, _gemini)
+        return service.handle_api(event, _llm, _tools)
+    return service.handle_task(event, _llm)

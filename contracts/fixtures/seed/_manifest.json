@@ -1,12 +1,12 @@
 {
-  "seed_version": 3,
+  "seed_version": 4,
   "reference_date": "2026-11-14",
   "counts": {
     "machines": 100,
-    "machine_models": 10,
-    "technicians": 12,
-    "catalog": 25,
-    "inventory": 100,
+    "machine_models": 19,
+    "technicians": 16,
+    "catalog": 30,
+    "inventory": 120,
     "notification_rules": 22,
     "warehouses": 4
   },

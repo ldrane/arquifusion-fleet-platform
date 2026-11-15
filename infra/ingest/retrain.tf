@@ -27,14 +27,15 @@ resource "aws_cloudwatch_log_group" "retrain" {
 }
 
 resource "aws_lambda_function" "retrain" {
-  function_name = local.retrain_name
-  description   = "Entrena el modelo candidato de anomalías (RF-13.2)"
-  role          = local.lab_role
-  package_type  = "Image"
-  image_uri     = local.retrain_image
-  architectures = ["x86_64"]
-  memory_size   = 3008
-  timeout       = 900
+  function_name                  = local.retrain_name
+  description                    = "Entrena el modelo candidato de anomalías (RF-13.2)"
+  role                           = local.lab_role
+  package_type                   = "Image"
+  image_uri                      = local.retrain_image
+  architectures                  = ["x86_64"]
+  memory_size                    = 3008
+  timeout                        = 900
+  reserved_concurrent_executions = var.reserved_concurrency["retrain"] # tope AWS Academy
 
   ephemeral_storage {
     size = 2048
@@ -52,14 +53,15 @@ resource "aws_lambda_function" "retrain" {
 }
 
 resource "aws_lambda_function" "retrain_promote" {
-  function_name = local.promote_name
-  description   = "Promueve el modelo candidato: SSM active_version + insights ml_model (RF-13.2)"
-  role          = local.lab_role
-  package_type  = "Image"
-  image_uri     = local.retrain_image
-  architectures = ["x86_64"]
-  memory_size   = 512
-  timeout       = 60
+  function_name                  = local.promote_name
+  description                    = "Promueve el modelo candidato: SSM active_version + insights ml_model (RF-13.2)"
+  role                           = local.lab_role
+  package_type                   = "Image"
+  image_uri                      = local.retrain_image
+  architectures                  = ["x86_64"]
+  memory_size                    = 512
+  timeout                        = 60
+  reserved_concurrent_executions = var.reserved_concurrency["retrain_promote"] # tope AWS Academy
 
   image_config {
     command = ["handler.promote"]

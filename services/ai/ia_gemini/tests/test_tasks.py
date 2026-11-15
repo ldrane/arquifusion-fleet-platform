@@ -16,6 +16,7 @@ def diagnose_event(**payload_overrides) -> dict:
 def test_diagnose_with_gemini_matches_contract():
     expected = json.loads((FIXTURES / "diagnose_response.json").read_text())
     gemini, transport = client(json_reply(expected["result"]))
+    gemini.model = expected["model"]  # la fixture fija un modelo de ejemplo; el real viene de GEMINI_MODEL
     out = service.handle_task(DIAGNOSE, gemini)  # request de la fixture tal cual (con candidate_parts §8.1)
 
     assert set(out) == set(expected)
@@ -139,3 +140,63 @@ def test_degraded_reason_en_tareas():
     assert service.handle_task(diagnose_event(), client(nf)[0])["degraded_reason"] == "model_not_found"
     assert service.handle_task(diagnose_event(), None)["degraded_reason"] == "other"
 
+def chat_event(messages, **extra) -> dict:
+    return {"task": "summarize_chat", "payload": {"incident_id": "INC-1", "messages": messages, **extra}}
+
+
+CHAT = [
+    {"role": "tecnico", "text": "Llegué a EX-023, el rodamiento del motor está desgastado", "author_id": "u-1"},
+    {"role": "supervisor", "text": "Ok, cámbialo", "quick_action": "aprobar"},
+    {"role": "tecnico", "text": "Rodamiento cambiado, temperatura normal"},
+]
+
+
+def test_summarize_chat_prompt_contains_only_the_conversation():
+    reply = {"summary": "s", "root_cause": None, "actions_taken": [], "parts_replaced": []}
+    gemini, transport = client(json_reply(reply))
+    event = chat_event(
+        [*CHAT, {"role": "tecnico", "text": "NOTA DE RESOLUCION", "kind": "resolution_notes"}],
+        resolution_notes="NOTAS DEL OPERADOR",
+        incident={"severity": "high"},
+    )
+    out = service.handle_task(event, gemini)
+    prompt = transport.bodies[0]["contents"][0]["parts"][0]["text"]
+    assert out["prompt_version"] == "summarize-chat-v2" and out["degraded"] is False
+    assert "rodamiento del motor" in prompt and "Ok, cámbialo" in prompt
+    for leaked in ("NOTAS DEL OPERADOR", "NOTA DE RESOLUCION", "severity", "incident_id", "author_id"):
+        assert leaked not in prompt
+
+
+def test_summarize_chat_keeps_contract_fields_and_drops_unmentioned_parts():
+    reply = {
+        "summary": "Se cambió el rodamiento",
+        "root_cause": "Rodamiento desgastado",
+        "actions_taken": ["cambio de rodamiento"],
+        "parts_replaced": ["Rodamiento de motor", "Bomba hidráulica"],
+    }
+    gemini, _ = client(json_reply(reply))
+    out = service.handle_task(chat_event(CHAT), gemini)
+    assert set(out["result"]) == {"summary", "root_cause", "actions_taken", "parts_replaced"}
+    assert out["result"]["parts_replaced"] == ["Rodamiento de motor"]  # la bomba nunca se mencionó en el chat
+
+
+def test_summarize_chat_without_messages_skips_llm():
+    gemini, transport = client()  # sin respuestas: si se llamara, fallaría el pop
+    out = service.handle_task(chat_event([], resolution_notes="Cambio de rodamiento"), gemini)
+    assert transport.bodies == [] and out["degraded"] is True
+    assert out["result"] == {
+        "summary": "No hubo conversación en el chat del incidente.",
+        "root_cause": None,
+        "actions_taken": [],
+        "parts_replaced": [],
+    }
+    assert "rodamiento" not in out["result"]["summary"].lower()
+
+
+def test_summarize_chat_fallback_uses_only_chat():
+    out = service.handle_task(chat_event(CHAT, resolution_notes="NOTAS DEL OPERADOR"), None)
+    result = out["result"]
+    assert out["degraded"] is True and "NOTAS" not in result["summary"]
+    assert result["summary"].startswith("Conversación de 3 mensajes entre supervisor, tecnico.")
+    assert "rodamiento del motor" in result["summary"] and "temperatura normal" in result["summary"]
+    assert result["actions_taken"] == ["aprobar"] and result["parts_replaced"] == [] and result["root_cause"] is None

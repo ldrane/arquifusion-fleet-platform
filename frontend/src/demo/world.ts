@@ -27,17 +27,22 @@ import { COMPONENT_BY_ID, GROUP_CAUSE, MODEL_BY_ID, SCENARIO_BY_KEY, SCENARIOS, 
 import { clamp, gaussian, hash, mulberry32, pick } from "./rng";
 
 // ------------------------------------------------------------------ tiempos de la simulación (ms)
+// Acelerados para ver el flujo completo en menos tiempo (todo.md "actualizaciones más rápidas"); antes → después:
+// tick 2500→1500, ai 2500→2000, assign 5000→3500, ackTimeout 150→120 s, autoAck 18→12 s, autoResolve 70→45 s,
+// close 4000→3000, spawn 40-80 s→25-50 s. ackTimeoutProtected (TEC-07) no cambia: el pitch necesita margen.
 const T = {
-  tick: 2500,
-  ai: 2500, // ia-gemini diagnose
-  assign: 5000, // scoring + asignación
-  ackTimeout: 150_000, // EsperarAceptacion: escalamiento
+  tick: 1500,
+  ai: 2000, // ia-gemini diagnose
+  assign: 3500, // scoring + asignación
+  ackTimeout: 120_000, // EsperarAceptacion: escalamiento
   ackTimeoutProtected: 15 * 60_000, // el técnico demo (TEC-07) tiene más margen para el pitch
-  autoAck: 18_000,
-  autoResolve: 70_000,
-  close: 4000, // resumen IA + cierre
-  spawnMin: 40_000,
-  spawnMax: 80_000,
+  autoAck: 12_000,
+  autoResolve: 45_000,
+  close: 3000, // resumen IA + cierre
+  spawnMin: 25_000,
+  spawnMax: 50_000,
+  firstSpawn: 20_000, // antes 30_000
+  silentRecovery: 11 * 60_000, // antes 13 min: la máquina sin señal (silentSince = −9 min) vuelve a los ~2 min
 };
 const MAX_OPEN = 8;
 
@@ -135,7 +140,7 @@ export class DemoWorld {
     this.seedState(now);
     this.seedHistory(now);
     this.seedOpen(now);
-    this.nextSpawnAt = now + 30_000;
+    this.nextSpawnAt = now + T.firstSpawn;
     this.dirty.clear();
   }
 
@@ -174,7 +179,7 @@ export class DemoWorld {
         model: s.model,
         type: s.type,
         location: { ...s.location },
-        status: "operational",
+        status: s.status ?? "operational", // seed v4: algunas en taller (maintenance) o en reserva (stopped)
         severity: "info",
         health_score: s.health_score,
         last_seen_at: iso(now - Math.floor(this.rand() * 25_000)),
@@ -263,6 +268,9 @@ export class DemoWorld {
         technician_score: tech.score,
         ai_diagnosis: this.diagnosis(sc, m, 0.62 + rand() * 0.3),
         resolution_summary: sc.summary,
+        resolution_notes: `Trabajo terminado: ${comps.map((c) => COMPONENT_BY_ID.get(c)?.name ?? c).join(", ") || "ajuste en sitio"}. Equipo probado y liberado.`,
+        resolved_by: { user_id: this.techs.get(tech.technician_id)?.user_id ?? tech.technician_id, role: "tecnico" },
+        closed_at: iso(resolved),
         assigned_at: iso(assigned),
         accepted_at: iso(accepted),
         resolved_at: iso(resolved),
@@ -286,7 +294,9 @@ export class DemoWorld {
   private seedOpen(now: number) {
     const byId = (id: string) => this.machines.get(id)!;
     const inZone = (zone: string, type?: string) =>
-      [...this.machines.values()].filter((m) => m.home.zone === zone && (!type || m.type === type) && !m.open_incident_id);
+      [...this.machines.values()].filter(
+        (m) => m.home.zone === zone && (!type || m.type === type) && !m.open_incident_id && m.status === "operational",
+      );
 
     // Norte: un camión ya en atención con TEC-01 (así TEC-07 queda como mejor candidato para EX-023)
     const truckN = inZone("norte", "mining_truck")[0]!;
@@ -365,7 +375,7 @@ export class DemoWorld {
       common_cause: common ?? null,
       top_factors: this.factors(sc),
       confidence: Math.round(confidence * 100) / 100,
-      model_version: "gemini-2.5-flash",
+      model_version: "gemini-3.8-flash",
       prompt_version: "diagnose@1.3",
       degraded: false,
     };
@@ -459,6 +469,9 @@ export class DemoWorld {
       ch.escalated = inc.escalated;
       ch.downtime_minutes = inc.downtime_minutes;
       ch.resolution_summary = inc.resolution_summary;
+      ch.resolution_notes = inc.resolution_notes;
+      ch.resolved_by = inc.resolved_by;
+      ch.closed_at = inc.closed_at;
     }
   }
 
@@ -604,9 +617,11 @@ export class DemoWorld {
     const m = this.machines.get(inc.machine_ids[0]!)!;
     inc.components_replaced = components.length ? components : this.partsFor(m.model, inc.specialty);
     inc.cost_usd = cost ?? inc.components_replaced.reduce((a, c) => a + (COMPONENT_BY_ID.get(c)?.cost_usd ?? 0), 0) + 320;
+    // Las notas de resolución NO van al chat: se guardan aparte (bloque "Notas de resolución" en la UI)
+    inc.resolution_notes = notes || "Trabajo terminado, equipo probado.";
+    inc.resolved_by = { user_id: by.user_id, role: by.role };
     this.syncChildren(inc);
-    this.post(inc.incident_id, by, notes || "Trabajo terminado, equipo probado.", at, "resolve");
-    this.post(inc.incident_id, SYSTEM, "Resolución recibida (resolve_token). Generando resumen IA y cerrando…", at + 500);
+    this.post(inc.incident_id, SYSTEM, "Resolución recibida (resolve_token). Generando resumen IA del chat y cerrando…", at + 500);
     this.touch("incidents");
   }
 
@@ -617,8 +632,12 @@ export class DemoWorld {
     inc.status = "closed";
     inc.closeAt = Infinity;
     inc.downtime_minutes = Math.round((new Date(inc.resolved_at!).getTime() - new Date(inc.detected_at).getTime()) / 60000);
-    const notes = (this.messages.get(inc.incident_id) ?? []).filter((x) => x.quick_action === "resolve").pop()?.text;
-    inc.resolution_summary = `${group ? GROUP_CAUSE.summary : sc.summary}${notes ? ` Nota del técnico: «${notes}».` : ""} Tiempo fuera de servicio: ${inc.downtime_minutes} min.`;
+    inc.closed_at = iso(at);
+    // ≈ summarize_chat: SOLO la conversación del chat (sin mensajes del sistema ni notas de resolución)
+    const chat = (this.messages.get(inc.incident_id) ?? []).filter((x) => x.role !== "sistema");
+    inc.resolution_summary = chat.length
+      ? `${group ? GROUP_CAUSE.summary : sc.summary} (resumen de ${chat.length} mensajes del chat)`
+      : "No hubo conversación en el chat del incidente.";
     this.syncChildren(inc);
 
     const tech = inc.assigned_technician_id ? this.techs.get(inc.assigned_technician_id) : undefined;
@@ -671,9 +690,9 @@ export class DemoWorld {
         this.refreshRisk(m);
       }
     }
-    // Silencio (heartbeat): la máquina vuelve a reportar tras ~4 min
+    // Silencio (heartbeat): la máquina vuelve a reportar tras ~2 min de demo
     for (const m of this.machines.values()) {
-      if (m.status === "silent" && m.silentSince && now - m.silentSince > 13 * 60_000) {
+      if (m.status === "silent" && m.silentSince && now - m.silentSince > T.silentRecovery) {
         m.status = "operational";
         m.silentSince = undefined;
       }
@@ -827,7 +846,10 @@ export class DemoWorld {
       this.flush();
       return inc;
     }
-    const candidates = [...this.machines.values()].filter((m) => !m.open_incident_id && (!zone || m.home.zone === zone));
+    // Sin máquina explícita se elige una operativa (seed v4: las que están en taller o en reserva no generan anomalías)
+    const candidates = [...this.machines.values()].filter(
+      (m) => !m.open_incident_id && m.status === "operational" && (!zone || m.home.zone === zone),
+    );
     const m = machineId ? this.machines.get(machineId) : pick(this.rand, candidates);
     if (!m) throw new ApiError(404, "NOT_FOUND", "No hay máquina disponible");
     const sc = SCENARIO_BY_KEY.get(scenarioKey) ?? this.scenarioFor(m);

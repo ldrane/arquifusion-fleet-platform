@@ -1,8 +1,9 @@
 terraform {
   required_version = ">= 1.10"
   required_providers {
-    aws     = { source = "hashicorp/aws", version = "~> 5.0" }
-    google  = { source = "hashicorp/google", version = "~> 6.0" }
+    aws         = { source = "hashicorp/aws", version = "~> 5.0" }
+    google      = { source = "hashicorp/google", version = "~> 6.0" }
+    google-beta = { source = "hashicorp/google-beta", version = "~> 6.0" }
     archive = { source = "hashicorp/archive", version = "~> 2.4" }
   }
   backend "s3" {
@@ -17,6 +18,12 @@ provider "aws" {
 }
 
 provider "google" {
+  project = var.gcp_project_id
+  region  = var.gcp_region
+}
+
+# Solo para google_project_service_identity (agente de servicio de Pub/Sub, notify.tf)
+provider "google-beta" {
   project = var.gcp_project_id
   region  = var.gcp_region
 }

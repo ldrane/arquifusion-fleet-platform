@@ -1006,11 +1006,20 @@ components:
             prompt_version: {type: string}
             degraded: {type: boolean}
             degraded_reason: {$ref: '#/components/schemas/DegradedReason'}
-        resolution_summary: {type: string, nullable: true}
+        resolution_summary: {type: string, nullable: true, description: 'Resumen IA SOLO del chat del incidente (summarize_chat, RF-16.8)'}
+        resolution_notes: {type: string, nullable: true, description: 'Notas de quien resolvió (POST /incidents/{id}/resolve); no entran al resumen del chat'}
+        resolved_by:
+          type: object
+          nullable: true
+          description: Autor de las notas de resolución
+          properties:
+            user_id: {type: string}
+            role: {type: string}
         detected_at: {type: string, format: date-time}
         assigned_at: {type: string, format: date-time, nullable: true}
         accepted_at: {type: string, format: date-time, nullable: true}
         resolved_at: {type: string, format: date-time, nullable: true}
+        closed_at: {type: string, format: date-time, nullable: true}
         downtime_minutes: {type: integer, nullable: true}
         components_replaced: {type: array, items: {type: string}}
         cost_usd: {type: number, nullable: true}

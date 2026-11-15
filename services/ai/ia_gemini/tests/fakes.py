@@ -1,4 +1,4 @@
-"""Dobles de prueba para el cliente Gemini."""
+"""Dobles de prueba para los proveedores LLM (Gemini por transport, Bedrock con botocore Stubber)."""
 
 import json
 
@@ -35,3 +35,24 @@ def client(*replies) -> tuple[GeminiClient, ScriptedTransport]:
 
 TIMEOUT = GeminiError("Gemini no respondió: timed out", "timeout")
 HTTP_503 = GeminiError("HTTP 503 de Gemini")
+
+
+def bedrock(model="amazon.nova-micro-v1:0"):
+    """BedrockClient con un cliente boto3 real envuelto en Stubber (valida los parámetros contra el modelo)."""
+    import boto3
+    from bedrock_client import BedrockClient
+    from botocore.stub import Stubber
+
+    raw = boto3.client("bedrock-runtime", region_name="us-east-1")
+    stubber = Stubber(raw)
+    stubber.activate()
+    return BedrockClient(model=model, client_factory=lambda _t: raw), stubber
+
+
+def converse_reply(*content, stop="end_turn") -> dict:
+    return {
+        "output": {"message": {"role": "assistant", "content": list(content)}},
+        "stopReason": stop,
+        "usage": {"inputTokens": 1, "outputTokens": 1, "totalTokens": 2},
+        "metrics": {"latencyMs": 1},
+    }

@@ -89,17 +89,18 @@ resource "aws_cloudwatch_log_group" "analytics" {
 }
 
 resource "aws_lambda_function" "analytics" {
-  for_each         = local.analytics_lambdas
-  function_name    = "${local.prefix}-analytics-${replace(each.key, "_", "-")}"
-  description      = each.value.description
-  role             = local.lab_role
-  runtime          = "python3.12"
-  handler          = "handler.handler"
-  filename         = data.archive_file.analytics[each.key].output_path
-  source_code_hash = data.archive_file.analytics[each.key].output_base64sha256
-  layers           = [aws_lambda_layer_version.common.arn]
-  memory_size      = 512
-  timeout          = 300
+  for_each                       = local.analytics_lambdas
+  function_name                  = "${local.prefix}-analytics-${replace(each.key, "_", "-")}"
+  description                    = each.value.description
+  role                           = local.lab_role
+  runtime                        = "python3.12"
+  handler                        = "handler.handler"
+  filename                       = data.archive_file.analytics[each.key].output_path
+  source_code_hash               = data.archive_file.analytics[each.key].output_base64sha256
+  layers                         = [aws_lambda_layer_version.common.arn]
+  memory_size                    = 512
+  timeout                        = 300
+  reserved_concurrent_executions = var.reserved_concurrency["analytics"] # tope AWS Academy (la SFN reintenta throttles)
 
   tracing_config {
     mode = "Active"

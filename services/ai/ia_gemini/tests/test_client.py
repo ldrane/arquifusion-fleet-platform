@@ -17,7 +17,7 @@ def test_timeout_never_exceeds_limit():
     gemini, _ = client()
     gemini._transport = lambda url, h, b, timeout: seen.append(timeout) or json_reply({})
     gemini.generate(contents=[], timeout_s=60)
-    assert seen == [8.0]
+    assert seen == [gemini.timeout_s]
 
 
 def test_urllib_transport_wraps_http_errors(monkeypatch):
@@ -64,3 +64,51 @@ def test_modelo_unico_desde_env(monkeypatch):
     assert GeminiClient(api_key_provider=lambda: "k").model == DEFAULT_MODEL
     monkeypatch.setenv("GEMINI_MODEL", "gemini-x")
     assert GeminiClient(api_key_provider=lambda: "k").model == "gemini-x"
+    ("model", "expected"),
+    [
+        ("gemini-2.5-flash-lite", {"thinkingBudget": 0}),
+        ("gemini-2.5-flash", {"thinkingBudget": 0}),
+        ("gemini-2.5-pro", None),
+        ("gemini-flash-lite-latest", None),
+        ("gemini-3.8-flash", None),
+    ],
+)
+def test_thinking_config_only_where_supported(model, expected):
+    gemini, transport = client(json_reply({}))
+    gemini.model = model
+    gemini.generate(contents=[])
+    assert transport.bodies[0]["generationConfig"].get("thinkingConfig") == expected
+
+
+def test_gemini_error_is_llm_error():
+    from llm_client import LLMError
+
+    assert issubclass(GeminiError, LLMError)
+
+
+def test_build_client_selects_provider():
+    from bedrock_client import BedrockClient
+    from gemini_client import GeminiClient
+    from llm_client import build_client
+
+    g = build_client({"GEMINI_MODEL": "gemini-x", "LLM_TIMEOUT_S": "13"}, gemini_api_key_provider=lambda: "k")
+    assert isinstance(g, GeminiClient) and g.model == "gemini-x" and g.timeout_s == 13.0
+    b = build_client({"LLM_PROVIDER": "bedrock", "BEDROCK_MODEL_ID": "amazon.nova-lite-v1:0"})
+    assert isinstance(b, BedrockClient) and b.model == "amazon.nova-lite-v1:0" and b.provider == "bedrock"
+    with pytest.raises(ValueError):
+        build_client({"LLM_PROVIDER": "openai"})
+
+
+def test_to_json_schema_translates_gemini_dialect():
+    from llm_client import to_json_schema
+
+    schema = {
+        "type": "OBJECT",
+        "properties": {"a": {"type": "STRING", "nullable": True}, "b": {"type": "ARRAY", "items": {"type": "NUMBER"}}},
+        "required": ["a"],
+    }
+    assert to_json_schema(schema) == {
+        "type": "object",
+        "properties": {"a": {"type": ["string", "null"]}, "b": {"type": "array", "items": {"type": "number"}}},
+        "required": ["a"],
+    }

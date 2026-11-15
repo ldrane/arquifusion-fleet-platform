@@ -1,12 +1,14 @@
 """Detección de máquinas silenciosas (OBS-09, RF-05).
 
-Cada 5 min (EventBridge Scheduler) recorre `machines` y marca `status = silent` las máquinas cuya última lectura
-(`last_seen_at`) es más antigua que `factor × expected_interval_s` (por defecto 3 × 60 s). Por cada máquina que pasa a
-silenciosa emite UN `MachineSilent` (contratos.md §3) con `zone` (del seed) y `silence_threshold_s` = factor ×
-`expected_interval_s` (#21). La escritura es condicional sobre `last_seen_at`, así que:
+Cada 1 min (EventBridge Scheduler; antes 5 min) recorre `machines` y marca `status = silent` las máquinas cuya
+última lectura (`last_seen_at`) es más antigua que `factor × expected_interval_s` (por defecto 3 × 60 s). Por cada
+máquina que pasa a silenciosa emite UN `MachineSilent` (contratos.md §3) con `zone` (del seed) y
+`silence_threshold_s` = factor × `expected_interval_s` (#21). La escritura es condicional sobre `last_seen_at`, así que:
 - no se emite dos veces por el mismo silencio;
 - si llega una lectura nueva entre el scan y la escritura, no se marca.
 Cuando `procesar` recibe una lectura nueva, el status deja de ser `silent` y un silencio posterior vuelve a emitir.
+Protección de tormenta: si >= 5 máquinas y >= 20 % de las activas se callan a la vez (caída de la ingesta, p. ej. se
+detuvo el simulador) se marcan `silent` sin emitir eventos; fuera de tormenta se emiten como máximo 5 por corrida.
 
 Nota de escala: el scan es suficiente para cientos de máquinas. Para miles conviene un GSI por `status`/`last_seen_at`.
 """
@@ -27,6 +29,10 @@ SILENT = "silent"
 class HeartbeatConfig:
     default_interval_s: int = 60
     silence_factor: int = 3
+    # Protección de tormenta (RNF costo / límite de concurrencia de AWS Academy):
+    max_events_per_run: int = 5  # MachineSilent máximos por corrida
+    storm_min_machines: int = 5  # silencio simultáneo de >= N máquinas…
+    storm_ratio: float = 0.2  # …y >= 20 % de las activas = caída de ingesta, no fallas individuales
 
 
 def _iso(dt: datetime) -> str:
@@ -57,17 +63,37 @@ class Heartbeat:
 
     def run(self) -> dict:
         now = self._clock()
-        candidates = silenced = 0
+        active = 0
+        pending: list[tuple[dict, int, int]] = []
         for machine in self._scan_active():
+            active += 1
             interval = int(machine.get("expected_interval_s") or self._config.default_interval_s)
             threshold = interval * self._config.silence_factor
-            if now - _parse(machine["last_seen_at"]) <= timedelta(seconds=threshold):
+            if now - _parse(machine["last_seen_at"]) > timedelta(seconds=threshold):
+                pending.append((machine, interval, threshold))
+
+        cfg = self._config
+        # Tormenta = caída de la ingesta (p. ej. se detuvo el simulador), no N fallas de máquina: se marcan `silent`
+        # para el mapa pero NO se abren incidentes (cada uno dispara ~5 Lambdas; AWS Academy limita a 10 en paralelo).
+        storm = len(pending) >= cfg.storm_min_machines and len(pending) >= cfg.storm_ratio * active
+        silenced = suppressed = 0
+        for machine, interval, threshold in pending:
+            if not storm and silenced >= cfg.max_events_per_run:
+                break  # el resto se evalúa en el próximo ciclo (1 min): acota la ráfaga de GestionIncidente
+            if not self._mark_silent(machine, now):
                 continue
-            candidates += 1
-            if self._mark_silent(machine, now):
-                self._emit(machine, interval, threshold, now)
-                silenced += 1
-        return {"candidates": candidates, "silenced": silenced}
+            if storm:
+                suppressed += 1
+                continue
+            self._emit(machine, interval, threshold, now)
+            silenced += 1
+        return {
+            "active": active,
+            "candidates": len(pending),
+            "silenced": silenced,
+            "storm": storm,
+            "storm_suppressed": suppressed,
+        }
 
     def _scan_active(self):
         """Máquinas con lectura previa que aún no están en silencio, paginando el scan."""

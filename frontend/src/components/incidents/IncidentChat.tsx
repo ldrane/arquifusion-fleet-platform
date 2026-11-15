@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { errorMessage } from "@/api/errors";
 import type { ChatMessage, Incident } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
-import { can } from "@/auth/permissions";
 import { DEMO_USERS, SEED } from "@/demo/data";
 import { fmtTime, ROLE_LABEL } from "@/lib/format";
 import { hasFirebase } from "@/config";
+import { CHAT_WRITE_HINT, chatWriteState } from "@/realtime/chatPolicy";
 import { realtime } from "@/services";
 import { useViewState } from "@/state/viewState";
 import { Button, cx, Empty, Icon } from "../ui";
@@ -31,6 +31,14 @@ function useOnline() {
     };
   }, []);
   return online;
+}
+
+/** Los errores de Firestore traen `code` (p. ej. permission-denied cuando las Security Rules rechazan). */
+function chatError(e: unknown): string {
+  const code = typeof e === "object" && e && "code" in e ? String((e as { code: unknown }).code) : "";
+  if (code === "permission-denied") return "Firestore rechazó la operación (Security Rules): revisa tu rol, zona o asignación.";
+  if (code === "unauthenticated") return "Sesión de Firebase vencida: vuelve a iniciar sesión.";
+  return errorMessage(e);
 }
 
 function authorName(m: ChatMessage) {
@@ -60,7 +68,9 @@ export function IncidentChat({ incident }: { incident: Incident }) {
   const online = useOnline();
   const toast = useToast();
   const list = useRef<HTMLDivElement>(null);
-  const canWrite = realtime.canChat && can(me?.role, "chatWrite") && incident.status !== "closed";
+  // Mismas condiciones que firestore.rules (técnico: solo si está asignado); si no, el mensaje se descartaría.
+  const writeState = chatWriteState(me, incident);
+  const canWrite = realtime.canChat && writeState === "ok";
 
   useEffect(() => {
     setMessages(null);
@@ -78,7 +88,7 @@ export function IncidentChat({ incident }: { incident: Incident }) {
       await realtime.sendMessage(channel, text.trim(), quick ?? null, (err) => toast(sendErrorMessage(err), "bad"));
       if (!quick) setDraft("");
     } catch (e) {
-      toast(errorMessage(e), "bad");
+      toast(chatError(e), "bad");
     } finally {
       setSending(false);
     }
@@ -103,7 +113,7 @@ export function IncidentChat({ incident }: { incident: Incident }) {
         </div>
       )}
       <div ref={list} className="flex-1 space-y-3 overflow-y-auto p-4 scroll-thin" aria-live="polite">
-        {error != null && <p className="text-xs text-error">{errorMessage(error)}</p>}
+        {error != null && <p className="text-xs text-error">{chatError(error)}</p>}
         {messages === null && <p className="text-xs text-on-surface-variant">Conectando al canal…</p>}
         {messages?.length === 0 && <p className="text-center text-xs text-on-surface-variant">Aún no hay mensajes.</p>}
         {messages?.map((m) => {
@@ -185,7 +195,7 @@ export function IncidentChat({ incident }: { incident: Incident }) {
         </div>
       ) : (
         <p className="border-t border-hairline px-4 py-3 text-center text-xs text-on-surface-variant">
-          {incident.status === "closed" ? "Incidente cerrado: el chat queda como registro de solo lectura." : "Tu rol puede leer el chat, pero no escribir (Security Rules)."}
+          {writeState === "ok" ? CHAT_WRITE_HINT.role : CHAT_WRITE_HINT[writeState]}
         </p>
       )}
     </div>

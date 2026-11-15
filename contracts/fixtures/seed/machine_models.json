@@ -232,7 +232,8 @@
       "CMP-019",
       "CMP-020",
       "CMP-021",
-      "CMP-025"
+      "CMP-025",
+      "CMP-028"
     ]
   },
   {
@@ -292,7 +293,8 @@
       "CMP-019",
       "CMP-020",
       "CMP-022",
-      "CMP-025"
+      "CMP-025",
+      "CMP-027"
     ]
   },
   {
@@ -352,7 +354,8 @@
       "CMP-019",
       "CMP-020",
       "CMP-022",
-      "CMP-025"
+      "CMP-025",
+      "CMP-027"
     ]
   },
   {
@@ -411,7 +414,9 @@
       "CMP-018",
       "CMP-019",
       "CMP-020",
-      "CMP-023"
+      "CMP-023",
+      "CMP-026",
+      "CMP-030"
     ]
   },
   {
@@ -470,7 +475,9 @@
       "CMP-018",
       "CMP-019",
       "CMP-020",
-      "CMP-023"
+      "CMP-023",
+      "CMP-026",
+      "CMP-030"
     ]
   },
   {
@@ -530,7 +537,9 @@
       "CMP-019",
       "CMP-020",
       "CMP-023",
-      "CMP-024"
+      "CMP-024",
+      "CMP-029",
+      "CMP-030"
     ]
   },
   {
@@ -590,7 +599,554 @@
       "CMP-019",
       "CMP-020",
       "CMP-023",
-      "CMP-024"
+      "CMP-024",
+      "CMP-029",
+      "CMP-030"
+    ]
+  },
+  {
+    "model_id": "HIT-EX1200",
+    "brand": "Hitachi",
+    "type": "excavator",
+    "payload_t": 6.7,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        89,
+        3
+      ],
+      "vibration_mm_s": [
+        4.3,
+        0.6
+      ],
+      "pressure_bar": [
+        310,
+        15
+      ],
+      "fuel_rate_lph": [
+        80,
+        7
+      ],
+      "load_pct": [
+        71,
+        10
+      ],
+      "speed_kmh": [
+        2.8,
+        1.3
+      ],
+      "rpm": [
+        1800,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-010",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023"
+    ]
+  },
+  {
+    "model_id": "LIE-R9400",
+    "brand": "Liebherr",
+    "type": "excavator",
+    "payload_t": 22.0,
+    "maintenance_interval_h": 500,
+    "nominal": {
+      "temperature_c": [
+        91,
+        3
+      ],
+      "vibration_mm_s": [
+        4.7,
+        0.6
+      ],
+      "pressure_bar": [
+        330,
+        15
+      ],
+      "fuel_rate_lph": [
+        150,
+        11
+      ],
+      "load_pct": [
+        73,
+        10
+      ],
+      "speed_kmh": [
+        2.2,
+        1.1
+      ],
+      "rpm": [
+        1800,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-010",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023"
+    ]
+  },
+  {
+    "model_id": "LIE-T284",
+    "brand": "Liebherr",
+    "type": "mining_truck",
+    "payload_t": 363.0,
+    "maintenance_interval_h": 500,
+    "nominal": {
+      "temperature_c": [
+        94,
+        3
+      ],
+      "vibration_mm_s": [
+        3.7,
+        0.5
+      ],
+      "pressure_bar": [
+        190,
+        10
+      ],
+      "fuel_rate_lph": [
+        215,
+        15
+      ],
+      "load_pct": [
+        76,
+        15
+      ],
+      "speed_kmh": [
+        27,
+        8
+      ],
+      "rpm": [
+        1750,
+        90
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-011",
+      "CMP-012",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-021",
+      "CMP-025",
+      "CMP-028"
+    ]
+  },
+  {
+    "model_id": "BEL-75131",
+    "brand": "BelAZ",
+    "type": "mining_truck",
+    "payload_t": 130.0,
+    "maintenance_interval_h": 400,
+    "nominal": {
+      "temperature_c": [
+        90,
+        3
+      ],
+      "vibration_mm_s": [
+        3.9,
+        0.5
+      ],
+      "pressure_bar": [
+        170,
+        10
+      ],
+      "fuel_rate_lph": [
+        120,
+        10
+      ],
+      "load_pct": [
+        74,
+        15
+      ],
+      "speed_kmh": [
+        32,
+        8
+      ],
+      "rpm": [
+        1800,
+        90
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-011",
+      "CMP-012",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-021",
+      "CMP-025",
+      "CMP-028"
+    ]
+  },
+  {
+    "model_id": "VOL-L350H",
+    "brand": "Volvo",
+    "type": "loader",
+    "payload_t": 11.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        88,
+        3
+      ],
+      "vibration_mm_s": [
+        3.9,
+        0.6
+      ],
+      "pressure_bar": [
+        260,
+        15
+      ],
+      "fuel_rate_lph": [
+        45,
+        5
+      ],
+      "load_pct": [
+        68,
+        12
+      ],
+      "speed_kmh": [
+        12,
+        4
+      ],
+      "rpm": [
+        1750,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-022",
+      "CMP-025",
+      "CMP-027"
+    ]
+  },
+  {
+    "model_id": "LIE-L586",
+    "brand": "Liebherr",
+    "type": "loader",
+    "payload_t": 6.0,
+    "maintenance_interval_h": 400,
+    "nominal": {
+      "temperature_c": [
+        87,
+        3
+      ],
+      "vibration_mm_s": [
+        3.8,
+        0.6
+      ],
+      "pressure_bar": [
+        250,
+        15
+      ],
+      "fuel_rate_lph": [
+        32,
+        4
+      ],
+      "load_pct": [
+        66,
+        12
+      ],
+      "speed_kmh": [
+        13,
+        4
+      ],
+      "rpm": [
+        1700,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-022",
+      "CMP-025",
+      "CMP-027"
+    ]
+  },
+  {
+    "model_id": "LIE-PR776",
+    "brand": "Liebherr",
+    "type": "bulldozer",
+    "payload_t": 0.0,
+    "maintenance_interval_h": 400,
+    "nominal": {
+      "temperature_c": [
+        90,
+        3
+      ],
+      "vibration_mm_s": [
+        5.1,
+        0.7
+      ],
+      "pressure_bar": [
+        260,
+        12
+      ],
+      "fuel_rate_lph": [
+        80,
+        6
+      ],
+      "load_pct": [
+        69,
+        12
+      ],
+      "speed_kmh": [
+        6,
+        2
+      ],
+      "rpm": [
+        1850,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023",
+      "CMP-026",
+      "CMP-030"
+    ]
+  },
+  {
+    "model_id": "CAT-MD6250",
+    "brand": "Caterpillar",
+    "type": "drill",
+    "payload_t": 0.0,
+    "maintenance_interval_h": 250,
+    "nominal": {
+      "temperature_c": [
+        88,
+        3
+      ],
+      "vibration_mm_s": [
+        6.2,
+        0.8
+      ],
+      "pressure_bar": [
+        345,
+        20
+      ],
+      "fuel_rate_lph": [
+        95,
+        7
+      ],
+      "load_pct": [
+        66,
+        12
+      ],
+      "speed_kmh": [
+        1.5,
+        0.8
+      ],
+      "rpm": [
+        1800,
+        70
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023",
+      "CMP-024",
+      "CMP-029",
+      "CMP-030"
+    ]
+  },
+  {
+    "model_id": "EPI-D65",
+    "brand": "Epiroc",
+    "type": "drill",
+    "payload_t": 0.0,
+    "maintenance_interval_h": 400,
+    "nominal": {
+      "temperature_c": [
+        85,
+        3
+      ],
+      "vibration_mm_s": [
+        5.5,
+        0.8
+      ],
+      "pressure_bar": [
+        250,
+        15
+      ],
+      "fuel_rate_lph": [
+        45,
+        5
+      ],
+      "load_pct": [
+        63,
+        12
+      ],
+      "speed_kmh": [
+        2.5,
+        1.0
+      ],
+      "rpm": [
+        2000,
+        80
+      ]
+    },
+    "component_ids": [
+      "CMP-001",
+      "CMP-002",
+      "CMP-003",
+      "CMP-004",
+      "CMP-005",
+      "CMP-006",
+      "CMP-007",
+      "CMP-008",
+      "CMP-009",
+      "CMP-011",
+      "CMP-012",
+      "CMP-013",
+      "CMP-014",
+      "CMP-015",
+      "CMP-016",
+      "CMP-017",
+      "CMP-018",
+      "CMP-019",
+      "CMP-020",
+      "CMP-023",
+      "CMP-024",
+      "CMP-029",
+      "CMP-030"
     ]
   }
 ]

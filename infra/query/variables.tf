@@ -27,11 +27,21 @@ variable "gcp_project_id" {
 variable "replica_heartbeat_s" {
   description = "replicar: máximo 1 write cada N s por máquina si solo cambian campos ruidosos (0 = siempre)"
   type        = number
-  default     = 300
+  default     = 60 # antes 300: el mapa (Firestore) ve posición/salud cada 1 min. ≤ 100 writes/min solo con el stream activo
 }
 
 variable "alarms_enabled" {
   description = "Crea alarmas hacia SNS {prefix}-platform-alarms (lo crea B en infra/base)"
   type        = bool
   default     = true
+}
+
+# Presupuesto de concurrencia (AWS Academy: <=10 Lambdas en paralelo, RNF-costo). Ver docs/concurrencia-lambda.md.
+variable "reserved_concurrency" {
+  description = "Concurrencia reservada por Lambda (clave = local.functions). replicar=2 cubre 3 streams de 1 shard con reintentos."
+  type        = map(number)
+  default = {
+    api_lectura = 2
+    replicar    = 2
+  }
 }

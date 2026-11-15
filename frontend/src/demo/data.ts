@@ -8,7 +8,7 @@ import machineModelsJson from "@seed/machine_models.json";
 import machinesJson from "@seed/machines.json";
 import techniciansJson from "@seed/technicians.json";
 import warehousesJson from "@seed/warehouses.json";
-import type { Location, MachineType, Severity, Specialty } from "@/api/types";
+import type { Location, MachineStatus, MachineType, Severity, Specialty } from "@/api/types";
 
 export interface SeedMachine {
   machine_id: string;
@@ -18,6 +18,8 @@ export interface SeedMachine {
   zone: string;
   location: Location;
   home_location: Location;
+  /** seed v4: estado inicial (operational | maintenance | stopped). El simulador (A) lo respeta. */
+  status?: MachineStatus;
   health_score: number;
   operating_hours: number;
   last_maintenance_at: string;

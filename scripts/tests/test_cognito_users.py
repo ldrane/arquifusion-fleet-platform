@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import cognito_users  # noqa: E402
+import seed_data  # noqa: E402
 
 
 class FakeCognito:
@@ -75,7 +76,7 @@ def test_crea_staff_y_tecnicos_con_claims(pool, capsys):
     client, pool_id = pool
     assert cognito_users.main(["--stage", "t", "--password", "Demo-2026!x", "--create-groups"], client=client) == 0
     users = client.list_users(UserPoolId=pool_id)["Users"]
-    assert len(users) == 5 + 12
+    assert len(users) == 5 + len(seed_data.TECHNICIANS)  # seed v4: 16 técnicos
     a = _attrs(client, pool_id, "u-tec-07")
     assert a["custom:technician_id"] == "TEC-07" and a["custom:zone"] == "norte"
     assert "custom:technician_id" not in _attrs(client, pool_id, "u-sup-01")
@@ -105,4 +106,4 @@ def test_sin_grupos_y_sin_create_groups_falla(pool):
 
 def test_usuarios_coinciden_con_el_seed():
     techs = {u["user_id"]: u for u in cognito_users.demo_users() if u["role"] == "tecnico"}
-    assert techs["u-tec-07"]["technician_id"] == "TEC-07" and len(techs) == 12
+    assert techs["u-tec-07"]["technician_id"] == "TEC-07" and len(techs) == len(seed_data.TECHNICIANS)

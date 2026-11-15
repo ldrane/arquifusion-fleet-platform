@@ -23,59 +23,115 @@ function machineColor(m: Machine) {
   return m.status === "operational" ? "#4edea3" : "#ffb95f";
 }
 
+/**
+ * Contraste de los marcadores según el mapa base: sobre la imagen satelital (tonos tierra, medios) el borde oscuro
+ * se pierde, así que se usa un anillo claro + sombra oscura; sobre el mapa oscuro se mantiene el borde oscuro.
+ */
+const MARKER_RING: Record<Basemap, { border: string; shadow: string }> = {
+  satellite: { border: "#f8fafc", shadow: "0 0 0 1px rgba(0,0,0,.55), 0 1px 6px rgba(0,0,0,.75)" },
+  dark: { border: "#0b0c10", shadow: "" },
+};
+
 const iconCache = new Map<string, L.DivIcon>();
 
-function machineIcon(m: Machine, selected: boolean) {
+function machineIcon(m: Machine, selected: boolean, layer: Basemap) {
   const color = machineColor(m);
   const alert = m.severity === "critical" || m.severity === "high";
-  const key = `${color}|${alert}|${selected}|${m.status}`;
+  const key = `${color}|${alert}|${selected}|${m.status}|${layer}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
-  const size = alert ? 22 : 12;
+  const ring = MARKER_RING[layer];
+  const size = alert ? 22 : layer === "satellite" ? 14 : 12;
+  const glow = (spread: number) => `${ring.shadow ? `${ring.shadow},` : ""}0 0 ${spread}px ${color}`;
   const html = alert
     ? `<div style="position:relative;width:${size}px;height:${size}px">
          <span class="af-ping" style="position:absolute;inset:0;border-radius:9999px;background:${color};opacity:.35"></span>
-         <span style="position:absolute;inset:0;border-radius:9999px;background:${color};border:2px solid #0b0c10;box-shadow:0 0 12px ${color};display:flex;align-items:center;justify-content:center;color:#690005;font:700 12px 'Material Symbols Outlined'">priority_high</span>
+         <span style="position:absolute;inset:0;border-radius:9999px;background:${color};border:2px solid ${ring.border};box-shadow:${glow(12)};display:flex;align-items:center;justify-content:center;color:#690005;font:700 12px 'Material Symbols Outlined'">priority_high</span>
          ${selected ? `<span style="position:absolute;inset:-6px;border:1.5px solid #adc6ff;border-radius:9999px"></span>` : ""}
        </div>`
-    : `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid #0b0c10;box-shadow:0 0 6px ${color}${m.status === "silent" ? ";opacity:.7" : ""};${selected ? "outline:2px solid #adc6ff;outline-offset:2px" : ""}"></div>`;
+    : `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid ${ring.border};box-shadow:${glow(6)}${m.status === "silent" ? ";opacity:.8" : ""};${selected ? "outline:2px solid #adc6ff;outline-offset:2px" : ""}"></div>`;
   const icon = L.divIcon({ className: "af-marker", html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
   iconCache.set(key, icon);
   return icon;
 }
 
-const techIcon = (busy: boolean) =>
-  L.divIcon({
-    className: "af-marker",
-    html: `<div style="width:26px;height:26px;border-radius:8px;background:${busy ? "#ffb95f" : "#adc6ff"};color:#002e6a;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.6);border:2px solid #0b0c10;font:400 15px 'Material Symbols Outlined'">engineering</div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
-  });
+/** Íconos memorizados por variante: crear un divIcon nuevo en cada render obliga a Leaflet a redibujar el marcador. */
+function cachedIcon(key: string, make: () => L.DivIcon) {
+  const hit = iconCache.get(key);
+  if (hit) return hit;
+  const icon = make();
+  iconCache.set(key, icon);
+  return icon;
+}
 
-const warehouseIcon = L.divIcon({
-  className: "af-marker",
-  html: `<div style="width:22px;height:22px;border-radius:6px;background:#16181e;color:#a3a8b4;display:flex;align-items:center;justify-content:center;border:1px solid #2e323b;font:400 14px 'Material Symbols Outlined'">warehouse</div>`,
-  iconSize: [22, 22],
-  iconAnchor: [11, 11],
-});
+const techIcon = (busy: boolean, layer: Basemap) =>
+  cachedIcon(`tech|${busy}|${layer}`, () =>
+    L.divIcon({
+      className: "af-marker",
+      html: `<div style="width:26px;height:26px;border-radius:8px;background:${busy ? "#ffb95f" : "#adc6ff"};color:#002e6a;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.6);border:2px solid ${MARKER_RING[layer].border};font:400 15px 'Material Symbols Outlined'">engineering</div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+    }),
+  );
 
-/** Mapas base sin API key (Esri). "dark" para la consola; "satellite" para ver el tajo real. */
+const warehouseIcon = (layer: Basemap) =>
+  cachedIcon(`wh|${layer}`, () =>
+    L.divIcon({
+      className: "af-marker",
+      html: `<div style="width:22px;height:22px;border-radius:6px;background:#16181e;color:${layer === "satellite" ? "#e5e7eb" : "#a3a8b4"};display:flex;align-items:center;justify-content:center;border:1px solid ${layer === "satellite" ? "#e5e7eb" : "#2e323b"};box-shadow:0 1px 6px rgba(0,0,0,.6);font:400 14px 'Material Symbols Outlined'">warehouse</div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+    }),
+  );
+
+/**
+ * Mapas base gratuitos y sin API key (Esri). Por defecto "satellite" (World Imagery + capa de etiquetas encima)
+ * para ver el tajo real; "dark" (la vista original de la consola) queda como secundaria con el botón de capas.
+ */
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const BASEMAPS = {
+  satellite: {
+    url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+    attribution:
+      "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, and the GIS User Community",
+    maxNativeZoom: 18,
+    maxZoom: 19,
+  },
   dark: {
     url: `${ESRI}/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
     attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
     maxNativeZoom: 16,
     maxZoom: 19,
   },
-  satellite: {
-    url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
-    attribution: "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics",
-    maxNativeZoom: 18,
-    maxZoom: 19,
-  },
 } as const;
+/** Etiquetas (límites y lugares) sobre la imagen satelital. */
+const SATELLITE_LABELS = {
+  url: `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,
+  attribution: "Labels &copy; Esri",
+  maxNativeZoom: 18,
+  maxZoom: 19,
+  opacity: 0.9,
+};
+const DEFAULT_BASEMAP = "satellite";
 export type Basemap = keyof typeof BASEMAPS;
+
+/** Preferencia del usuario (sobrevive al cierre del navegador). localStorage puede fallar en modo privado. */
+const BASEMAP_KEY = "arquifusion.map.basemap";
+function storedBasemap(): Basemap {
+  try {
+    const v = localStorage.getItem(BASEMAP_KEY);
+    return v === "dark" || v === "satellite" ? v : DEFAULT_BASEMAP;
+  } catch {
+    return DEFAULT_BASEMAP;
+  }
+}
+function storeBasemap(layer: Basemap) {
+  try {
+    localStorage.setItem(BASEMAP_KEY, layer);
+  } catch {
+    /* sin almacenamiento: la preferencia vive solo en esta sesión */
+  }
+}
 
 const zoneLabel = (zone: string, hot: boolean) =>
   L.divIcon({
@@ -105,13 +161,13 @@ function MapControls({ layer, onLayer }: { layer: Basemap; onLayer: (l: Basemap)
         </button>
         <button
           type="button"
-          className={`${btn} ${layer === "satellite" ? "text-primary" : ""}`}
-          title={layer === "dark" ? "Ver satélite" : "Ver mapa oscuro"}
-          aria-label="Cambiar capa del mapa"
-          aria-pressed={layer === "satellite"}
-          onClick={() => onLayer(layer === "dark" ? "satellite" : "dark")}
+          className={`${btn} ${layer === "dark" ? "text-primary" : ""}`}
+          title={layer === "satellite" ? "Ver mapa oscuro (vista de consola)" : "Volver a la vista satelital"}
+          aria-label={layer === "satellite" ? "Cambiar a mapa oscuro" : "Cambiar a vista satelital"}
+          aria-pressed={layer === "dark"}
+          onClick={() => onLayer(layer === "satellite" ? "dark" : "satellite")}
         >
-          <span className="icon text-[16px]">{layer === "dark" ? "satellite_alt" : "layers"}</span>
+          <span className="icon text-[16px]">{layer === "satellite" ? "layers" : "satellite_alt"}</span>
         </button>
       </div>
     </div>
@@ -173,13 +229,20 @@ export function FleetMap({
       const m = machineById.get(i.machine_ids[0] ?? "");
       return t && m ? [{ id: i.incident_id, from: [t.location.lat, t.location.lon] as [number, number], to: [m.location.lat, m.location.lon] as [number, number], active: i.status === "in_progress" }] : [];
     });
-  const [layer, setLayer] = useViewState<Basemap>("map.layer", "satellite");
+  // "map.basemap" (no "map.layer"): una sesión vieja con "dark" guardado no debe tapar el nuevo default satelital.
+  const [layer, setLayerState] = useViewState<Basemap>("map.basemap", storedBasemap());
+  const setLayer = (l: Basemap) => {
+    setLayerState(l);
+    storeBasemap(l);
+  };
+  const sat = layer === "satellite";
   const fitPoints = useMemo(() => machines.map((m) => [m.location.lat, m.location.lon] as [number, number]), [machines.length, zone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={className ?? "h-[540px] w-full"}>
       <MapContainer center={[-11.95, -76.4]} zoom={13} className="h-full w-full" zoomControl={false} attributionControl preferCanvas={false}>
         <TileLayer key={layer} {...BASEMAPS[layer]} />
+        {sat && <TileLayer key="labels" {...SATELLITE_LABELS} />}
         <MapControls layer={layer} onLayer={setLayer} />
         <FitOnce points={fitPoints} zone={zone} />
         {ZONE_GEOMETRY.filter((z) => !zone || z.zone === zone).map((z) => (
@@ -188,11 +251,12 @@ export function FleetMap({
             center={z.center}
             radius={z.radius}
             pathOptions={{
-              color: hotZones.has(z.zone) ? "#ffb4ab" : "#6f7582",
-              weight: 1.5,
+              color: hotZones.has(z.zone) ? "#ffb4ab" : sat ? "#e5e7eb" : "#6f7582",
+              weight: sat ? 2 : 1.5,
+              opacity: sat ? 0.85 : 1,
               dashArray: "4 4",
               fillColor: hotZones.has(z.zone) ? "#93000a" : "#16181e",
-              fillOpacity: hotZones.has(z.zone) ? 0.14 : 0.1,
+              fillOpacity: hotZones.has(z.zone) ? (sat ? 0.22 : 0.14) : sat ? 0.06 : 0.1,
             }}
           />
         ))}
@@ -202,20 +266,20 @@ export function FleetMap({
         {SEED.warehouses
           .filter((w) => !zone || w.zone === zone)
           .map((w) => (
-            <Marker key={w.warehouse_id} position={[w.location.lat, w.location.lon]} icon={warehouseIcon}>
+            <Marker key={w.warehouse_id} position={[w.location.lat, w.location.lon]} icon={warehouseIcon(layer)}>
               <Tooltip className="af-tooltip" direction="top" offset={[0, -10]}>
                 <b className="font-mono text-xs">{w.warehouse_id}</b> · {w.name}
               </Tooltip>
             </Marker>
           ))}
         {routes.map((r) => (
-          <Polyline key={r.id} positions={[r.from, r.to]} pathOptions={{ color: r.active ? "#adc6ff" : "#ffb95f", weight: 2, dashArray: "6 4", opacity: 0.8 }} />
+          <Polyline key={r.id} positions={[r.from, r.to]} pathOptions={{ color: r.active ? "#adc6ff" : "#ffb95f", weight: sat ? 3 : 2, dashArray: "6 4", opacity: sat ? 0.95 : 0.8 }} />
         ))}
         {shown.map((m) => (
           <Marker
             key={m.machine_id}
             position={[m.location.lat, m.location.lon]}
-            icon={machineIcon(m, m.machine_id === selectedId)}
+            icon={machineIcon(m, m.machine_id === selectedId, layer)}
             zIndexOffset={m.severity === "critical" ? 1000 : m.severity === "high" ? 800 : 0}
             eventHandlers={{ click: () => onSelect?.(m.machine_id) }}
             keyboard
@@ -240,7 +304,7 @@ export function FleetMap({
           </Marker>
         ))}
         {(filter !== "critical" ? technicians : []).map((t) => (
-          <Marker key={t.technician_id} position={[t.location.lat, t.location.lon]} icon={techIcon(!t.available)} zIndexOffset={1200}>
+          <Marker key={t.technician_id} position={[t.location.lat, t.location.lon]} icon={techIcon(!t.available, layer)} zIndexOffset={1200}>
             <Tooltip className="af-tooltip" direction="right" offset={[12, 0]}>
               <b className="text-xs text-primary">{t.name}</b>
               <div className="text-[11px] text-on-surface-variant">

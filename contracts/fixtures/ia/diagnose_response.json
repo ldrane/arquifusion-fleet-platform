@@ -7,7 +7,7 @@
       "CMP-014"
     ]
   },
-  "model": "gemini-2.5-flash",
+  "model": "gemini-3.8-flash",
   "degraded": false,
   "prompt_version": "diagnose-v1",
   "latency_ms": 1840

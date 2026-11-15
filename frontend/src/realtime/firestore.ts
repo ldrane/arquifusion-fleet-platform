@@ -12,8 +12,10 @@
 import type { FleetApi } from "@/api/client";
 import type { ChatMessage, Incident, Machine, Me, Technician } from "@/api/types";
 import { can } from "@/auth/permissions";
+import { sessionStore } from "@/auth/sessionStore";
 import { config } from "@/config";
 import { myTechnicianId, newCorrelationId } from "@/lib/ids";
+import { settleWrite } from "./chatPolicy";
 import { registerPush } from "./push";
 import type { FleetUpdate, RealtimeSource } from "./types";
 
@@ -38,12 +40,22 @@ export class FirestoreRealtime implements RealtimeSource {
   readonly kind = "firestore" as const;
   readonly canChat = true;
   private ready: Promise<{ fs: FirestoreMod; db: Db; uid: string; role: string; techId: string | null }> | null = null;
+  /** Usuario con el que se firmó `ready`: si cambia (logout → login con otro rol) hay que volver a firmar. */
+  private readyFor: string | null = null;
   private me: Me | null = null;
 
   constructor(private readonly api: FleetApi) {}
 
+  /** El chat puede montarse antes que el `start()` del FleetProvider (los efectos hijos corren primero):
+   *  sin esto `subscribeMessages` quedaba en "Conectando al canal…" para siempre. */
+  private currentMe(): Me | null {
+    return this.me ?? sessionStore.get().me;
+  }
+
   private connect(me: Me) {
-    if (this.ready) return this.ready;
+    const key = `${me.user_id}|${me.role}|${me.zone ?? "*"}`;
+    if (this.ready && this.readyFor === key) return this.ready;
+    this.readyFor = key;
     this.ready = (async () => {
       const [{ initializeApp, getApps }, auth, fs] = await Promise.all([
         import("firebase/app"),
@@ -80,8 +92,14 @@ export class FirestoreRealtime implements RealtimeSource {
         techId: (claims.technician_id as string | null | undefined) ?? myTechnicianId(me),
       };
     })();
-    this.ready.catch(() => (this.ready = null));
-    return this.ready;
+    const attempt = this.ready;
+    attempt.catch(() => {
+      if (this.ready === attempt) {
+        this.ready = null;
+        this.readyFor = null;
+      }
+    });
+    return attempt;
   }
 
   start(me: Me, onUpdate: (u: FleetUpdate) => void, onError: (e: unknown) => void) {
@@ -126,8 +144,11 @@ export class FirestoreRealtime implements RealtimeSource {
   }
 
   subscribeMessages(incidentId: string, onMessages: (m: ChatMessage[]) => void, onError: (e: unknown) => void) {
-    const me = this.me;
-    if (!me) return () => {};
+    const me = this.currentMe();
+    if (!me) {
+      onError(new Error("Sin sesión: no se puede abrir el chat"));
+      return () => {};
+    }
     let unsub = () => {};
     let stopped = false;
     this.connect(me)
@@ -165,7 +186,7 @@ export class FirestoreRealtime implements RealtimeSource {
   }
 
   async sendMessage(incidentId: string, text: string, quickAction?: string | null, onAsyncError?: (e: unknown) => void) {
-    const me = this.me;
+    const me = this.currentMe();
     if (!me) throw new Error("Sin sesión");
     const { fs, db, uid, role } = await this.connect(me);
     // Campos exactos que valida firestore.rules (validMessage): created_at == request.time
@@ -177,11 +198,11 @@ export class FirestoreRealtime implements RealtimeSource {
       correlation_id: newCorrelationId(),
     };
     if (quickAction) doc.quick_action = quickAction;
-    // Sin await del servidor: con caché persistente el mensaje queda en cola si no hay red.
-    // El rechazo del servidor (permission-denied, etc.) se reporta por onAsyncError hacia la UI (F-10).
-    fs.addDoc(fs.collection(db, "incidents", incidentId, "messages"), doc).catch((e: unknown) => {
-      if (onAsyncError) onAsyncError(e);
-      else console.error("[chat] addDoc rechazado", e);
+    // Con red se espera la confirmación (un rechazo de las Security Rules llega al usuario como error);
+    // sin red el SDK lo deja en cola en IndexedDB y se envía al reconectar.
+    await settleWrite(fs.addDoc(fs.collection(db, "incidents", incidentId, "messages"), doc), {
+      online: typeof navigator === "undefined" || navigator.onLine,
+      onLateError: (e) => { console.warn("[chat] mensaje rechazado por Firestore", e); onAsyncError?.(e); },
     });
   }
 }

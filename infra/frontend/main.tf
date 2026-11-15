@@ -27,9 +27,10 @@ resource "aws_cloudfront_origin_access_control" "web" {
   signing_protocol                  = "sigv4"
 }
 
-# Política administrada "CachingOptimized"
-data "aws_cloudfront_cache_policy" "optimized" {
-  name = "Managed-CachingOptimized"
+# Política administrada "Managed-CachingOptimized". ID fijo y global de AWS: el Learner Lab deniega
+# cloudfront:ListCachePolicies, así que no se puede resolver con un data source.
+locals {
+  caching_optimized_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6"
 }
 
 resource "aws_cloudfront_distribution" "web" {
@@ -49,7 +50,7 @@ resource "aws_cloudfront_distribution" "web" {
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
-    cache_policy_id        = data.aws_cloudfront_cache_policy.optimized.id
+    cache_policy_id        = local.caching_optimized_policy_id
     compress               = true
   }
 

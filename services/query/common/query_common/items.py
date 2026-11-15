@@ -55,11 +55,14 @@ INCIDENT_FIELDS = (
     "assigned_technician_id",
     "technician_score",
     "ai_diagnosis",
-    "resolution_summary",
+    "resolution_summary",  # solo el resumen IA del chat (RF-16.8)
+    "resolution_notes",  # notas de quien resolvió (POST /resolve), bloque aparte en la UI
+    "resolved_by",  # {user_id, role} del autor de las notas
     "detected_at",
     "assigned_at",
     "accepted_at",
     "resolved_at",
+    "closed_at",
     "downtime_minutes",
     "components_replaced",
     "cost_usd",

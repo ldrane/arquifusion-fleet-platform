@@ -10,9 +10,8 @@ locals {
     "iam.googleapis.com",             # service accounts
     "iamcredentials.googleapis.com",
     "pubsub.googleapis.com", # B: topic notificaciones
-    "fcm.googleapis.com",    # B: push
+    "fcm.googleapis.com",    # B: push (FCM HTTP v1 send)
     "logging.googleapis.com",
-    "firebasecloudmessaging.googleapis.com", # B: FCM HTTP v1 (send)
   ]
   apis_billing = [
     "cloudfunctions.googleapis.com", # B: Cloud Function Gen2
