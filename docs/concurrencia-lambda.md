@@ -20,6 +20,7 @@ La estrategia es acotar cada fuente que escala sola, reintentar el throttling y 
 | heartbeat | 1 | Scheduler cada 1 min (~1 s de ejecución) | — |
 | analytics-* (5) | 1 c/u | SFN AnalisisDiario, 05:00 Lima | SFN reintenta |
 | retrain, retrain-promote | 1 c/u | SFN Reentrenamiento, domingo 04:00 Lima | SFN reintenta |
+| sim-driver | 1 | Scheduler cada 1 min (solo trabaja si `enabled`) | — |
 
 Las tres state machines tienen un retrier dedicado para `Lambda.TooManyRequestsException`
 (`IntervalSeconds 2, MaxAttempts 8, BackoffRate 2, MaxDelaySeconds 20, JitterStrategy FULL`), así un tope nunca

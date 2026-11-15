@@ -13,26 +13,28 @@ Plataforma serverless y multinube (AWS + GCP) para la telemetría de maquinaria 
 
 ```
 contracts/                 Contratos (fuente de verdad) + fixtures/ de ejemplo por interfaz
-docs/                      Contexto, rúbrica, requerimientos, arquitectura, división del trabajo
+docs/                      Contexto, rúbrica, requerimientos, arquitectura, pitch, costos, división del trabajo
 infra/                     Terraform, un state por stack
+  modules/lab_s3_bucket/   Bucket S3 compatible con el Learner Lab (evita `aws_s3_bucket`)
   base/                    (B) DynamoDB, EventBridge, API Gateway, Cognito, SNS, secretos
-  ingest/                  (A) SQS, procesar, Firehose, lake, Athena, SFN de analítica
-  incidents/               (B) SFN GestionIncidente y Lambdas de incidente
-  query/                   (C) api-lectura, replicar, VPC
-  gcp/                     (C + B) Firestore, Pub/Sub, Cloud Function
+  ingest/                  (A) SQS, procesar, Firehose, lake, Athena, SFN de analítica, sim-driver
+  incidents/               (B) SFN GestionIncidente, Lambdas de incidente y VPC aislada de auditoría
+  query/                   (C) api-lectura, replicar, export-gcp
+  gcp/                     (C + B) Firestore, Pub/Sub, Cloud Function, BigQuery (DR)
 services/
   shared/                  (B) librería común: respuestas, errores, correlation_id, RBAC
-  ingest/                  (A) procesar, heartbeat
+  ingest/                  (A) procesar, heartbeat, sim_driver
   ai/                      (A) ia_gemini
   analytics/               (A) ramas de AnalisisDiario, retrain, sfn/
-  incidents/               (B) api_comandos, scoring, correlacion, notificar, auditoria, sfn/
-  query/                   (C) api_lectura, replicar
+  incidents/               (B) api_comandos, scoring, correlacion, notificar, notify_push,
+                               notify_telegram, auditoria, incidente, sfn/
+  query/                   (C) api_lectura, replicar, export_gcp
 gcp/
   functions/notify_bridge/ (B) Pub/Sub → FCM · Firestore actions → /bridge/events
   firestore/               (C) README de Firestore (las reglas están en infra/gcp/firestore.rules)
 simulator/                 (A) Simulador de flota y escenarios
-scripts/                   seed.py (C), smoke_golden_path.sh (todos)
-frontend/                  (C) App web/móvil
+scripts/                   seed.py (C), check_all.sh, demo_preflight.sh, demo_reset.py, smoke_golden_path.sh
+frontend/                  (C) App web/móvil (React + PWA, hosting en Firebase Hosting)
 ```
 
 Cada servicio tiene `README.md` (dueño, qué consume y produce, RF que cubre), `handler.py`, `service.py`, `requirements.txt` y `tests/`.
@@ -45,4 +47,4 @@ Cada servicio tiene `README.md` (dueño, qué consume y produce, RF que cubre), 
 | **C** | Consulta y tiempo real: seeds, `api-lectura`, `replicar`, Firestore, frontend |
 
 ## Golden path (demo)
-Simulador → `POST /telemetry` → SQS → `procesar` → `AnomalyDetected` → Step Functions `GestionIncidente` → `ia-gemini` + `scoring` → `notificar` (SNS + Pub/Sub → FCM) → `ack` → chat Firestore → `resolve` → resumen IA → `closed`.
+Simulador (o `sim-driver` serverless) → `POST /telemetry` → SQS → `procesar` → `AnomalyDetected` → Step Functions `GestionIncidente` → `ia-gemini` + `scoring` → `notificar` (SNS + `notify-push` → FCM + `notify-telegram`) → `ack` → chat Firestore → `resolve` → resumen IA → `closed` → `auditoria` (append-only) + `replicar` (Firestore) + `export-gcp` (BigQuery/Looker).
