@@ -62,6 +62,7 @@ const INC_STATUS_STYLE: Record<IncidentStatus, string> = {
   in_progress: "bg-primary/15 text-primary",
   resolved: "bg-secondary/15 text-secondary",
   closed: "bg-white/[0.05] text-on-surface-variant",
+  abandoned: "bg-error/10 text-error",
 };
 const INC_STATUS_ICON: Record<IncidentStatus, string> = {
   detected: "notification_important",
@@ -69,6 +70,7 @@ const INC_STATUS_ICON: Record<IncidentStatus, string> = {
   in_progress: "build",
   resolved: "task_alt",
   closed: "inventory",
+  abandoned: "cancel",
 };
 
 export function IncidentStatusBadge({ status }: { status: IncidentStatus }) {

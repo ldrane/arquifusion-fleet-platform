@@ -81,7 +81,7 @@ resource "aws_dynamodb_table" "machines" {
 
 | Tabla | `pk` | `sk` | GSI | Notas |
 |---|---|---|---|---|
-| `incidents` | `INC#<incident_id>` | `META` · `EVT#<ts>#<event_id>` | `by_machine`: `machine_id` → `detected_at` · `by_status`: `status` → `detected_at` | Escribe B. META guarda `machine_id` (escalar, principal) **y** `machine_ids[]`, `zone`, `ack_token`, `resolve_token`, `execution_arn`, `parent_incident_id`, `child_incident_ids`, `correlation_id`. Los `EVT#` no llevan `incident_id`/`status`/`machine_id`/`detected_at` en la raíz (contratos.md §9.1) |
+| `incidents` | `INC#<incident_id>` | `META` · `EVT#<ts>#<event_id>` | `by_machine`: `machine_id` → `detected_at` · `by_status`: `status` → `detected_at` | Escribe B. `status` ∈ `detected`, `assigned`, `in_progress`, `resolved`, `closed`, `abandoned` (la SFN lo deja así si vence la espera manual sin atención). META guarda `machine_id` (escalar, principal) **y** `machine_ids[]`, `zone`, `ack_token`, `resolve_token`, `execution_arn`, `parent_incident_id`, `child_incident_ids`, `correlation_id`. Los `EVT#` no llevan `incident_id`/`status`/`machine_id`/`detected_at` en la raíz (contratos.md §9.1) |
 | `machine-state` | `<machine_id>` | `AGG#1h#<ts>` · `BASELINE` · `LAST` | — | Escribe A. TTL `expires_at` |
 | `anomalies` | `<machine_id>` | `<detected_at>#<anomaly_id>` | `by_zone`: `zone` → `detected_at` | Escribe A. `detected_at` = timestamp de la lectura (ISO 8601). Sin `gsi1pk`/`gsi1sk` |
 | `idempotency` | `<machine_id>#<timestamp>` · `NTF#<event_type>#<role>#<id>` | — (solo `pk`) | — | Escribe A (lecturas, 24 h) y B (throttle de notificar). TTL `expires_at` |

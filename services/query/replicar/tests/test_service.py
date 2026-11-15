@@ -153,3 +153,18 @@ def test_table_of():
         == "incidents"
     )
     assert service.table_of({"eventSourceARN": "arn:aws:dynamodb:r:1:table/arquifusion-c-anomalies/stream/x"}) is None
+
+
+def test_f36_handler_fija_correlation_id(monkeypatch):
+    import handler as replicar_handler
+
+    seen = []
+    monkeypatch.setattr(replicar_handler.logger, "set_correlation_id", seen.append)
+    monkeypatch.setattr(replicar_handler.service, "run", lambda event: {"ok": 1})
+    from types import SimpleNamespace
+
+    ctx = SimpleNamespace(
+        function_name="replicar", memory_limit_in_mb=128, invoked_function_arn="arn:x", aws_request_id="r-1"
+    )
+    out = replicar_handler.handler({"Records": []}, ctx)
+    assert out == {"ok": 1} and len(seen) == 1 and len(seen[0]) == 36

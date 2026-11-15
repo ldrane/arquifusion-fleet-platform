@@ -185,7 +185,7 @@ export class FirestoreRealtime implements RealtimeSource {
     };
   }
 
-  async sendMessage(incidentId: string, text: string, quickAction?: string | null) {
+  async sendMessage(incidentId: string, text: string, quickAction?: string | null, onAsyncError?: (e: unknown) => void) {
     const me = this.currentMe();
     if (!me) throw new Error("Sin sesión");
     const { fs, db, uid, role } = await this.connect(me);
@@ -202,7 +202,7 @@ export class FirestoreRealtime implements RealtimeSource {
     // sin red el SDK lo deja en cola en IndexedDB y se envía al reconectar.
     await settleWrite(fs.addDoc(fs.collection(db, "incidents", incidentId, "messages"), doc), {
       online: typeof navigator === "undefined" || navigator.onLine,
-      onLateError: (e) => console.warn("[chat] mensaje rechazado por Firestore", e),
+      onLateError: (e) => { console.warn("[chat] mensaje rechazado por Firestore", e); onAsyncError?.(e); },
     });
   }
 }

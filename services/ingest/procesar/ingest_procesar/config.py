@@ -18,6 +18,9 @@ class Settings:
     ewma_alpha: float = 0.05  # peso de la lectura nueva en el baseline EWMA
     warmup_readings: int = 20  # lecturas mínimas antes de confiar en el z-score
     idempotency_ttl_s: int = 24 * 3600  # RNF-07: ventana de deduplicación
+    # Reclamo `pending` (F-18): > timeout de la Lambda (55 s) y < visibilidad de la cola (60 s), para que el
+    # reintento de SQS tras un timeout/OOM encuentre el reclamo vencido y reprocese la lectura.
+    claim_pending_s: int = 56
     anomaly_lock_s: int = 600  # contratos.md §9: bloqueo de reemisión de AnomalyDetected
     cache_ttl_s: int = 300  # caché de SSM (umbrales y versión del modelo)
 

@@ -14,6 +14,25 @@ Idempotente: PutItem con `attribute_not_exists(pk)`; un reintento de EventBridge
 import json
 from decimal import Decimal
 
+# F-14: claves que nunca deben quedar en la tabla append-only (se comparan sin mayúsculas ni `_`/`-`).
+_SENSITIVE_KEYS = frozenset(
+    k.replace("_", "").lower()
+    for k in ("ack_token", "resolve_token", "taskToken", "task_token", "execution_arn", "executionArn")
+)
+
+
+def _sanitize(value):
+    """Copia de `value` sin las claves sensibles, a cualquier profundidad (dicts y listas)."""
+    if isinstance(value, dict):
+        return {
+            k: _sanitize(v)
+            for k, v in value.items()
+            if str(k).replace("_", "").replace("-", "").lower() not in _SENSITIVE_KEYS
+        }
+    if isinstance(value, list):
+        return [_sanitize(v) for v in value]
+    return value
+
 
 def _ddb(value):
     """float → Decimal para DynamoDB."""
@@ -22,7 +41,7 @@ def _ddb(value):
 
 def build_items(event: dict) -> tuple[dict, dict | None]:
     detail = event.get("detail") or {}
-    data = detail.get("data") or {}
+    data = _sanitize(detail.get("data") or {})
     detail_type = event.get("detail-type")
     event_id = detail.get("event_id") or event.get("id")
     occurred_at = detail.get("occurred_at") or event.get("time")

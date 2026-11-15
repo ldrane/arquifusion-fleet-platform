@@ -1,5 +1,9 @@
 """correlation_id de punta a punta (contratos.md §1, Trazabilidad)."""
+import re
 import uuid
+
+# F-35: un id de cliente solo se acepta con formato simple (evita log injection y ids enormes)
+_VALID_ID = re.compile(r"^[A-Za-z0-9-]{1,64}$")
 
 
 def _new() -> str:
@@ -8,7 +12,8 @@ def _new() -> str:
 
 def from_api_event(event: dict) -> str:
     headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
-    return headers.get("x-correlation-id") or _new()
+    value = headers.get("x-correlation-id")
+    return value if isinstance(value, str) and _VALID_ID.fullmatch(value) else _new()
 
 
 def from_eventbridge(event: dict) -> str:

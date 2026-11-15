@@ -32,6 +32,8 @@ def walk(states):
         yield name, st, states
         for b in st.get("Branches", []):
             yield from walk(b["States"])
+        if "ItemProcessor" in st:
+            yield from walk(st["ItemProcessor"]["States"])
 
 
 def targets(st):
@@ -121,3 +123,64 @@ def test_emite_todos_los_event_type_de_incidente():
         "incident.closed",
         "incident.escalated",
     }
+
+
+def all_states():
+    return {name: st for name, st, _ in walk(DEF["States"])}
+
+
+def test_g01_map_real_con_catch_y_lista_vacia_segura():
+    maps = {n: st for n, st in all_states().items() if st["Type"] == "Map"}
+    assert maps, "G-01: debe existir al menos un estado Map"
+    for name, st in maps.items():
+        assert {"Items", "ItemSelector", "ItemProcessor", "MaxConcurrency", "Catch"} <= set(st), name
+        assert st["ItemProcessor"]["ProcessorConfig"]["Mode"] == "INLINE"
+        assert "$type(" in st["Items"] and ": []" in st["Items"]  # null/no-array → []
+        assert any("States.ALL" in c["ErrorEquals"] for c in st["Catch"])
+
+
+def test_f12_sin_atencion_abandona_y_termina_en_fail():
+    s = DEF["States"]
+    assert "'action': 'abandonar'" in s["SinAtencion"]["Arguments"]["Payload"]
+    assert s["SinAtencion"]["Next"] == "FinSinAtencion"
+    assert s["FinSinAtencion"]["Type"] == "Fail" and s["FinSinAtencion"]["Error"] == "IncidenteAbandonado"
+    catches = {tuple(c["ErrorEquals"]): c["Next"] for c in s["EsperarAsignacionManual"]["Catch"]}
+    assert catches[("States.Timeout",)] == "SinAtencion"
+    assert catches[("States.ALL",)] != "SinAtencion"  # solo el timeout abandona
+    assert "liberar" not in s["SinAtencion"]["Arguments"]["Payload"]  # abandonar marca y luego libera
+
+
+def test_f13_tope_de_escalamientos_de_resolucion():
+    s = DEF["States"]
+    assert s["Inicio"]["Assign"]["resolveEscalations"] == 0
+    first = s["EsperarResolucion"]["Catch"][0]
+    assert first["ErrorEquals"] == ["States.Timeout"] and "resolveEscalations" in first["Assign"]
+    assert first["Next"] == "TopeResolucion"
+    assert all("States.ALL" not in c["ErrorEquals"] or c["Next"] == "LiberarYFallar" for c in s["EsperarResolucion"]["Catch"])
+    tope = s["TopeResolucion"]
+    assert tope["Choices"][0]["Next"] == "RecordarResolucion" and tope["Default"] == "ResolucionAgotada"
+    assert "'action': 'abandonar'" in s["ResolucionAgotada"]["Arguments"]["Payload"]
+    assert s["FinResolucionAgotada"]["Type"] == "Fail"
+
+
+def test_f31_emitir_escalado_limpia_escalating_en_catch():
+    st = DEF["States"]["EmitirEscalado"]
+    assert st["Assign"] == {"escalating": False}
+    assert all(c.get("Assign") == {"escalating": False} for c in st["Catch"])
+
+
+def test_f32_maquina_inexistente_distinta_de_duplicado():
+    s = DEF["States"]
+    assert s["ReclamarMaquina"]["Catch"][0]["Next"] == "VerificarMaquina"
+    assert s["VerificarMaquina"]["Resource"].endswith("dynamodb:getItem")
+    assert s["MaquinaExiste"]["Choices"][0]["Next"] == "Deduplicado"
+    assert s["MaquinaExiste"]["Default"] == "MaquinaInexistente"
+    assert s["MaquinaInexistente"]["Type"] == "Fail"
+
+
+def test_g08_escalamientos_semantica():
+    # `escalations` cuenta timeouts; con max=N hay N reasignaciones automáticas, la N+1 va a manual
+    cond = DEF["States"]["QuedanEscalamientos"]["Choices"][0]["Condition"]
+    assert cond == "{% $escalations <= ${max_escalations} %}"
+    assert DEF["States"]["Inicio"]["Assign"]["escalations"] == 0
+    assert DEF["States"]["Escalar"]["Assign"]["escalations"] == "{% $escalations + 1 %}"

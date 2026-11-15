@@ -63,3 +63,22 @@ def test_anomalia_y_silencio_se_auditan_por_maquina():
     pks = sorted(k[0] for k in d["audit"].items)
     assert pks == ["machine#CM-004", "machine#EX-023"]
     assert d["incidents"].items == {}
+
+
+def test_f14_audit_data_descarta_tokens_recursivamente():
+    ev = eventbridge("incident_state_changed.json")
+    ev["detail"]["data"].update(
+        {
+            "ack_token": "SECRETO-1",
+            "taskToken": "SECRETO-2",
+            "nested": {"resolve_token": "SECRETO-3", "ok": 1, "items": [{"task_token": "SECRETO-4", "k": "v"}]},
+            "execution_arn": "arn:exec",
+        }
+    )
+    d = deps()
+    service.run(ev, d)
+    blob = json.dumps(list(d["audit"].items.values()) + list(d["incidents"].items.values()), default=str)
+    for secret in ("SECRETO-1", "SECRETO-2", "SECRETO-3", "SECRETO-4", "arn:exec"):
+        assert secret not in blob
+    stored = next(iter(d["audit"].items.values()))["data"]
+    assert stored["nested"]["ok"] == 1 and stored["nested"]["items"] == [{"k": "v"}]

@@ -467,3 +467,27 @@ def test_todas_las_rutas_get_de_api_lectura_estan_en_routes():
 def test_cursor_invalido(deps):
     bad = base64.urlsafe_b64encode(b"-5").decode()
     assert err(deps, ev("GET", "/incidents", qs={"cursor": bad})) == (400, "VALIDATION_ERROR")
+
+
+def test_f11_rol_de_zona_sin_zona_403_y_rol_global_sin_zona_ok(deps):
+    for zone in ("", None):
+        e = ev("GET", "/incidents", groups="supervisor")
+        if zone is None:
+            e["requestContext"]["authorizer"]["claims"].pop("custom:zone")
+        else:
+            e["requestContext"]["authorizer"]["claims"]["custom:zone"] = zone
+        assert err(deps, e) == (403, "FORBIDDEN")
+    e = ev("GET", "/incidents", groups="tecnico")
+    e["requestContext"]["authorizer"]["claims"].pop("custom:zone")
+    assert err(deps, e) == (403, "FORBIDDEN")
+    e = ev("GET", "/incidents", groups="admin")
+    e["requestContext"]["authorizer"]["claims"].pop("custom:zone")
+    service.run(e, deps)  # global sin atributo: ok
+    service.run(ev("GET", "/incidents", groups="supervisor", zone="*"), deps)  # "*" explícito: ok
+
+
+def test_f15_reports_y_ml_model_solo_para_usuarios_globales(deps):
+    assert err(deps, ev("GET", "/reports/latest", groups="supervisor", zone="norte")) == (403, "FORBIDDEN")
+    assert err(deps, ev("GET", "/ml/model", groups="mantenimiento", zone="norte")) == (403, "FORBIDDEN")
+    # global: llega al handler (404 = aún no hay reporte)
+    assert err(deps, ev("GET", "/reports/latest", groups="supervisor", zone="*")) == (404, "NOT_FOUND")

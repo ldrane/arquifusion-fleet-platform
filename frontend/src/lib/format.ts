@@ -24,6 +24,7 @@ export const INCIDENT_STATUS_LABEL: Record<IncidentStatus, string> = {
   in_progress: "En atención",
   resolved: "Resuelto",
   closed: "Cerrado",
+  abandoned: "Sin atención",
 };
 
 export const TYPE_LABEL: Record<MachineType, string> = {

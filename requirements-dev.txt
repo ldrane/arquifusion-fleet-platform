@@ -4,3 +4,9 @@ boto3
 openapi-core
 ruff
 aws-lambda-powertools[tracer]>=3
+# Suites de procesar / retrain / simulator / ml (versiones alineadas con services/ingest/procesar y analytics/retrain)
+numpy>=2,<3
+pandas>=3,<4
+pyarrow
+joblib>=1,<2
+scikit-learn>=1.9,<1.10

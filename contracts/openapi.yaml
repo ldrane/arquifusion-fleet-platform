@@ -324,6 +324,8 @@ paths:
                 properties:
                   data: {$ref: '#/components/schemas/Incident'}
                   meta: {$ref: '#/components/schemas/CommandMeta'}
+        '400': {$ref: '#/components/responses/ValidationError'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
@@ -348,7 +350,7 @@ paths:
               required: [technician_id]
               properties:
                 technician_id: {type: string, example: TEC-07}
-                reason: {type: string, maxLength: 300}
+                reason: {type: string, maxLength: 500}
       responses:
         '200':
           description: OK
@@ -359,6 +361,9 @@ paths:
                 properties:
                   data: {$ref: '#/components/schemas/Incident'}
                   meta: {$ref: '#/components/schemas/CommandMeta'}
+        '400': {$ref: '#/components/responses/ValidationError'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
 
@@ -390,6 +395,9 @@ paths:
                 properties:
                   data: {$ref: '#/components/schemas/Incident'}
                   meta: {$ref: '#/components/schemas/CommandMeta'}
+        '400': {$ref: '#/components/responses/ValidationError'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
 
@@ -639,7 +647,7 @@ paths:
       x-roles: [admin, gerencia, supervisor]
       x-lambda: api-lectura
       parameters:
-        - {name: type, in: query, schema: {type: string, enum: [daily, weekly], default: daily}}
+        - {name: type, in: query, schema: {type: string, enum: [daily], default: daily}, description: 'Solo `daily`: AnalisisDiario no genera `weekly` (G-07)'}
       responses:
         '200':
           description: OK
@@ -706,7 +714,8 @@ paths:
       summary: Asistente IA con tool-calling sobre datos reales (nunca SQL libre)
       description: |
         Atendido por la Lambda `ia-gemini` (fuera de la VPC, porque llama a Vertex AI).
-        Si Gemini falla, responde 200 con `degraded: true` y una respuesta determinista.
+        Si Gemini falla, responde 200 con `degraded: true`, `degraded_reason` (enum, sin llaves ni detalle de la
+        excepción) y una respuesta determinista. `degraded_reason` solo viene cuando `degraded` es `true`.
       x-roles: [tecnico, mantenimiento, supervisor, admin, gerencia]
       x-lambda: ia-gemini
       requestBody:
@@ -718,7 +727,7 @@ paths:
               required: [message]
               properties:
                 message: {type: string, maxLength: 1000, example: '¿Qué máquinas de la zona norte están en riesgo?'}
-                session_id: {type: string}
+                session_id: {type: string, maxLength: 64, pattern: '^[A-Za-z0-9._:-]+$'}
       responses:
         '200':
           description: OK
@@ -734,6 +743,10 @@ paths:
                       session_id: {type: string}
                       tools_used: {type: array, items: {type: string}, example: [get_machines_at_risk]}
                       degraded: {type: boolean}
+                      degraded_reason: {$ref: '#/components/schemas/DegradedReason'}
+        '400': {$ref: '#/components/responses/ValidationError'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
 
   /bridge/events:
     post:
@@ -880,7 +893,7 @@ components:
     Severity: {type: string, enum: [info, low, medium, high, critical]}
     MachineStatus: {type: string, enum: [operational, stopped, maintenance, needs_intervention, silent]}
     MachineType: {type: string, enum: [excavator, mining_truck, loader, bulldozer, drill]}
-    IncidentStatus: {type: string, enum: [detected, assigned, in_progress, resolved, closed]}
+    IncidentStatus: {type: string, enum: [detected, assigned, in_progress, resolved, closed, abandoned]}
     Role: {type: string, enum: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]}
 
     Location:
@@ -987,10 +1000,12 @@ components:
             suggested_action: {type: string}
             common_cause: {type: string, nullable: true}
             top_factors: {type: array, items: {$ref: '#/components/schemas/Factor'}}
+            parts_suggested: {type: array, items: {type: string}, description: 'component_id sugeridos (solo de candidate_parts)'}
             confidence: {type: number}
             model_version: {type: string}
             prompt_version: {type: string}
             degraded: {type: boolean}
+            degraded_reason: {$ref: '#/components/schemas/DegradedReason'}
         resolution_summary: {type: string, nullable: true, description: 'Resumen IA SOLO del chat del incidente (summarize_chat, RF-16.8)'}
         resolution_notes: {type: string, nullable: true, description: 'Notas de quien resolvió (POST /incidents/{id}/resolve); no entran al resumen del chat'}
         resolved_by:
@@ -1009,6 +1024,23 @@ components:
         components_replaced: {type: array, items: {type: string}}
         cost_usd: {type: number, nullable: true}
         chat_channel_id: {type: string, nullable: true}
+        # Campos internos que también salen en las respuestas de ack/assign/resolve (F-22: api-comandos devuelve el
+        # ítem leído, sin secretos). `GET /incidents*` (api-lectura) proyecta solo los de arriba.
+        scoring_candidates: {type: array, items: {type: object, additionalProperties: true}, description: 'TRZ-03: candidatos del scoring'}
+        required_specialty: {type: string, nullable: true}
+        escalation_count: {type: integer}
+        source: {type: string}
+        correlation_id: {type: string}
+        root_cause: {type: string, nullable: true}
+        resolution_notes: {type: string, nullable: true}
+
+    DegradedReason:
+      type: string
+      enum: [secret_missing, http_4xx, timeout, model_not_found, other]
+      description: |
+        Motivo por el que la IA respondió en modo determinista (solo presente si `degraded: true`).
+        `secret_missing` (API key no disponible) · `http_4xx` (key inválida, cuota, petición rechazada) ·
+        `timeout` · `model_not_found` (HTTP 404, modelo retirado) · `other` (5xx, JSON inválido, bloqueo, etc.).
 
     CommandMeta:
       type: object
@@ -1026,14 +1058,14 @@ components:
       required: [decision]
       properties:
         decision: {type: string, enum: [accept, reject]}
-        reason: {type: string, maxLength: 300}
+        reason: {type: string, maxLength: 500}
 
     ResolveRequest:
       type: object
       required: [resolution_notes]
       properties:
         resolution_notes: {type: string, maxLength: 2000}
-        components_replaced: {type: array, items: {type: string}, example: [CMP-014]}
+        components_replaced: {type: array, maxItems: 50, items: {type: string, maxLength: 64}, example: [CMP-014]}
         cost_usd: {type: number, minimum: 0}
 
     Technician:
@@ -1075,7 +1107,7 @@ components:
       type: object
       required: [event_id, type, actor, occurred_at, correlation_id]
       properties:
-        event_id: {type: string, description: Id del documento de Firestore; clave de idempotencia}
+        event_id: {type: string, maxLength: 128, pattern: '^[A-Za-z0-9._:-]+$', description: Id del documento de Firestore; clave de idempotencia}
         type: {type: string, enum: [incident.ack, incident.resolve, technician.status]}
         incident_id: {type: string}
         actor:
@@ -1084,6 +1116,8 @@ components:
           properties:
             user_id: {type: string}
             role: {$ref: '#/components/schemas/Role'}
+            technician_id: {type: string, description: 'Solo rol tecnico (custom:technician_id)'}
+            zone: {type: string, description: 'Zona del usuario (la completa notify_bridge desde users/{uid})'}
         data:
           description: Mismo cuerpo que el endpoint JWT equivalente (AckRequest, ResolveRequest o el de technicians/me/status)
           type: object

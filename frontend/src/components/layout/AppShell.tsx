@@ -6,6 +6,7 @@ import { api } from "@/services";
 import { useFleet } from "@/state/FleetContext";
 import { cx, Icon } from "../ui";
 import { useToast } from "../ui/Toast";
+import { ConfigBanner } from "./ConfigBanner";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { useSidebarCollapsed } from "./sidebarState";
@@ -95,6 +96,7 @@ export function AppShell() {
             <div key={pathname} className="view-enter flex flex-col gap-6">
               <Outlet />
             </div>
+            <ConfigBanner />
             <StatusBar />
           </div>
         </main>

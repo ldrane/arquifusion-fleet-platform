@@ -41,6 +41,6 @@ export class PollingRealtime implements RealtimeSource {
   }
 
   async sendMessage() {
-    throw new Error("El chat necesita Firestore: configura VITE_FIREBASE_* (frontend/README.md)");
+    throw new Error("El chat necesita Firestore: falta VITE_FIREBASE_API_KEY y/o VITE_FIREBASE_PROJECT_ID (frontend/README.md)");
   }
 }

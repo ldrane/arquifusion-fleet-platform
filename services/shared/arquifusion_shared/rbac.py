@@ -7,8 +7,10 @@ ROLES = {"operador", "tecnico", "mantenimiento", "supervisor", "admin", "gerenci
 # Debe coincidir con la `precedence` de los grupos de Cognito en infra/base (0 = mayor).
 ROLE_PRECEDENCE = ("admin", "gerencia", "supervisor", "mantenimiento", "tecnico", "operador")
 
-# Zona del usuario en `custom:zone`: "*" o ausente = todas.
+# Zona del usuario en `custom:zone`: solo "*" explícito = todas.
 GLOBAL_ZONE = "*"
+# Roles acotados a una zona: sin `custom:zone` (o vacío) NO son globales, se rechazan (F-11, falla cerrada).
+ZONE_ROLES = frozenset({"supervisor", "tecnico", "operador"})
 
 
 def claims(event: dict) -> dict:
@@ -40,9 +42,19 @@ def technician_id(event: dict) -> str | None:
 
 
 def zone(event: dict) -> str | None:
-    """Zona del usuario; `None` si es global (`*` o sin atributo)."""
+    """Zona del usuario; `None` si es global.
+
+    Roles de zona (`ZONE_ROLES`): `custom:zone` ausente/vacío = `Forbidden`; solo `*` es global.
+    Roles globales (admin, gerencia, mantenimiento): ausente o `*` = global.
+    """
     value = (claims(event).get("custom:zone") or "").strip().lower()
-    return None if value in ("", GLOBAL_ZONE) else value
+    if value == GLOBAL_ZONE:
+        return None
+    if not value:
+        if role(event) in ZONE_ROLES:
+            raise Forbidden("El usuario no tiene zona asignada (custom:zone)")
+        return None
+    return value
 
 
 def actor(event: dict) -> dict:

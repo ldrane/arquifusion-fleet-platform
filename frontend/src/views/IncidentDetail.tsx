@@ -106,6 +106,12 @@ export function IncidentDetail() {
               <p className="flex items-center gap-2 text-sm text-on-surface-variant"><span className="h-2 w-2 animate-pulse rounded-full bg-primary" />Generando diagnóstico…</p>
             ) : (
               <div className="flex flex-col gap-4">
+                {(d.model === "fallback" || d.degraded) && (
+                  <p className="flex items-start gap-2 rounded-lg border border-tertiary/30 bg-tertiary/10 px-3 py-2 text-xs text-tertiary">
+                    <Icon name="warning" className="mt-px text-[16px]" />
+                    Diagnóstico de respaldo (reglas deterministas): Gemini no respondió. Revisa la API key, el modelo y la cuota en el backend.
+                  </p>
+                )}
                 <div>
                   <span className="label">Causa probable</span>
                   <p className="mt-1 text-sm text-on-surface">{d.probable_cause}</p>

@@ -12,6 +12,9 @@ La máquina debe existir en `machines` (seed de C, hallazgo #1): las lecturas de
 log estructurado y métrica `ReadingsUnknownMachine`, sin crear máquinas fantasma. `model`, `type` y `zone` salen
 del seed (no de la lectura) y `procesar` solo escribe los campos dinámicos (contratos.md §9).
 
+La idempotencia es en dos fases (F-18): la lectura se reclama como `pending` (TTL corto) y se marca `done` al
+terminar; si la Lambda muere a mitad, el reclamo vence y el reintento de SQS la reprocesa.
+
 Un mensaje que falla se devuelve en `batchItemFailures` y libera sus registros de idempotencia,
 para que el reintento de SQS lo procese completo. Tras 3 intentos va a la DLQ.
 """
@@ -113,6 +116,8 @@ class Processor:
             for r in claimed:
                 self._repo.release_reading(r["machine_id"], r["timestamp"])
             raise
+        for r in claimed:  # fase 2 de la idempotencia: solo ahora quedan como duplicadas
+            self._repo.mark_done(r["machine_id"], r["timestamp"], int(now.timestamp()))
         metrics.add_metric(name="ReadingsProcessed", unit=MetricUnit.Count, value=len(claimed))
 
     # ------------------------------------------------------------------ evaluación

@@ -106,7 +106,7 @@ def test_assistant_degrades_without_gemini(tables):
     gemini, _ = client(TIMEOUT)
     resp = service.handle_api(api_event("incidentes abiertos"), gemini, factory(tables))
     data = body_of(resp)["data"]
-    assert resp["statusCode"] == 200 and data["degraded"] is True
+    assert resp["statusCode"] == 200 and data["degraded"] is True and data["degraded_reason"] == "timeout"
     assert "INC-1" in data["answer"] and "INC-2" not in data["answer"]
     assert data["tools_used"] == ["get_open_incidents"]
 
@@ -155,6 +155,37 @@ def test_is_api_event():
     assert service.is_api_event(api_event()) and not service.is_api_event({"task": "diagnose"})
 
 
+def test_degraded_reason_secret_missing_sin_filtrar_la_llave(tables):
+    from gemini_client import GeminiClient
+
+    def no_key():
+        raise RuntimeError("AIzaSECRETO")
+
+    resp = service.handle_api(api_event("incidentes abiertos"), GeminiClient(api_key_provider=no_key), factory(tables))
+    data = body_of(resp)["data"]
+    assert data["degraded"] is True and data["degraded_reason"] == "secret_missing"
+    assert "AIza" not in resp["body"]
+
+
+def test_respuesta_normal_sin_degraded_reason(tables):
+    final = {"candidates": [{"content": {"role": "model", "parts": [{"text": "ok"}]}}]}
+    gemini, _ = client(final)
+    data = body_of(service.handle_api(api_event(), gemini, factory(tables)))["data"]
+    assert data["degraded"] is False and "degraded_reason" not in data
+
+
+def test_f11_supervisor_sin_zona_403(tables):
+    ev = api_event()
+    ev["requestContext"]["authorizer"]["claims"].pop("custom:zone")
+    assert service.handle_api(ev, None, factory(tables))["statusCode"] == 403
+    ev["requestContext"]["authorizer"]["claims"]["custom:zone"] = "*"
+    assert service.handle_api(ev, None, factory(tables))["statusCode"] == 200
+
+
+def test_f37_session_id_invalido_400(tables):
+    for sid in ("s" * 65, 123, "con espacio", ["x"]):
+        ev = api_event(body={"message": "hola", "session_id": sid})
+        assert service.handle_api(ev, None, factory(tables))["statusCode"] == 400
 def test_assistant_with_bedrock_tool_use(tables):
     llm, stubber = bedrock()
     stubber.add_response(

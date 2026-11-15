@@ -79,11 +79,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "lake" {
       storage_class = "STANDARD_IA"
     }
     transition {
-      days          = 90
+      days          = 365
       storage_class = "GLACIER"
     }
     expiration {
-      days = 400 # RNF-05: ≥ 1 año de histórico
+      days = 730 # RNF-05: ≥ 1 año de histórico (Glacier solo a partir de 365 días)
     }
     noncurrent_version_expiration {
       noncurrent_days = 30

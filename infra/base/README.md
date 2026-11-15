@@ -11,8 +11,11 @@
 
 ## Orden de despliegue
 
-`base` → `ingest` (A) → `query` (C) / `incidents` (B) → `gcp`. Después de que A publique `POST /telemetry`:
-`terraform -chdir=infra/base apply -var stage=<stage> -var api_redeploy=2` (nuevo deployment del stage `v1`; §9).
+`base` → `ingest` (A) → redeploy de `v1` → `incidents` (B) / `query` (C) → `gcp`. Después de que A publique `POST /telemetry`
+**hay que redeployar el stage `v1`** (si no, `/telemetry` responde "Missing Authentication Token"; el deployment de base solo se
+invalida con sus propias rutas):
+`terraform -chdir=infra/base apply -var stage=<stage> -var api_redeploy=$(date +%s)` **más los mismos `-var` con que se aplicó base**
+(`alert_emails`, `cors_origin`, ...), o vuelven a su default. `scripts/deploy_infra.sh` lo hace solo y pasa `TF_ARGS_base`.
 
 ## Cómo se enganchan las Lambdas a la API (sin depender de otros states)
 

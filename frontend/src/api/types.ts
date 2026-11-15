@@ -6,7 +6,7 @@
 export type Severity = "info" | "low" | "medium" | "high" | "critical";
 export type MachineStatus = "operational" | "stopped" | "maintenance" | "needs_intervention" | "silent";
 export type MachineType = "excavator" | "mining_truck" | "loader" | "bulldozer" | "drill";
-export type IncidentStatus = "detected" | "assigned" | "in_progress" | "resolved" | "closed";
+export type IncidentStatus = "detected" | "assigned" | "in_progress" | "resolved" | "closed" | "abandoned";
 export type Role = "operador" | "tecnico" | "mantenimiento" | "supervisor" | "admin" | "gerencia";
 export type Specialty = "motor" | "hidraulica" | "electrica" | "neumaticos";
 export type Zone = string;
@@ -84,6 +84,8 @@ export interface AiDiagnosis {
   model_version: string;
   prompt_version: string;
   degraded: boolean;
+  /** "fallback" cuando el diagnóstico es determinista (sin Gemini). */
+  model?: string;
 }
 
 export interface Incident {
@@ -246,7 +248,11 @@ export interface AssistantAnswer {
   session_id: string;
   tools_used: string[];
   degraded: boolean;
+  /** Motivo del modo degradado (lo agrega el backend; si falta se muestra el texto genérico). */
+  degraded_reason?: DegradedReason | null;
 }
+
+export type DegradedReason = "secret_missing" | "http_4xx" | "timeout" | "model_not_found" | "other";
 
 /** incidents/{id}/messages/{msg_id} (contratos.md §5). */
 export interface ChatMessage {

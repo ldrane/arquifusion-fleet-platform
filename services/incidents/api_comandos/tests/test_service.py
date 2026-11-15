@@ -348,3 +348,81 @@ def test_bridge_error_5xx_libera_idempotencia():
 def test_ruta_desconocida_404():
     resp = service.run(make_event("/otra", method="GET"), make_deps())
     assert resp["statusCode"] == 404
+
+
+# --------------------------------------------------------------------------- auditoría: F-11, F-20, F-21, F-22, F-37
+def test_f11_supervisor_sin_zona_403_y_con_asterisco_ok():
+    body = {"technician_id": "TEC-01"}
+    sin_zona = make_event(ASSIGN, groups="supervisor", body=body, claims={"cognito:username": "u-sup"})
+    assert service.run(sin_zona, make_deps(incident()))["statusCode"] == 403
+    vacia = make_event(ASSIGN, groups="supervisor", body=body, claims={"cognito:username": "u", "custom:zone": ""})
+    assert service.run(vacia, make_deps(incident()))["statusCode"] == 403
+    global_ = make_event(ASSIGN, groups="supervisor", body=body, claims={"cognito:username": "u", "custom:zone": "*"})
+    assert service.run(global_, make_deps(incident()))["statusCode"] == 200
+
+
+def test_f11_admin_sin_zona_sigue_siendo_global():
+    ev = make_event(ASSIGN, groups="admin", body={"technician_id": "TEC-01"}, claims={"cognito:username": "u-a"})
+    assert service.run(ev, make_deps(incident()))["statusCode"] == 200
+
+
+def test_f20_reason_demasiado_largo_o_no_texto_400():
+    for reason in ("x" * 501, 123, ["a"]):
+        resp = service.run(make_event(ACK, body={"decision": "accept", "reason": reason}), make_deps(incident()))
+        assert resp["statusCode"] == 400
+    resp = service.run(
+        make_event(ASSIGN, groups="supervisor", body={"technician_id": "TEC-01", "reason": "x" * 501}),
+        make_deps(incident()),
+    )
+    assert resp["statusCode"] == 400
+
+
+def test_f20_components_replaced_limites_400():
+    deps = make_deps(incident("in_progress"))
+    for comps in (["C"] * 51, [1], "CMP-1", ["x" * 65]):
+        resp = service.run(make_event(RESOLVE, body={"resolution_notes": "ok", "components_replaced": comps}), deps)
+        assert resp["statusCode"] == 400
+    ok = service.run(make_event(RESOLVE, body={"resolution_notes": "ok", "components_replaced": ["C"] * 50}), deps)
+    assert ok["statusCode"] == 200
+
+
+def test_f37_cost_usd_no_finito_400():
+    deps = make_deps(incident("in_progress"))
+    for raw in ('{"resolution_notes":"ok","cost_usd":NaN}', '{"resolution_notes":"ok","cost_usd":Infinity}'):
+        ev = make_event(RESOLVE)
+        ev["body"] = raw
+        assert service.run(ev, deps)["statusCode"] == 400
+    ev = make_event(RESOLVE, body={"resolution_notes": "ok", "cost_usd": -1})
+    assert service.run(ev, deps)["statusCode"] == 400
+
+
+def test_f37_bridge_data_no_dict_400_y_event_id_invalido_400():
+    deps = make_deps(incident())
+    assert service.run(bridge({**BRIDGE_ACK, "data": [1, 2]}), deps)["statusCode"] == 400
+    assert service.run(bridge({**BRIDGE_ACK, "data": "x"}), deps)["statusCode"] == 400
+    for bad in ("e" * 129, "con espacio", "a/b", 123, ["x"]):
+        assert service.run(bridge({**BRIDGE_ACK, "event_id": bad}), deps)["statusCode"] == 400
+    assert deps["sfn"].calls == []
+
+
+def test_f21_bridge_409_libera_idempotencia_para_reintentar():
+    inc = incident()
+    del inc["ack_token"]  # el token aún no se guardó
+    deps = make_deps(inc)
+    assert service.run(bridge(BRIDGE_ACK), deps)["statusCode"] == 409
+    assert deps["idempotency"].deleted == [{"pk": "BRG#fs-9f3a1"}]
+    deps["incidents"].items[("INC#INC-1", "META")]["ack_token"] = "TOKEN-ACK"
+    assert service.run(bridge(BRIDGE_ACK), deps)["statusCode"] == 200
+
+
+def test_f21_bridge_403_no_libera_idempotencia():
+    deps = make_deps(incident())
+    body = {**BRIDGE_ACK, "event_id": "fs-3", "actor": {"user_id": "u-tec-01", "role": "tecnico"}}
+    assert service.run(bridge(body), deps)["statusCode"] == 403
+    assert deps["idempotency"].deleted == []
+
+
+def test_f22_respuesta_normaliza_machine_ids():
+    deps = make_deps(incident(machine_id="EX-023"))
+    data = body_of(service.run(make_event(ACK, body={"decision": "accept"}), deps))["data"]
+    assert data["machine_ids"] == ["EX-023"]

@@ -9,6 +9,7 @@ Regla: una falla del LLM nunca se propaga. Se responde con el fallback determini
 """
 
 import json
+import re
 import time
 import uuid
 from collections.abc import Callable
@@ -26,6 +27,13 @@ FALLBACK_MODEL = "fallback"
 ASSISTANT_ROLES = ("tecnico", "mantenimiento", "supervisor", "admin", "gerencia")
 GLOBAL_ROLES = {"admin", "gerencia", "mantenimiento"}  # ven todas las zonas
 MAX_MESSAGE_CHARS = 1000
+MAX_SESSION_ID = 64
+_SESSION_ID_RE = re.compile(r"^[A-Za-z0-9._:\-]+$")
+
+
+def _safe_error(exc: Exception) -> str:
+    """Texto apto para logs: mensaje de GeminiError (sin llaves) o solo el nombre de la excepción."""
+    return str(exc) if isinstance(exc, GeminiError) else type(exc).__name__
 
 
 def is_api_event(event: dict) -> bool:
@@ -53,19 +61,29 @@ def handle_task(event: dict, llm: LLMClient | None) -> dict:
             schema=spec.schema(payload),
         )
         result, model, degraded = spec.normalize(raw, payload), llm.model, False
+        reason = None
     except Exception as exc:  # cualquier falla de la IA (red, cuota, JSON, validación) → fallback
+        reason = degraded_reason(exc)
         logger.warning(
             "LLM no disponible, se usa fallback",
-            extra={"task": task, "provider": getattr(llm, "provider", None), "error": str(exc)},
+            extra={
+                "task": task,
+                "provider": getattr(llm, "provider", None),
+                "degraded_reason": reason,
+                "error": _safe_error(exc),
+            },
         )
         result, model, degraded = spec.fallback(payload), FALLBACK_MODEL, True
-    return {
+    out = {
         "result": result,
         "model": model,
         "degraded": degraded,
         "prompt_version": prompt.version if not degraded else f"{prompt.version}+fallback",
         "latency_ms": int((time.monotonic() - started) * 1000),
     }
+    if degraded:
+        out["degraded_reason"] = reason
+    return out
 
 
 # ---------------------------------------------------------------- API Gateway: asistente
@@ -82,13 +100,20 @@ def _parse_body(event: dict) -> dict:
             f"`message` supera {MAX_MESSAGE_CHARS} caracteres", [{"field": "message", "issue": "max_length"}]
         )
     session_id = body.get("session_id")
-    return {"message": message.strip(), "session_id": session_id if isinstance(session_id, str) else None}
+    if session_id is not None and (
+        not isinstance(session_id, str) or len(session_id) > MAX_SESSION_ID or not _SESSION_ID_RE.match(session_id)
+    ):
+        raise ValidationError(
+            f"`session_id` debe ser texto simple de hasta {MAX_SESSION_ID} caracteres",
+            [{"field": "session_id", "issue": "invalid"}],
+        )
+    return {"message": message.strip(), "session_id": session_id or None}
 
 
 def _zone_scope(event: dict) -> str | None:
     if rbac.groups(event) & GLOBAL_ROLES:
         return None
-    return (rbac.claims(event).get("custom:zone") or "").lower() or None
+    return rbac.zone(event)  # F-11: roles de zona sin custom:zone => Forbidden; "*" explícito = global
 
 
 def handle_api(event: dict, llm: LLMClient | None, tools_factory: Callable[[str | None], ToolBox]) -> dict:
@@ -103,11 +128,16 @@ def handle_api(event: dict, llm: LLMClient | None, tools_factory: Callable[[str 
             if llm is None:
                 raise LLMError("cliente LLM no configurado")
             answer, used = ia_assistant.answer_with_llm(body["message"], llm, tools, prompts.load("assistant").text)
-            degraded = False
+            degraded, reason = False, None
         except Exception as exc:  # la IA nunca rompe el endpoint
+            reason = degraded_reason(exc)
             logger.warning(
                 "Asistente en modo determinista",
-                extra={"provider": getattr(llm, "provider", None), "error": str(exc)},
+                extra={
+                    "provider": getattr(llm, "provider", None),
+                    "degraded_reason": reason,
+                    "error": _safe_error(exc),
+                },
             )
             answer, used = ia_assistant.answer_deterministic(body["message"], tools)
             degraded = True
@@ -117,6 +147,8 @@ def handle_api(event: dict, llm: LLMClient | None, tools_factory: Callable[[str 
             "tools_used": list(dict.fromkeys(used)),
             "degraded": degraded,
         }
+        if degraded:
+            data["degraded_reason"] = reason
         return response.ok(data, cid)
     except ApiError as err:
         return response.error(err, cid)

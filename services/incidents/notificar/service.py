@@ -117,6 +117,8 @@ class Notifier:
                 continue
             target_user, target_tech = None, None
             if role == "tecnico" and msg["event_type"].startswith("incident."):
+                if "technician_id" in msg and msg["technician_id"] is None:
+                    continue  # evento explícito sin técnico (p. ej. sin candidatos): no se avisa a nadie de rol técnico
                 target_tech = msg.get("technician_id") or (incident or {}).get("assigned_technician_id")
                 if not target_tech:
                     continue  # §10: el técnico solo recibe lo suyo

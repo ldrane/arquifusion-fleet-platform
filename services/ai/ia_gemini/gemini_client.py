@@ -6,6 +6,8 @@ llamador use el fallback.
 """
 
 import json
+import os
+import socket
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -19,9 +21,23 @@ DEFAULT_MODEL = "gemini-flash-lite-latest"
 
 Transport = Callable[[str, dict, dict, float], dict]
 
+# Enum público de `degraded_reason` (openapi.yaml / contratos.md). Nunca incluye llaves ni texto de excepciones.
+DEGRADED_REASONS = ("secret_missing", "http_4xx", "timeout", "model_not_found", "other")
+
 
 class GeminiError(LLMError):
-    """Falla al obtener una respuesta útil de Gemini."""
+    """Falla al obtener una respuesta útil de Gemini. `reason` ∈ DEGRADED_REASONS."""
+
+    def __init__(self, message: str = "", reason: str = "other"):
+        super().__init__(message)
+        self.reason = reason if reason in DEGRADED_REASONS else "other"
+
+
+def degraded_reason(exc: BaseException) -> str:
+    """Motivo seguro (enum) de una falla de la IA; cualquier excepción sin `reason` válido es `other`."""
+    reason = getattr(exc, "reason", None)
+    return reason if reason in DEGRADED_REASONS else "other"
+
 
 
 def urllib_transport(url: str, headers: dict, body: dict, timeout_s: float) -> dict:
@@ -31,15 +47,23 @@ def urllib_transport(url: str, headers: dict, body: dict, timeout_s: float) -> d
         with urllib.request.urlopen(request, timeout=timeout_s) as resp:  # noqa: S310 (URL fija https)
             return json.loads(resp.read())
     except urllib.error.HTTPError as exc:
+ if exc.code == 404:
+            reason = "model_not_found"
+        elif 400 <= exc.code < 500:  # key inválida (400/403), cuota (429), etc.
+            reason = "http_4xx"
+        else:
+            reason = "other"
         detail = ""
         try:
             detail = exc.read().decode(errors="replace")[:300]
         except Exception:  # noqa: BLE001 (el detalle es opcional)
             pass
-        raise GeminiError(f"HTTP {exc.code} de Gemini {detail}".strip()) from exc
+        raise GeminiError(f"HTTP {exc.code} de Gemini {detail}".strip(), reason) from exc
     except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
-        raise GeminiError(f"Gemini no respondió: {exc}") from exc
-
+        timed_out = isinstance(exc, (TimeoutError, socket.timeout)) or isinstance(
+            getattr(exc, "reason", None), (TimeoutError, socket.timeout)
+        )
+        raise GeminiError(f"Gemini no respondió: {exc}", "timeout" if timed_out else "other") from exc
 
 def thinking_config(model: str) -> dict | None:
     """`thinkingConfig` solo donde se sabe que aplica: la familia 2.5 flash acepta `thinkingBudget: 0` (latencia
@@ -59,11 +83,11 @@ class GeminiClient:
     def __init__(
         self,
         api_key_provider: Callable[[], str],
-        model: str = DEFAULT_MODEL,
+        model: str | None = None,
         timeout_s: float = DEFAULT_TIMEOUT_S,
         transport: Transport = urllib_transport,
     ):
-        self.model = model
+        self.model = model or default_model()
         self.timeout_s = timeout_s
         self._api_key_provider = api_key_provider
         self._transport = transport
@@ -94,7 +118,7 @@ class GeminiClient:
         try:
             headers = {"Content-Type": "application/json", "x-goog-api-key": self._api_key_provider()}
         except Exception as exc:  # el secreto no está disponible: se trata como falla de Gemini
-            raise GeminiError("API key de Gemini no disponible") from exc
+            raise GeminiError("API key de Gemini no disponible", "secret_missing") from exc
 
         timeout = min(timeout_s or self.timeout_s, self.timeout_s)
         try:

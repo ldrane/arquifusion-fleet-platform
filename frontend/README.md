@@ -40,6 +40,12 @@ Copia `.env.example` a `.env.local`. Todo lo que va ahí es **público**: el nav
 | `VITE_FIREBASE_*` | Firebase → Configuración → app web (runbook H0 §4) |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_VAPID_KEY` | Firebase → Configuración → Cloud Messaging (ID del remitente y clave pública de *Certificados push web*). Sin ellas no hay push |
 
+Las `VITE_*` se **hornean al build**: tras cambiarlas hay que reconstruir y volver a publicar.
+`scripts/deploy_frontend.sh` las toma del entorno o de `frontend/.env.local` (y, si faltan, `VITE_API_URL` y
+`VITE_COGNITO_CLIENT_ID` de los outputs `api_url` / `cognito_client_id` de `infra/base`); no imprime valores. Sin `VITE_API_URL`
+aborta, salvo `VITE_FORCE_DEMO=true` (demo a propósito). La consola avisa con un banner qué variables faltan (solo nombres), el chat
+indica la causa cuando no hay `VITE_FIREBASE_API_KEY`/`PROJECT_ID`, y el asistente muestra el motivo del modo de respaldo de Gemini (`degraded_reason`).
+
 ## Integración con el backend
 
 1. **Identidad (#8):** `GET /me` devuelve `technician_id` (claim `custom:technician_id`). El front usa `myTechnicianId(me)`;
