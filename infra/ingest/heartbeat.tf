@@ -1,4 +1,6 @@
-# Lambda heartbeat + Scheduler cada 5 min: detecta máquinas silenciosas y emite MachineSilent.
+# Lambda heartbeat + Scheduler cada 1 min (antes 5): detecta máquinas silenciosas y emite MachineSilent.
+# Con silencio = 3 × 60 s, la detección pasa de 3-8 min a 3-4 min. Costo: 1 440 invocaciones/día (free tier de Lambda)
+# + un Scan de ~100 ítems por corrida (~$0.02/día on-demand). No hay costo fijo: sigue siendo 100 % por uso.
 # Cubre: OBS-09, RF-05. Dueño: Persona A (worker 2).
 
 locals {
@@ -25,16 +27,17 @@ resource "aws_cloudwatch_log_group" "heartbeat" {
 }
 
 resource "aws_lambda_function" "heartbeat" {
-  function_name    = local.heartbeat_name
-  description      = "Marca máquinas silenciosas y emite MachineSilent (OBS-09)"
-  role             = local.lab_role
-  runtime          = "python3.12"
-  handler          = "handler.handler"
-  filename         = data.archive_file.heartbeat.output_path
-  source_code_hash = data.archive_file.heartbeat.output_base64sha256
-  layers           = [aws_lambda_layer_version.common.arn]
-  memory_size      = 256
-  timeout          = 120
+  function_name                  = local.heartbeat_name
+  description                    = "Marca máquinas silenciosas y emite MachineSilent (OBS-09)"
+  role                           = local.lab_role
+  runtime                        = "python3.12"
+  handler                        = "handler.handler"
+  filename                       = data.archive_file.heartbeat.output_path
+  source_code_hash               = data.archive_file.heartbeat.output_base64sha256
+  layers                         = [aws_lambda_layer_version.common.arn]
+  memory_size                    = 256
+  timeout                        = 120
+  reserved_concurrent_executions = var.reserved_concurrency["heartbeat"] # tope AWS Academy
 
   tracing_config {
     mode = "Active"
@@ -54,8 +57,8 @@ resource "aws_lambda_function" "heartbeat" {
 
 resource "aws_scheduler_schedule" "heartbeat" {
   name                         = local.heartbeat_name
-  description                  = "Heartbeat de la flota cada 5 minutos (OBS-09)"
-  schedule_expression          = "rate(5 minutes)"
+  description                  = "Heartbeat de la flota cada minuto (OBS-09)"
+  schedule_expression          = "rate(1 minute)"
   schedule_expression_timezone = "America/Lima"
 
   flexible_time_window {

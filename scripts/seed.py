@@ -6,6 +6,7 @@ Uso (desde la raíz del repo):
   python scripts/seed.py load   --stage dev           # carga en arquifusion-dev-* (solo crea lo que falta)
   python scripts/seed.py load   --stage dev --force   # sobrescribe (¡resetea status/health de la flota!)
   python scripts/seed.py verify --stage dev           # cuenta ítems y revisa los IDs de los contratos
+  python scripts/seed.py reset-baselines --stage dev  # borra los BASELINE de machine-state (tras cambiar modelos/zonas)
   python scripts/seed.py load   --stage c --bootstrap-tables   # SOLO en tu lab personal: crea tablas temporales
 
 Idempotencia: cada ítem se escribe con PutItem condicional (attribute_not_exists), así que
@@ -270,12 +271,46 @@ def cmd_verify(args: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+# --------------------------------------------------------------------------- reset-baselines
+def delete_baselines(table) -> int:
+    """Borra los ítems `sk = BASELINE` (propios y de cohorte) de `machine-state`. Devuelve cuántos borró.
+
+    Necesario al pasar a un seed que cambia el modelo o la zona de máquinas existentes (v3 -> v4: 60 cambian de
+    modelo): el EWMA propio aprendido con el `nominal` del modelo anterior generaría z-scores falsos. `procesar`
+    los vuelve a aprender solo (warm-up). `LAST` y los agregados horarios se conservan.
+    """
+    deleted = 0
+    scan_kwargs: dict[str, Any] = {
+        "FilterExpression": "#sk = :b",
+        "ProjectionExpression": "#pk, #sk",
+        "ExpressionAttributeNames": {"#pk": "pk", "#sk": "sk"},
+        "ExpressionAttributeValues": {":b": "BASELINE"},
+    }
+    with table.batch_writer() as batch:
+        while True:
+            page = table.scan(**scan_kwargs)
+            for item in page.get("Items", []):
+                batch.delete_item(Key={"pk": item["pk"], "sk": item["sk"]})
+                deleted += 1
+            if "LastEvaluatedKey" not in page:
+                break
+            scan_kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+    return deleted
+
+
+def cmd_reset_baselines(args: argparse.Namespace) -> int:
+    _client, resource = _dynamodb(args)
+    name = f"arquifusion-{args.stage}-machine-state"
+    print(f"Reset baselines: {delete_baselines(resource.Table(name))} ítems BASELINE borrados de {name}")
+    return 0
+
+
 # --------------------------------------------------------------------------- CLI
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Seeds de ArquiFusion (Persona C)")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("export", help="Genera contracts/fixtures/seed/*.json")
-    for name in ("load", "verify"):
+    for name in ("load", "verify", "reset-baselines"):
         p = sub.add_parser(name)
         p.add_argument("--stage", required=True, help="dev (integración) o tu inicial (lab personal)")
         p.add_argument("--region", default=DEFAULT_REGION)
@@ -284,7 +319,8 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--force", action="store_true", help="Sobrescribe ítems existentes")
             p.add_argument("--bootstrap-tables", action="store_true", help="Crea tablas temporales (nunca en dev)")
     args = parser.parse_args(argv)
-    return {"export": cmd_export, "load": cmd_load, "verify": cmd_verify}[args.cmd](args)
+    commands = {"export": cmd_export, "load": cmd_load, "verify": cmd_verify, "reset-baselines": cmd_reset_baselines}
+    return commands[args.cmd](args)
 
 
 if __name__ == "__main__":

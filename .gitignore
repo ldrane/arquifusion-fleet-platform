@@ -82,3 +82,7 @@ build/
 *sa-key*.json
 out.json
 tfplan
+
+# Firebase Hosting (caché local del CLI)
+.firebase/
+firebase-debug.log

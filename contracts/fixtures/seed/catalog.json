@@ -13,11 +13,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 45,
     "lead_time_days": 2,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-002",
@@ -33,11 +42,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 38,
     "lead_time_days": 2,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-003",
@@ -53,11 +71,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 120,
     "lead_time_days": 3,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-004",
@@ -73,11 +100,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 650,
     "lead_time_days": 7,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-005",
@@ -93,11 +129,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 4800,
     "lead_time_days": 21,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-006",
@@ -113,11 +158,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 1200,
     "lead_time_days": 10,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-007",
@@ -133,11 +187,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 6500,
     "lead_time_days": 30,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-008",
@@ -153,11 +216,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 85,
     "lead_time_days": 3,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-009",
@@ -171,11 +243,18 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 18500,
     "lead_time_days": 35,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-010",
@@ -183,11 +262,13 @@
     "specialty": "hidraulica",
     "compatible_models": [
       "CAT-336",
-      "KOM-PC2000"
+      "KOM-PC2000",
+      "HIT-EX1200",
+      "LIE-R9400"
     ],
     "cost_usd": 9200,
     "lead_time_days": 28,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-011",
@@ -203,11 +284,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 260,
     "lead_time_days": 4,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-012",
@@ -223,11 +313,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 340,
     "lead_time_days": 5,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-013",
@@ -241,11 +340,18 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 5400,
     "lead_time_days": 20,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-014",
@@ -261,11 +367,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 1350,
     "lead_time_days": 10,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-015",
@@ -281,11 +396,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 1900,
     "lead_time_days": 12,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-016",
@@ -301,11 +425,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 1600,
     "lead_time_days": 12,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-017",
@@ -321,11 +454,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 320,
     "lead_time_days": 3,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-018",
@@ -341,11 +483,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 140,
     "lead_time_days": 4,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-019",
@@ -361,11 +512,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 480,
     "lead_time_days": 7,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-020",
@@ -381,11 +541,20 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 7800,
     "lead_time_days": 30,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-021",
@@ -393,11 +562,13 @@
     "specialty": "neumaticos",
     "compatible_models": [
       "CAT-793F",
-      "KOM-930E"
+      "KOM-930E",
+      "LIE-T284",
+      "BEL-75131"
     ],
     "cost_usd": 42000,
     "lead_time_days": 45,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-022",
@@ -405,11 +576,13 @@
     "specialty": "neumaticos",
     "compatible_models": [
       "CAT-994K",
-      "KOM-WA900"
+      "KOM-WA900",
+      "VOL-L350H",
+      "LIE-L586"
     ],
     "cost_usd": 18000,
     "lead_time_days": 40,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-023",
@@ -421,11 +594,16 @@
       "CAT-D10T",
       "KOM-D375A",
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "HIT-EX1200",
+      "LIE-R9400",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 650,
     "lead_time_days": 14,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-024",
@@ -433,11 +611,13 @@
     "specialty": "hidraulica",
     "compatible_models": [
       "EPI-PV271",
-      "SAN-DR412i"
+      "SAN-DR412i",
+      "CAT-MD6250",
+      "EPI-D65"
     ],
     "cost_usd": 2900,
     "lead_time_days": 15,
-    "seed_version": 3
+    "seed_version": 4
   },
   {
     "component_id": "CMP-025",
@@ -447,10 +627,85 @@
       "CAT-793F",
       "KOM-930E",
       "CAT-994K",
-      "KOM-WA900"
+      "KOM-WA900",
+      "LIE-T284",
+      "BEL-75131",
+      "VOL-L350H",
+      "LIE-L586"
     ],
     "cost_usd": 2100,
     "lead_time_days": 10,
-    "seed_version": 3
+    "seed_version": 4
+  },
+  {
+    "component_id": "CMP-026",
+    "name": "Cuchilla de hoja topadora",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "CAT-D10T",
+      "KOM-D375A",
+      "LIE-PR776"
+    ],
+    "cost_usd": 3800,
+    "lead_time_days": 18,
+    "seed_version": 4
+  },
+  {
+    "component_id": "CMP-027",
+    "name": "Cuchilla de cucharón de cargador",
+    "specialty": "hidraulica",
+    "compatible_models": [
+      "CAT-994K",
+      "KOM-WA900",
+      "VOL-L350H",
+      "LIE-L586"
+    ],
+    "cost_usd": 2400,
+    "lead_time_days": 12,
+    "seed_version": 4
+  },
+  {
+    "component_id": "CMP-028",
+    "name": "Motor de tracción eléctrico de rueda",
+    "specialty": "electrica",
+    "compatible_models": [
+      "KOM-930E",
+      "LIE-T284",
+      "BEL-75131"
+    ],
+    "cost_usd": 65000,
+    "lead_time_days": 60,
+    "seed_version": 4
+  },
+  {
+    "component_id": "CMP-029",
+    "name": "Compresor de aire de perforación",
+    "specialty": "motor",
+    "compatible_models": [
+      "EPI-PV271",
+      "SAN-DR412i",
+      "CAT-MD6250",
+      "EPI-D65"
+    ],
+    "cost_usd": 14500,
+    "lead_time_days": 25,
+    "seed_version": 4
+  },
+  {
+    "component_id": "CMP-030",
+    "name": "Rodillo inferior de tren de rodaje",
+    "specialty": "neumaticos",
+    "compatible_models": [
+      "CAT-D10T",
+      "KOM-D375A",
+      "EPI-PV271",
+      "SAN-DR412i",
+      "LIE-PR776",
+      "CAT-MD6250",
+      "EPI-D65"
+    ],
+    "cost_usd": 980,
+    "lead_time_days": 9,
+    "seed_version": 4
   }
 ]

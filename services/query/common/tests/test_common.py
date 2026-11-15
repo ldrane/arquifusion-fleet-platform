@@ -116,6 +116,20 @@ def test_items_plain_y_proyecciones():
     assert t["specialties"] == [] and t["current_load"] == 0 and "pk" not in t
     inc = items.incident({"incident_id": "I", "machine_id": "EX-023", "ack_token": "s", "status": "assigned"})
     assert inc["machine_ids"] == ["EX-023"] and "ack_token" not in inc and inc["escalated"] is False
+    closed = items.incident(
+        {
+            "incident_id": "I",
+            "machine_id": "EX-023",
+            "status": "closed",
+            "resolution_summary": "Resumen del chat",
+            "resolution_notes": "Cambio de rodamientos",
+            "resolved_by": {"user_id": "u-tec-07", "role": "tecnico"},
+            "closed_at": "2026-11-14T10:00:00Z",
+        }
+    )
+    # Resumen del chat y notas de resolución viajan por separado al front (RF-16.8)
+    assert closed["resolution_summary"] == "Resumen del chat" and closed["resolution_notes"] == "Cambio de rodamientos"
+    assert closed["resolved_by"] == {"user_id": "u-tec-07", "role": "tecnico"} and closed["closed_at"]
     assert items.inventory_alert({"stock": 1, "stock_min": 2, "stock_max": 5}) == "low_stock"
     assert items.inventory_alert({"stock": 6, "stock_min": 2, "stock_max": 5}) == "overstock"
     assert items.inventory_alert({"stock": 2, "stock_min": 2, "stock_max": 5}) == "none"

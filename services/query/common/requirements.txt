@@ -1,2 +1,3 @@
 # Dependencias de query_common (las empaqueta scripts/build_query_layer.sh en build/layer-c-gcp.zip)
-google-auth>=2.30,<3
+# [urllib3]: desde google-auth 2.4x el transporte urllib3 exige `packaging` (si falta: ImportError en Lambda)
+google-auth[urllib3]>=2.30,<3

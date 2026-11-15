@@ -72,13 +72,16 @@ locals {
       }
     }
     incidente = {
-      name    = "${local.prefix}-incidente"
-      dir     = "incidente"
-      files   = ["handler.py", "service.py"]
+      name  = "${local.prefix}-incidente"
+      dir   = "incidente"
+      files = ["handler.py", "service.py", "chat_firestore.py"]
+      # chat_mensajes lee incidents/{id}/messages de Firestore por REST (RF-15, RF-16.8): JWT con la stdlib
+      extra   = { "gcp_auth.py" = "${local.services_dir}/incidents/notificar/gcp_auth.py" }
       timeout = 20
       memory  = 256
-      rf      = "RF-06 RF-11.2 TRZ-03"
+      rf      = "RF-06 RF-11.2 RF-15 RF-16.8 TRZ-03"
       env = {
+        GCP_SA_SECRET_NAME        = "arquifusion/${var.stage}/gcp/service-account"
         TABLE_INCIDENTS           = local.tables.TABLE_INCIDENTS
         TABLE_MACHINES            = local.tables.TABLE_MACHINES
         TABLE_MACHINE_STATE       = local.tables.TABLE_MACHINE_STATE
@@ -210,6 +213,8 @@ resource "aws_lambda_function" "fn" {
   memory_size      = each.value.memory
   timeout          = each.value.timeout
   layers           = [nonsensitive(data.aws_ssm_parameter.powertools.value)]
+
+  reserved_concurrent_executions = lookup(var.reserved_concurrency, each.key, 1) # tope AWS Academy
 
   # Fuera de VPC: llaman a Step Functions, SNS y GCP (sin NAT).
   tracing_config {

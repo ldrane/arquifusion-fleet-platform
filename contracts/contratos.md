@@ -188,7 +188,7 @@ Se mantiene el puente: la Lambda *notificar* (B) publica por REST al topic **`no
 2. Anomalía → evento **AnomalyDetected** → Step Functions `GestionIncidente`.
 3. Step Functions crea el incidente (`detected`), pide el diagnóstico a `ia-gemini` con `candidate_parts` (§8), deriva `required_specialty` (§8.2), calcula el técnico (`scoring`), lo asigna (`assigned`), notifica (§10: SNS email + Pub/Sub → FCM) y espera el `ack_token`.
 4. Técnico acepta: web `POST /incidents/{id}/ack`, o móvil escribe en Firestore → Cloud Function → `POST /bridge/events`. Ambos terminan en `SendTaskSuccess` → `in_progress`.
-5. Chat en Firestore. Al terminar: `POST /incidents/{id}/resolve` (segundo token) → `resolved` → resumen IA → registro en `maintenance-records` → `closed`.
+5. Chat en Firestore. Al terminar: `POST /incidents/{id}/resolve` (segundo token) → `resolved` (guarda `resolution_notes` + `resolved_by`) → `incidente.chat_mensajes` lee `incidents/{id}/messages` → resumen IA SOLO del chat (`resolution_summary`) → registro en `maintenance-records` → `closed`.
 6. Supervisor: `GET /machines` e `/incidents`; mapa y chat en vivo por Firestore.
 
 ## 7. Ajustes a tener para el diagrama de arquitectura
@@ -202,7 +202,7 @@ Se mantiene el puente: la Lambda *notificar* (B) publica por REST al topic **`no
 
 ### 8.1 `ia-gemini` (dueño A; la invocan la SFN `GestionIncidente`, `AnalisisDiario` y API Gateway)
 
-Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-2.5-flash" | "fallback", "degraded": bool, "prompt_version", "latency_ms" }`. Si Gemini falla o tarda más de 8 s, responde con `model: "fallback"`, `degraded: true`, `prompt_version: "<id>+fallback"` y un resultado determinista. **Nunca lanza error a la SFN por culpa de la IA.** Credencial: API key de AI Studio en Secrets Manager (`arquifusion/{stage}/gemini/api-key`, #22).
+Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-3.8-flash" | "fallback", "degraded": bool, "prompt_version", "latency_ms" }`. Si Gemini falla o tarda más de 8 s, responde con `model: "fallback"`, `degraded: true`, `prompt_version: "<id>+fallback"` y un resultado determinista. **Nunca lanza error a la SFN por culpa de la IA.** Credencial: API key de AI Studio en Secrets Manager (`arquifusion/{stage}/gemini/api-key`, #22).
 
 | `task` | `payload` | `result` |
 |---|---|---|
@@ -304,7 +304,7 @@ Todos los workers referencian los recursos de `infra/base` **por nombre** (no po
 **Anomalías (#7):** el GSI de `anomalies` es **`by_zone` (hash `zone`, range `detected_at`)**. `detected_at` = `timestamp` de la lectura que disparó la anomalía (ISO 8601 UTC, el mismo valor que `reading_ts` del evento). `procesar` **debe** escribir `zone` y `detected_at` en cada ítem (el GSI es disperso). Ya **no existen** `gsi1pk`/`gsi1sk`. Atributos: `anomaly_id`, `machine_id`, `zone`, `detected_at`, `severity`, `anomaly_score`, `top_factors[]`, `health_score`, `model_version`, `correlation_id`.
 
 **Incidentes (#26):**
-- Ítem `META`: `incident_id`, **`machine_id`** (escalar = máquina principal; lo indexa `by_machine`), **`machine_ids[]`** (principal primero + hijas correlacionadas; lo expone el OpenAPI), `zone`, `severity`, `status`, `detected_at`, `assigned_technician_id`, `technician_score`, `scoring_candidates[]`, `escalated`, `ai_diagnosis`, `required_specialty`, `parent_incident_id`, `child_incident_ids[]`, `assigned_at`, `accepted_at`, `resolved_at`, `downtime_minutes`, `components_replaced[]`, `cost_usd`, `resolution_summary`, `correlation_id`, `source` (`anomaly` | `silence`). Secretos (nunca salen): `ack_token`, `resolve_token`, `execution_arn`.
+- Ítem `META`: `incident_id`, **`machine_id`** (escalar = máquina principal; lo indexa `by_machine`), **`machine_ids[]`** (principal primero + hijas correlacionadas; lo expone el OpenAPI), `zone`, `severity`, `status`, `detected_at`, `assigned_technician_id`, `technician_score`, `scoring_candidates[]`, `escalated`, `ai_diagnosis`, `required_specialty`, `parent_incident_id`, `child_incident_ids[]`, `assigned_at`, `accepted_at`, `resolved_at`, `downtime_minutes`, `components_replaced[]`, `cost_usd`, `resolution_summary` (resumen IA solo del chat), `resolution_notes` + `resolved_by` `{user_id, role}` (notas de quien resolvió, aparte del resumen), `closed_at`, `correlation_id`, `source` (`anomaly` | `silence`). Secretos (nunca salen): `ack_token`, `resolve_token`, `execution_arn`.
 - Ítems `EVT#<ts>#<event_id>` (historial): `entity = "incident_event"`, `event_type`, `from`, `to`, `actor{}`, `occurred_at`, `correlation_id`. **No** llevan `incident_id`, `status`, `machine_id` ni `detected_at` a nivel raíz (así no entran a los GSIs ni los cuenta dos veces el `Scan` de `kpis_report`). `replicar` los ignora (`sk != META`).
 
 **Mantenimiento (`{p}-maintenance-records`, #3):** ítem = `record_id` (`MR-<ULID>`), `machine_id`, `zone`, `type` (`preventive` | `corrective`), `performed_at` (ISO 8601), `technician_id`, `incident_id?`, `operating_hours`, `components[]` = `[{ "component_id", "quantity" }]`, `cost_usd`, `notes?`. La SFN escribe uno `corrective` al cerrar el incidente (con `components_replaced` y `cost_usd` del `ResolveRequest`). A lo lee con `Scan` (`analytics_common/records.py`); C lo consulta por máquina (`Query pk = machine_id`) para el timeline.

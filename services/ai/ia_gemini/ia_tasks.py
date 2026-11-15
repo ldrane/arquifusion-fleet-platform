@@ -36,12 +36,17 @@ def _str_list(value) -> list[str]:
     return [str(v).strip() for v in value if str(v).strip()]
 
 
+def _always(_payload: dict) -> bool:
+    return True
+
+
 @dataclass(frozen=True)
 class TaskSpec:
     schema: Callable[[dict], dict]
     prepare: Callable[[dict], dict]  # recorta el payload antes de enviarlo al prompt
-    normalize: Callable[[dict, dict], dict]  # valida la respuesta de Gemini; ValueError si no sirve
+    normalize: Callable[[dict, dict], dict]  # valida la respuesta del LLM; ValueError si no sirve
     fallback: Callable[[dict], dict]
+    has_input: Callable[[dict], bool] = _always  # False → no hay nada que darle al LLM: se usa el fallback
 
 
 # ---------------------------------------------------------------- diagnose
@@ -95,26 +100,35 @@ def _normalize_common_cause(raw: dict, _payload: dict) -> dict:
 
 
 # ---------------------------------------------------------------- summarize_chat
+# RF-16.8 / RF-12.3: el resumen de cierre contiene ÚNICAMENTE lo conversado en el chat del incidente
+# (`incidents/{id}/messages`, contratos.md §5). Las notas de resolución del operador y el resto de datos del
+# incidente NO entran al prompt (el front los muestra en un bloque aparte). `chat_messages` es la única fuente,
+# tanto para el LLM como para el fallback determinista.
 def _prepare_chat(payload: dict) -> dict:
-    messages = [m for m in payload.get("messages") or [] if isinstance(m, dict)][-MAX_CHAT_MESSAGES:]
     slim = [
         {
             k: (str(m[k])[:MAX_MESSAGE_CHARS] if k == "text" else m[k])
             for k in ("role", "text", "quick_action", "created_at")
             if m.get(k)
         }
-        for m in messages
+        for m in ia_fallbacks.chat_messages(payload)[-MAX_CHAT_MESSAGES:]
     ]
-    return {"incident_id": payload.get("incident_id"), "messages": slim}
+    return {"messages": slim}  # sin incident_id ni otros campos: el LLM solo ve la conversación
 
 
-def _normalize_chat(raw: dict, _payload: dict) -> dict:
+def _has_chat(payload: dict) -> bool:
+    return bool(ia_fallbacks.chat_messages(payload))
+
+
+def _normalize_chat(raw: dict, payload: dict) -> dict:
     root_cause = raw.get("root_cause")
+    chat_text = ia_fallbacks.chat_text(payload)
     return {
         "summary": _text(raw.get("summary")),
         "root_cause": root_cause.strip() if isinstance(root_cause, str) and root_cause.strip() else None,
         "actions_taken": _str_list(raw.get("actions_taken", [])),
-        "parts_replaced": _str_list(raw.get("parts_replaced", [])),
+        # Solo repuestos que aparecen en la conversación (nunca inventados ni tomados de otros datos).
+        "parts_replaced": [p for p in _str_list(raw.get("parts_replaced", [])) if ia_fallbacks.mentioned(p, chat_text)],
     }
 
 
@@ -157,6 +171,7 @@ TASKS: dict[str, TaskSpec] = {
         prepare=_prepare_chat,
         normalize=_normalize_chat,
         fallback=ia_fallbacks.summarize_chat,
+        has_input=_has_chat,
     ),
     "executive_report": TaskSpec(
         schema=lambda _p: _obj({"summary_text": STRING}),

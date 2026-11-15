@@ -81,3 +81,18 @@ variable "alarms_enabled" {
 locals {
   prefix = "arquifusion-${var.stage}"
 }
+
+# Presupuesto de concurrencia (AWS Academy: <=10 Lambdas en paralelo, RNF-costo). Ver docs/concurrencia-lambda.md.
+variable "reserved_concurrency" {
+  description = "Concurrencia reservada por Lambda (clave = local.functions). Las SFN reintentan Lambda.TooManyRequestsException."
+  type        = map(number)
+  default = {
+    api_comandos = 1
+    incidente    = 1
+    scoring      = 1
+    correlacion  = 1
+    notificar    = 1
+    notify_push  = 1
+    auditoria    = 1
+  }
+}

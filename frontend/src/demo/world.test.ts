@@ -33,7 +33,7 @@ describe("DemoWorld: ciclo de vida de GestionIncidente", () => {
 
   it("arranca con los 100 seeds y el golden path de EX-023", () => {
     expect(w.machines.size).toBe(100);
-    expect(w.techs.size).toBe(12);
+    expect(w.techs.size).toBe(16); // seed v4
     const ex = w.machines.get("EX-023")!;
     expect(ex.open_incident_id).toBeTruthy();
     expect(w.incidents.get(ex.open_incident_id!)!.status).toBe("detected");
@@ -46,7 +46,7 @@ describe("DemoWorld: ciclo de vida de GestionIncidente", () => {
     expect(inc.ai_diagnosis?.probable_cause).toBeTruthy();
     expect(inc.status).toBe("assigned");
     expect(inc.assigned_technician_id).toBe(PROTECTED_TECH);
-    expect(inc.candidates.length).toBe(12); // TRZ-03: se guarda el puntaje de todos los candidatos
+    expect(inc.candidates.length).toBe(16); // TRZ-03: se guarda el puntaje de todos los candidatos
   });
 
   it("ack → resolve → cierre: inventario, máquina y técnico vuelven a su estado", () => {
@@ -66,7 +66,12 @@ describe("DemoWorld: ciclo de vida de GestionIncidente", () => {
 
     const inc = w.incidents.get(id)!;
     expect(inc.status).toBe("closed");
-    expect(inc.resolution_summary).toContain("Cambio de rodamientos");
+    // Resumen de cierre = solo el chat; las notas de resolución van aparte (RF-16.8)
+    expect(inc.resolution_summary).not.toContain("Cambio de rodamientos");
+    expect(inc.resolution_notes).toBe("Cambio de rodamientos");
+    expect(inc.resolved_by).toEqual({ user_id: TECH_07.user_id, role: "tecnico" });
+    expect(inc.closed_at).toBeTruthy();
+    expect((w.messages.get(id) ?? []).some((m) => m.text === "Cambio de rodamientos")).toBe(false);
     expect(inc.downtime_minutes).not.toBeNull();
     expect(w.machines.get("EX-023")!.open_incident_id).toBeNull();
     expect(w.machines.get("EX-023")!.status).toBe("operational");
@@ -120,6 +125,7 @@ describe("DemoWorld: ciclo de vida de GestionIncidente", () => {
       "incident_id", "parent_incident_id", "child_incident_ids", "machine_ids", "zone", "severity", "status", "escalated",
       "is_recurrence", "assigned_technician_id", "technician_score", "ai_diagnosis", "resolution_summary", "detected_at",
       "assigned_at", "accepted_at", "resolved_at", "downtime_minutes", "components_replaced", "cost_usd", "chat_channel_id",
+      "resolution_notes", "resolved_by", "closed_at",
     ]);
     for (const inc of w.incidents.values()) {
       for (const k of Object.keys(w.publicIncident(inc))) expect(allowed.has(k), k).toBe(true);

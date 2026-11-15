@@ -101,7 +101,12 @@ export interface Incident {
   assigned_technician_id: string | null;
   technician_score: number | null;
   ai_diagnosis: AiDiagnosis | null;
+  /** Resumen IA SOLO de la conversación del chat (summarize_chat, RF-16.8). */
   resolution_summary: string | null;
+  /** Notas de quien resolvió (POST /resolve). Bloque aparte del resumen del chat. */
+  resolution_notes?: string | null;
+  resolved_by?: { user_id: string; role: string | null } | null;
+  closed_at?: string | null;
   detected_at: string;
   assigned_at: string | null;
   accepted_at: string | null;

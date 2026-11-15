@@ -15,7 +15,10 @@ import math
 import random
 from datetime import date, timedelta
 
-SEED_VERSION = 3  # v2: WH-04 oeste, expected_interval_s=60, reglas §10. v3: ~8 % de mantenimientos vencidos (no 53 %)
+SEED_VERSION = 4  # v2: WH-04 oeste, expected_interval_s=60, reglas §10. v3: ~8 % de mantenimientos vencidos (no 53 %)
+# v4: flota más variada (19 modelos / 8 marcas, distribución por zona según el tipo de trabajo, horómetro según la
+#     antigüedad del modelo, estados iniciales maintenance/stopped), 16 técnicos con cargas y disponibilidad distintas,
+#     5 repuestos nuevos y más quiebres/sobrestock. Los IDs (100 máquinas) y los datos del golden path no cambian.
 RANDOM_SEED = 27  # Grupo 27
 REFERENCE_DATE = date(2026, 11, 14)  # fechas relativas a este día (no a "hoy") para que sea determinista
 OVERDUE_RAW_MIN = 38  # sorteo 3..40: 38-40 => mantenimiento vencido (~8 % de la flota)
@@ -223,22 +226,241 @@ MACHINE_MODELS = [
             "rpm": [1800, 70],
         },
     },
+    # ---- v4: más marcas y modelos (mismos 5 tipos del enum MachineType del OpenAPI)
+    {
+        "model_id": "HIT-EX1200",
+        "brand": "Hitachi",
+        "type": "excavator",
+        "payload_t": 6.7,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [89, 3],
+            "vibration_mm_s": [4.3, 0.6],
+            "pressure_bar": [310, 15],
+            "fuel_rate_lph": [80, 7],
+            "load_pct": [71, 10],
+            "speed_kmh": [2.8, 1.3],
+            "rpm": [1800, 80],
+        },
+    },
+    {
+        "model_id": "LIE-R9400",
+        "brand": "Liebherr",
+        "type": "excavator",
+        "payload_t": 22.0,
+        "maintenance_interval_h": 500,
+        "nominal": {
+            "temperature_c": [91, 3],
+            "vibration_mm_s": [4.7, 0.6],
+            "pressure_bar": [330, 15],
+            "fuel_rate_lph": [150, 11],
+            "load_pct": [73, 10],
+            "speed_kmh": [2.2, 1.1],
+            "rpm": [1800, 80],
+        },
+    },
+    {
+        "model_id": "LIE-T284",
+        "brand": "Liebherr",
+        "type": "mining_truck",
+        "payload_t": 363.0,
+        "maintenance_interval_h": 500,
+        "nominal": {
+            "temperature_c": [94, 3],
+            "vibration_mm_s": [3.7, 0.5],
+            "pressure_bar": [190, 10],
+            "fuel_rate_lph": [215, 15],
+            "load_pct": [76, 15],
+            "speed_kmh": [27, 8],
+            "rpm": [1750, 90],
+        },
+    },
+    {
+        "model_id": "BEL-75131",
+        "brand": "BelAZ",
+        "type": "mining_truck",
+        "payload_t": 130.0,
+        "maintenance_interval_h": 400,
+        "nominal": {
+            "temperature_c": [90, 3],
+            "vibration_mm_s": [3.9, 0.5],
+            "pressure_bar": [170, 10],
+            "fuel_rate_lph": [120, 10],
+            "load_pct": [74, 15],
+            "speed_kmh": [32, 8],
+            "rpm": [1800, 90],
+        },
+    },
+    {
+        "model_id": "VOL-L350H",
+        "brand": "Volvo",
+        "type": "loader",
+        "payload_t": 11.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [88, 3],
+            "vibration_mm_s": [3.9, 0.6],
+            "pressure_bar": [260, 15],
+            "fuel_rate_lph": [45, 5],
+            "load_pct": [68, 12],
+            "speed_kmh": [12, 4],
+            "rpm": [1750, 80],
+        },
+    },
+    {
+        "model_id": "LIE-L586",
+        "brand": "Liebherr",
+        "type": "loader",
+        "payload_t": 6.0,
+        "maintenance_interval_h": 400,
+        "nominal": {
+            "temperature_c": [87, 3],
+            "vibration_mm_s": [3.8, 0.6],
+            "pressure_bar": [250, 15],
+            "fuel_rate_lph": [32, 4],
+            "load_pct": [66, 12],
+            "speed_kmh": [13, 4],
+            "rpm": [1700, 80],
+        },
+    },
+    {
+        "model_id": "LIE-PR776",
+        "brand": "Liebherr",
+        "type": "bulldozer",
+        "payload_t": 0.0,
+        "maintenance_interval_h": 400,
+        "nominal": {
+            "temperature_c": [90, 3],
+            "vibration_mm_s": [5.1, 0.7],
+            "pressure_bar": [260, 12],
+            "fuel_rate_lph": [80, 6],
+            "load_pct": [69, 12],
+            "speed_kmh": [6, 2],
+            "rpm": [1850, 80],
+        },
+    },
+    {
+        "model_id": "CAT-MD6250",
+        "brand": "Caterpillar",
+        "type": "drill",
+        "payload_t": 0.0,
+        "maintenance_interval_h": 250,
+        "nominal": {
+            "temperature_c": [88, 3],
+            "vibration_mm_s": [6.2, 0.8],
+            "pressure_bar": [345, 20],
+            "fuel_rate_lph": [95, 7],
+            "load_pct": [66, 12],
+            "speed_kmh": [1.5, 0.8],
+            "rpm": [1800, 70],
+        },
+    },
+    {
+        "model_id": "EPI-D65",
+        "brand": "Epiroc",
+        "type": "drill",
+        "payload_t": 0.0,
+        "maintenance_interval_h": 400,
+        "nominal": {
+            "temperature_c": [85, 3],
+            "vibration_mm_s": [5.5, 0.8],
+            "pressure_bar": [250, 15],
+            "fuel_rate_lph": [45, 5],
+            "load_pct": [63, 12],
+            "speed_kmh": [2.5, 1.0],
+            "rpm": [2000, 80],
+        },
+    },
 ]
+
+# Antigüedad de cada modelo en la flota -> rango de horómetro [mín, máx] (h). v4: los modelos recién
+# incorporados tienen pocas horas y los veteranos superan las 20 000 h (más contraste en analítica y salud).
+MODEL_HOURS = {
+    "CAT-336": (2500, 14000),
+    "KOM-PC2000": (8000, 26000),
+    "HIT-EX1200": (300, 4500),
+    "LIE-R9400": (1200, 9000),
+    "CAT-793F": (9000, 32000),
+    "KOM-930E": (6000, 24000),
+    "LIE-T284": (400, 5000),
+    "BEL-75131": (12000, 30000),
+    "CAT-994K": (5000, 20000),
+    "KOM-WA900": (9000, 25000),
+    "VOL-L350H": (500, 6000),
+    "LIE-L586": (1500, 8000),
+    "CAT-D10T": (7000, 22000),
+    "KOM-D375A": (10000, 28000),
+    "LIE-PR776": (600, 5500),
+    "EPI-PV271": (4000, 16000),
+    "SAN-DR412i": (2000, 12000),
+    "CAT-MD6250": (300, 3500),
+    "EPI-D65": (1000, 7000),
+}
 
 # prefijo de ID (patrón ^[A-Z]{2}-[0-9]{3,4}$ del OpenAPI), cantidad y modelos por tipo
 FLEET_PLAN = [
-    {"type": "excavator", "prefix": "EX", "count": 25, "models": ["CAT-336", "KOM-PC2000"]},
-    {"type": "mining_truck", "prefix": "CM", "count": 35, "models": ["CAT-793F", "KOM-930E"]},
-    {"type": "loader", "prefix": "CF", "count": 15, "models": ["CAT-994K", "KOM-WA900"]},
-    {"type": "bulldozer", "prefix": "BD", "count": 12, "models": ["CAT-D10T", "KOM-D375A"]},
-    {"type": "drill", "prefix": "PF", "count": 13, "models": ["EPI-PV271", "SAN-DR412i"]},
+    # models = [(modelo, peso)]; zones = peso de cada zona (distribución según el tipo de trabajo, v4):
+    # el pit norte concentra excavación y carguío, el este es zona de perforación y voladura, el oeste de
+    # botaderos (tractores) y los camiones circulan por todas las rutas de acarreo.
+    {
+        "type": "excavator",
+        "prefix": "EX",
+        "count": 25,
+        "models": [("CAT-336", 4), ("KOM-PC2000", 3), ("HIT-EX1200", 2), ("LIE-R9400", 1)],
+        "zones": {"norte": 4, "sur": 3, "este": 2, "oeste": 1},
+    },
+    {
+        "type": "mining_truck",
+        "prefix": "CM",
+        "count": 35,
+        "models": [("CAT-793F", 4), ("KOM-930E", 3), ("LIE-T284", 2), ("BEL-75131", 2)],
+        "zones": {"norte": 3, "sur": 3, "este": 2, "oeste": 2},
+    },
+    {
+        "type": "loader",
+        "prefix": "CF",
+        "count": 15,
+        "models": [("CAT-994K", 3), ("KOM-WA900", 2), ("VOL-L350H", 2), ("LIE-L586", 1)],
+        "zones": {"norte": 3, "sur": 2, "este": 2, "oeste": 2},
+    },
+    {
+        "type": "bulldozer",
+        "prefix": "BD",
+        "count": 12,
+        "models": [("CAT-D10T", 3), ("KOM-D375A", 2), ("LIE-PR776", 1)],
+        "zones": {"norte": 1, "sur": 2, "este": 2, "oeste": 4},
+    },
+    {
+        "type": "drill",
+        "prefix": "PF",
+        "count": 13,
+        "models": [("EPI-PV271", 3), ("SAN-DR412i", 2), ("CAT-MD6250", 2), ("EPI-D65", 1)],
+        "zones": {"norte": 1, "sur": 2, "este": 5, "oeste": 1},
+    },
 ]
 ZONE_ORDER = ["norte", "sur", "este", "oeste"]
 
-# Máquinas fijadas porque aparecen en contratos.md / openapi.yaml / fixtures del golden path
-PINNED_MACHINES = {"EX-023": {"model": "CAT-336", "zone": "norte"}}
+# Máquinas fijadas porque aparecen en contratos.md / openapi.yaml / fixtures del golden path (contracts/fixtures:
+# telemetry_batch, scoring_*, anomaly_detected, incident_state_changed usan EX-023; machine_silent usa CM-004/sur).
+# EX-023 conserva ubicación y horómetro de v3 para que el ETA del scoring (TEC-07 0.98, TEC-01 2.º) no cambie.
+PINNED_MACHINES = {
+    "EX-023": {
+        "model": "CAT-336",
+        "zone": "norte",
+        "location": {"lat": -11.913239, "lon": -76.39975, "zone": "norte"},
+        "operating_hours": 3582.1,
+        "health_score": 85,
+        "status": "operational",
+    },
+    "CM-004": {"zone": "sur", "status": "operational"},
+}
+# Estado inicial (MachineStatus): las máquinas con mantenimiento vencido entran al taller con esta probabilidad
+# y algunas quedan detenidas en reserva. El simulador respeta este estado (envía state=maintenance/stopped).
+OVERDUE_IN_SHOP_P = 0.5
+STANDBY_P = 0.04
 
 ALL_MODELS = [m["model_id"] for m in MACHINE_MODELS]
+assert set(MODEL_HOURS) == set(ALL_MODELS), "cada modelo necesita su rango de horómetro"
 
 
 def _models_of(*types: str) -> list[str]:
@@ -287,6 +509,19 @@ CATALOG = [
     ("CMP-023", "Zapata de oruga", "neumaticos", _models_of("excavator", "bulldozer", "drill"), 650, 14),
     ("CMP-024", "Broca tricónica 10 5/8 in", "hidraulica", _models_of("drill"), 2900, 15),
     ("CMP-025", "Kit de discos de freno", "hidraulica", _models_of("mining_truck", "loader"), 2100, 10),
+    # v4: repuestos específicos de los tipos/modelos nuevos (ninguno aplica al CAT-336 del golden path)
+    ("CMP-026", "Cuchilla de hoja topadora", "hidraulica", _models_of("bulldozer"), 3800, 18),
+    ("CMP-027", "Cuchilla de cucharón de cargador", "hidraulica", _models_of("loader"), 2400, 12),
+    (
+        "CMP-028",
+        "Motor de tracción eléctrico de rueda",
+        "electrica",
+        ["KOM-930E", "LIE-T284", "BEL-75131"],
+        65000,
+        60,
+    ),
+    ("CMP-029", "Compresor de aire de perforación", "motor", _models_of("drill"), 14500, 25),
+    ("CMP-030", "Rodillo inferior de tren de rodaje", "neumaticos", _models_of("bulldozer", "drill"), 980, 9),
 ]
 
 # --------------------------------------------------------------------------- técnicos
@@ -304,7 +539,23 @@ TECHNICIANS = [
     ("TEC-10", "Sofía Ramos", "sur", ["neumaticos", "motor"], "day"),
     ("TEC-11", "Diego Torres", "este", ["motor"], "day"),
     ("TEC-12", "Elena Paredes", "oeste", ["hidraulica", "electrica"], "day"),
+    # v4: más cobertura nocturna y perfiles senior (3 especialidades). Ninguno en norte: el scoring del golden
+    # path (contracts/fixtures/internal/scoring_response.json) compara contra TODOS los técnicos de norte.
+    ("TEC-13", "Raúl Huanca", "sur", ["hidraulica", "neumaticos", "motor"], "night"),
+    ("TEC-14", "Valeria Soto", "este", ["electrica", "motor"], "day"),
+    ("TEC-15", "Óscar Cusi", "oeste", ["neumaticos"], "day"),
+    ("TEC-16", "Gabriela Puma", "este", ["hidraulica", "electrica", "neumaticos"], "night"),
 ]
+
+# Estado operativo inicial distinto de "disponible y sin carga" (v4). Solo técnicos fuera de norte (golden path).
+# technician_id -> (available, current_load)
+TECH_STATE_OVERRIDES = {
+    "TEC-06": (False, 0),  # en capacitación
+    "TEC-08": (True, 1),
+    "TEC-11": (True, 2),
+    "TEC-14": (True, 1),
+    "TEC-15": (False, 0),  # descanso médico
+}
 
 # Ubicación inicial fijada para que el golden path sea determinista (contracts/fixtures/internal/scoring_*.json):
 # para EX-023 (motor, high) gana TEC-07 (junto a WH-01) y el 2.º candidato es TEC-01 (rechazo -> reasignación).
@@ -352,6 +603,16 @@ INVENTORY_OVERRIDES = {
     ("WH-03", "CMP-005"): 0,  # low_stock: turbo agotado en el este
     ("WH-01", "CMP-008"): 60,  # overstock
     ("WH-03", "CMP-001"): 90,  # overstock
+    # v4: más quiebres y sobrestock repartidos en los 4 almacenes
+    ("WH-04", "CMP-009"): 0,  # low_stock: bomba hidráulica agotada en el oeste (zona de tractores)
+    ("WH-04", "CMP-018"): 3,  # low_stock: sensores de temperatura bajo el mínimo
+    ("WH-02", "CMP-028"): 0,  # low_stock: motor de tracción (lead time 60 días)
+    ("WH-03", "CMP-029"): 0,  # low_stock: compresor de perforación agotado en la zona de perforación
+    ("WH-01", "CMP-002"): 6,  # low_stock: filtros de combustible bajo el mínimo en el norte
+    ("WH-02", "CMP-011"): 22,  # overstock: mangueras hidráulicas
+    ("WH-04", "CMP-023"): 15,  # overstock: zapatas de oruga
+    ("WH-03", "CMP-017"): 14,  # overstock: baterías
+    ("WH-01", "CMP-021"): 1,  # en el mínimo: un solo neumático de camión en el norte
 }
 
 
@@ -378,28 +639,66 @@ def build_machine_models() -> list[dict]:
     return out
 
 
+def _hours_for(rng: random.Random, model: str) -> float:
+    lo, hi = MODEL_HOURS[model]
+    return round(rng.triangular(lo, hi, lo + (hi - lo) * 0.45), 1)
+
+
+def _health_for(rng: random.Random, hours: float, overdue: bool) -> int:
+    """Salud inicial: baja con el horómetro y con el mantenimiento vencido (rango ~62-99)."""
+    wear = min(hours / 32000, 1.0) * 18
+    return max(62, min(99, round(rng.uniform(90, 99) - wear - (6 if overdue else 0))))
+
+
+def _weighted_round_robin(weighted: list[tuple[str, int]], count: int) -> list[str]:
+    """Reparto determinista y proporcional a los pesos (smooth weighted round-robin): todos los modelos aparecen."""
+    current = {k: 0 for k, _ in weighted}
+    total = sum(w for _, w in weighted)
+    out = []
+    for _ in range(count):
+        for k, w in weighted:
+            current[k] += w
+        best = max(current, key=lambda k: current[k])
+        current[best] -= total
+        out.append(best)
+    return out
+
+
 def build_machines() -> list[dict]:
     rng = random.Random(RANDOM_SEED)
     machines = []
     for plan in FLEET_PLAN:
+        model_seq = _weighted_round_robin(plan["models"], plan["count"])
+        zones, zone_w = zip(*plan["zones"].items(), strict=True)
         for n in range(1, plan["count"] + 1):
             machine_id = f"{plan['prefix']}-{n:03d}"
             pinned = PINNED_MACHINES.get(machine_id, {})
-            model = pinned.get("model") or plan["models"][(n - 1) % len(plan["models"])]
-            zone = pinned.get("zone") or ZONE_ORDER[rng.randrange(len(ZONE_ORDER))]
+            # Se sortea todo siempre (aunque esté fijada) para que fijar una máquina no altere al resto.
+            model = pinned.get("model") or model_seq[n - 1]
+            zone = pinned.get("zone") or rng.choices(zones, zone_w)[0]
             model_cfg = next(m for m in MACHINE_MODELS if m["model_id"] == model)
             interval = model_cfg["maintenance_interval_h"]
             # ~16 h de uso diario -> días hasta el próximo mantenimiento por horas
             interval_days = round(interval / 16)
-            # Un solo sorteo (misma secuencia RNG que v2: zonas/coords/horas no cambian). v3: ~8 % vencidas
-            # (raw >= OVERDUE_RAW_MIN, 2-6 días de atraso); el resto repartido dentro del ciclo. EX-023 nunca vencida.
+            # ~8 % vencidas (raw >= OVERDUE_RAW_MIN, 2-6 días de atraso); el resto repartido dentro del ciclo.
             raw = rng.randint(3, 40)
-            if raw >= OVERDUE_RAW_MIN and machine_id not in PINNED_MACHINES:
+            overdue = raw >= OVERDUE_RAW_MIN and machine_id not in PINNED_MACHINES
+            if overdue:
                 days_since = interval_days + (raw - OVERDUE_RAW_MIN + 1) * 2
             else:
                 days_since = 1 + (min(raw, OVERDUE_RAW_MIN - 1) - 3) * (interval_days - 2) // (OVERDUE_RAW_MIN - 4)
             last_maint = REFERENCE_DATE - timedelta(days=days_since)
             next_maint = last_maint + timedelta(days=interval_days)
+            location = _point_in_zone(rng, zone)
+            hours = _hours_for(rng, model)
+            health = _health_for(rng, hours, overdue)
+            status_draw = rng.random()
+            if overdue and status_draw < OVERDUE_IN_SHOP_P:
+                status = "maintenance"  # entró al taller por el preventivo vencido
+            elif status_draw > 1 - STANDBY_P:
+                status = "stopped"  # equipo de reserva, detenido
+            else:
+                status = "operational"
             machines.append(
                 {
                     "machine_id": machine_id,
@@ -407,14 +706,14 @@ def build_machines() -> list[dict]:
                     "model": model,
                     "type": plan["type"],
                     "zone": zone,  # duplicado de location.zone para el GSI by_zone
-                    "location": _point_in_zone(rng, zone),
+                    "location": dict(pinned.get("location") or location),
                     "home_location": None,  # se completa abajo (igual a location inicial)
-                    "status": "operational",
+                    "status": pinned.get("status") or status,
                     "severity": "info",
-                    "health_score": rng.randint(84, 99),
+                    "health_score": pinned.get("health_score") or health,
                     "last_seen_at": None,  # aún no hay telemetría (heartbeat debe ignorar null)
                     "expected_interval_s": EXPECTED_INTERVAL_S,
-                    "operating_hours": round(rng.uniform(1500, 18000), 1),
+                    "operating_hours": pinned.get("operating_hours") or hours,
                     "last_maintenance_at": last_maint.isoformat(),
                     "next_maintenance_at": next_maint.isoformat(),
                     "failure_probability": None,
@@ -437,6 +736,7 @@ def build_technicians() -> list[dict]:
         home_wh = next((w for w in WAREHOUSES if w["zone"] == zone), WAREHOUSES[0])
         location = _point_in_zone(rng, zone)  # se consume siempre, para no alterar la secuencia del resto
         location = dict(PINNED_TECH_LOCATIONS.get(tech_id, location))
+        available, load = TECH_STATE_OVERRIDES.get(tech_id, (True, 0))
         techs.append(
             {
                 "technician_id": tech_id,
@@ -446,9 +746,9 @@ def build_technicians() -> list[dict]:
                 "specialties": specialties,
                 "location": location,
                 "home_warehouse_id": home_wh["warehouse_id"],
-                "available": True,
+                "available": available,
                 "shift": shift,
-                "current_load": 0,
+                "current_load": load,
                 "seed_version": SEED_VERSION,
             }
         )

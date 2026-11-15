@@ -40,6 +40,9 @@ _heartbeat = Heartbeat(
     HeartbeatConfig(
         default_interval_s=int(os.environ.get("DEFAULT_INTERVAL_S", "60")),
         silence_factor=int(os.environ.get("SILENCE_FACTOR", "3")),
+        max_events_per_run=int(os.environ.get("MAX_SILENT_EVENTS_PER_RUN", "5")),
+        storm_min_machines=int(os.environ.get("STORM_MIN_MACHINES", "5")),
+        storm_ratio=float(os.environ.get("STORM_RATIO", "0.2")),
     ),
 )
 
@@ -50,5 +53,8 @@ _heartbeat = Heartbeat(
 def handler(event, context):
     result = _heartbeat.run()
     metrics.add_metric(name="MachinesSilenced", unit=MetricUnit.Count, value=result["silenced"])
+    metrics.add_metric(name="SilenceStormSuppressed", unit=MetricUnit.Count, value=result["storm_suppressed"])
+    if result["storm"]:
+        logger.warning("Silencio masivo: caída de ingesta, sin incidentes por máquina", extra=result)
     logger.info("Heartbeat completado", extra=result)
     return result

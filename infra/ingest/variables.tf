@@ -34,3 +34,17 @@ variable "cors_origin" {
   type        = string
   default     = "*"
 }
+
+# Presupuesto de concurrencia (AWS Academy: <=10 Lambdas en paralelo, RNF-costo). Ver docs/concurrencia-lambda.md.
+variable "reserved_concurrency" {
+  description = "Concurrencia reservada: procesar (= maximum_concurrency de SQS), ia_gemini, heartbeat, analytics (cada una), retrain, retrain_promote."
+  type        = map(number)
+  default = {
+    procesar        = 2
+    ia_gemini       = 2
+    heartbeat       = 1
+    analytics       = 1
+    retrain         = 1
+    retrain_promote = 1
+  }
+}

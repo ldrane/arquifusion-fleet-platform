@@ -4,7 +4,8 @@ Dos modos de entrada:
 - Invocación directa (Step Functions, otras Lambdas): `{"task", "correlation_id", "payload"}` → contratos.md §8.
 - API Gateway (`POST /v1/assistant/chat`): evento proxy con JWT de Cognito → respuesta según openapi.yaml.
 
-Regla: una falla de Gemini nunca se propaga. Se responde con el fallback determinista y `degraded: true`.
+El proveedor LLM es configurable (`LLM_PROVIDER`=gemini|bedrock, ver llm_client).
+Regla: una falla del LLM nunca se propaga. Se responde con el fallback determinista y `degraded: true`.
 """
 
 import json
@@ -17,9 +18,9 @@ import prompts
 from arquifusion_shared import correlation, rbac, response
 from arquifusion_shared.errors import ApiError, ValidationError
 from arquifusion_shared.observability import logger
-from gemini_client import GeminiClient, GeminiError
 from ia_tasks import TASKS, payload_json
 from ia_tools import ToolBox
+from llm_client import LLMClient, LLMError
 
 FALLBACK_MODEL = "fallback"
 ASSISTANT_ROLES = ("tecnico", "mantenimiento", "supervisor", "admin", "gerencia")
@@ -32,7 +33,7 @@ def is_api_event(event: dict) -> bool:
 
 
 # ---------------------------------------------------------------- invocación directa
-def handle_task(event: dict, gemini: GeminiClient | None) -> dict:
+def handle_task(event: dict, llm: LLMClient | None) -> dict:
     """Ejecuta una tarea del contrato §8. Solo lanza ValueError si la tarea no existe (error de programación)."""
     task = event.get("task")
     spec = TASKS.get(task)
@@ -42,16 +43,21 @@ def handle_task(event: dict, gemini: GeminiClient | None) -> dict:
     prompt = prompts.load(task)
     started = time.monotonic()
     try:
-        if gemini is None:
-            raise GeminiError("cliente Gemini no configurado")
-        raw = gemini.generate_json(
+        if llm is None:
+            raise LLMError("cliente LLM no configurado")
+        if not spec.has_input(payload):
+            raise LLMError("sin datos de entrada para el LLM")
+        raw = llm.generate_json(
             prompt=prompt.render(payload_json(spec.prepare(payload))),
             system=prompts.load("system").text,
             schema=spec.schema(payload),
         )
-        result, model, degraded = spec.normalize(raw, payload), gemini.model, False
+        result, model, degraded = spec.normalize(raw, payload), llm.model, False
     except Exception as exc:  # cualquier falla de la IA (red, cuota, JSON, validación) → fallback
-        logger.warning("Gemini no disponible, se usa fallback", extra={"task": task, "error": str(exc)})
+        logger.warning(
+            "LLM no disponible, se usa fallback",
+            extra={"task": task, "provider": getattr(llm, "provider", None), "error": str(exc)},
+        )
         result, model, degraded = spec.fallback(payload), FALLBACK_MODEL, True
     return {
         "result": result,
@@ -85,8 +91,8 @@ def _zone_scope(event: dict) -> str | None:
     return (rbac.claims(event).get("custom:zone") or "").lower() or None
 
 
-def handle_api(event: dict, gemini: GeminiClient | None, tools_factory: Callable[[str | None], ToolBox]) -> dict:
-    """`POST /v1/assistant/chat`: responde 200 aunque Gemini falle (`degraded: true`), según el OpenAPI."""
+def handle_api(event: dict, llm: LLMClient | None, tools_factory: Callable[[str | None], ToolBox]) -> dict:
+    """`POST /v1/assistant/chat`: responde 200 aunque el LLM falle (`degraded: true`), según el OpenAPI."""
     cid = correlation.from_api_event(event)
     logger.set_correlation_id(cid)
     try:
@@ -94,14 +100,15 @@ def handle_api(event: dict, gemini: GeminiClient | None, tools_factory: Callable
         body = _parse_body(event)
         tools = tools_factory(_zone_scope(event))
         try:
-            if gemini is None:
-                raise GeminiError("cliente Gemini no configurado")
-            answer, used = ia_assistant.answer_with_gemini(
-                body["message"], gemini, tools, prompts.load("assistant").text
-            )
+            if llm is None:
+                raise LLMError("cliente LLM no configurado")
+            answer, used = ia_assistant.answer_with_llm(body["message"], llm, tools, prompts.load("assistant").text)
             degraded = False
         except Exception as exc:  # la IA nunca rompe el endpoint
-            logger.warning("Asistente en modo determinista", extra={"error": str(exc)})
+            logger.warning(
+                "Asistente en modo determinista",
+                extra={"provider": getattr(llm, "provider", None), "error": str(exc)},
+            )
             answer, used = ia_assistant.answer_deterministic(body["message"], tools)
             degraded = True
         data = {
