@@ -1,41 +1,46 @@
 # ArquiFusion Corp — Arquitectura de Solución en AWS
 
-> Base: `requerimientos.md` (RF/RNF) + `analisis-brechas-plan-aws-academy.md` (MH-*).
-> Entorno: AWS Academy Learner Lab · región **us-east-1** · rol único **`LabRole`** · segunda nube: **GCP**.
-> Restricciones aplicadas: sin creación de roles IAM, sin NAT Gateway, sin servicios con costo por hora, sin EC2/RDS/contenedores encendidos.
+> Base: `requerimientos.md` (RF/RNF) y `rubrica.md`. Evidencia por criterio: `rubrica-evidencia.md`.
+> Entorno: AWS Academy Learner Lab · región **us-east-1** · rol único **`LabRole`** · segunda nube: **GCP / Firebase (plan Spark)**.
+> Restricciones aplicadas: sin creación de roles IAM, sin NAT Gateway, sin servicios con costo por hora, sin EC2/RDS/contenedores encendidos, máximo 10 Lambdas concurrentes.
 
 ---
 
 ## 1. Diagrama de arquitectura
 
+![Arquitectura ArquiFusion](arquitectura.png)
+
+Fuente editable: [`arquitectura-arquifusion.drawio`](../arquitectura-arquifusion.drawio). En el diagrama, los íconos atenuados son **opcionales** y no se despliegan en el Learner Lab ni en el plan Spark (CloudFront + S3, Pub/Sub, Cloud Functions, Cloud Storage para adjuntos).
+
 ### 1.1 Vista general (Mermaid)
 
 ```mermaid
 flowchart LR
-  %% ===================== CLIENTES =====================
+  %% ===================== CLIENTES Y EXTERNOS =====================
   subgraph CLIENTES["Clientes"]
-    SIM["Simulador de flota<br/>(Python, local)"]
-    WEB["App web / móvil<br/>(React + Leaflet)"]
+    SIM["Simulador de flota<br/>(Python, local, opcional)"]
+    WEB["PWA web / móvil<br/>(React + Leaflet, instalable)"]
   end
+  TG["Telegram Bot API<br/>(alertas + botones)"]
 
   %% ===================== BORDE =====================
   subgraph EDGE["Capa de borde (AWS administrado)"]
     COG["Cognito<br/>User Pool + grupos"]
-    APIGW["API Gateway REST<br/>/telemetry (API key)<br/>/v1/* (Cognito JWT)"]
+    APIGW["API Gateway REST<br/>/telemetry (API key) · /v1/* (JWT)<br/>/v1/sim/* · /telegram/webhook"]
   end
-  %% El front se sirve con Firebase Hosting (GCP). CloudFront + S3 (OAC) es la alternativa fuera del Learner Lab.
 
   %% ===================== INGESTA =====================
   subgraph INGESTA["Ingesta (hot path)"]
     SQS["SQS ingest"]
     DLQ["SQS DLQ"]
     LPROC["Lambda procesar<br/>(container ECR)<br/>reglas + z-score + IsolationForest"]
+    LSIM["Lambda sim-driver<br/>(gemelo de flota)"]
   end
 
   %% ===================== DATOS =====================
   subgraph DATOS["Capa de datos"]
     DDB[("DynamoDB on-demand<br/>PITR + Streams")]
-    FH["Kinesis Firehose<br/>→ Parquet"]
+    FH["Data Firehose<br/>→ Parquet"]
     S3L[("S3 data lake<br/>versionado + lifecycle")]
     GLUE["Glue Data Catalog"]
     ATH["Athena"]
@@ -53,21 +58,25 @@ flowchart LR
 
   %% ===================== SERVICIOS =====================
   subgraph SVC["Lambdas de dominio"]
-    LAPI["Lambdas API<br/>(lectura/escritura)"]
+    LREAD["Lambda api-lectura<br/>(/v1/* + /pulse)"]
+    LCMD["Lambda api-comandos<br/>(ack · resolve · sim · Telegram)"]
+    LPRE["Lambda precursores<br/>(firma pre-falla)"]
     LASSIGN["Lambda scoring técnicos"]
     LCORR["Lambda correlación zona"]
     LNOTIF["Lambda notificar por rol"]
-    LTG["Lambda notify-telegram"]
+    LTG["Lambda notify-telegram<br/>(solo críticas)"]
     LNPUSH["Lambda notify-push<br/>(FCM HTTP v1)"]
     LREPL["Lambda replicar<br/>(Streams → Firestore)"]
-    LAI["Lambda IA<br/>(cadena Gemini → Bedrock → determinista)"]
+    LAI["Lambda ia-gemini<br/>(Gemini → Bedrock → determinista)"]
     LHB["Lambda heartbeat"]
-    LSIM["Lambda sim-driver<br/>(gemelo de flota)"]
     LEXP["Lambda export-gcp<br/>(DR → BigQuery)"]
-    LAUD["Lambda auditoria<br/>(VPC aislada)"]
   end
-  %% TAREA-16: solo `auditoria` corre dentro de la VPC aislada (2 subredes privadas + Gateway Endpoint DynamoDB).
-  %% El resto sale a Internet / otros servicios (GCP, Athena, Secrets Manager, SFN) y la VPC no tiene NAT.
+  BEDROCK["Amazon Bedrock<br/>(LLM de respaldo)"]
+
+  subgraph VPC["VPC auditoría (sin IGW · sin NAT)"]
+    LAUD["Lambda auditoria<br/>(ledger append-only)"]
+    VPCE["Gateway Endpoint<br/>DynamoDB"]
+  end
 
   %% ===================== TRANSVERSAL =====================
   subgraph TRANS["Transversal"]
@@ -79,25 +88,28 @@ flowchart LR
   end
 
   %% ===================== GCP =====================
-  subgraph GCP["Google Cloud"]
-    GEM["Gemini API<br/>(AI Studio / Vertex express)"]
+  subgraph GCP["Google Cloud / Firebase (Spark)"]
+    GEM["Gemini API<br/>(AI Studio)"]
+    FBH["Firebase Hosting<br/>(PWA)"]
+    FAUTH["Firebase Auth<br/>(custom tokens)"]
     FS[("Firestore<br/>chat + réplica")]
-    PS["Pub/Sub<br/>(opcional: Cloud Functions)"]
     FCM["Firebase Cloud Messaging"]
     BQ[("BigQuery (sandbox)<br/>réplica DR diaria")]
     LK["Looker Studio<br/>(Gerencia)"]
-    FBH["Firebase Hosting<br/>(front)"]
-    TG["Telegram Bot API<br/>(alertas + decisiones)"]
   end
 
   SIM -->|HTTPS + x-api-key| APIGW
-  WEB --> FBH
+  LSIM -->|POST /telemetry| APIGW
+  WEB -->|carga la PWA| FBH
   WEB -->|login| COG
   WEB -->|HTTPS + JWT| APIGW
-  WEB <-->|listeners tiempo real| FS
+  WEB -->|custom token| FAUTH
+  WEB <-->|listeners tiempo real · offline| FS
 
   APIGW -->|integración directa| SQS
-  APIGW --> LAPI
+  APIGW --> LREAD
+  APIGW --> LCMD
+  APIGW --> LPRE
   SQS --> LPROC
   SQS -.->|3 fallos| DLQ
   LPROC --> DDB
@@ -106,42 +118,44 @@ flowchart LR
   S3M -.->|carga en init| LPROC
 
   EB --> SFN1
-  EB --> LTG
-  EB --> LAUD
+  EB -.->|eventos de incidente| LAUD
   SFN1 --> LAI --> GEM
+  LAI -.->|fallback| BEDROCK
   SFN1 --> LCORR
   SFN1 --> LASSIGN
   SFN1 --> LNOTIF
   SFN1 --> DDB
   LNOTIF --> SNS
-  LNOTIF --> PS
-  LNOTIF --> LNPUSH --> FCM
-  LTG --> TG
-  TG -->|webhook (botones)| APIGW
-  LNPUSH -->|ack técnico / comandos| APIGW
-  LSIM -->|telemetría simulada| APIGW
+  LNOTIF --> LNPUSH --> FCM --> WEB
+  LNOTIF -->|críticas| LTG --> TG
+  TG -.->|webhook (botones)| APIGW
+  LCMD -.->|SendTaskSuccess| SFN1
 
   SCH --> SFN2
   SCH --> SFN3
   SCH --> LHB
   SCH --> LSIM
+  LHB -.->|MachineSilent| EB
   SFN2 --> ATH
   SFN3 --> ATH
   SFN3 --> S3M
+  LPRE --> ATH
   ATH --> GLUE
   ATH --> S3L
 
   DDB -->|Streams| LREPL --> FS
   SFN2 --> LEXP --> BQ --> LK
 
-  LAPI --> DDB
-  LAUD --> DDB
+  LREAD --> DDB
+  LCMD --> DDB
+  LAUD --> VPCE --> DDB
   SM -.-> LAI
   SM -.-> LREPL
   SM -.-> LNOTIF
   SM -.-> LTG
   SM -.-> LEXP
   SSM -.-> LPROC
+  SSM -.-> LSIM
   LPROC -.-> CW
   SFN1 -.-> XR
 ```
@@ -150,28 +164,30 @@ flowchart LR
 
 ```
 ┌──────────────────────────────────────────── CLIENTES ─────────────────────────────────────────────┐
-│  Simulador (local)                          Web/Móvil (operador, técnico, mantenimiento, gerencia) │
-└───────┬──────────────────────────────────────────────┬─────────────────────────┬───────────────────┘
-        │ HTTPS + API key                              │ HTTPS + JWT             │ SDK Firestore (WSS)
-┌───────▼──────────────────────── BORDE (sin VPC, administrado) ─────────────────▼───────────────────┐
-│  API Gateway REST  ── Cognito authorizer ──  (front servido por Firebase Hosting, GCP)             │
-└───────┬──────────────────────────────┬─────────────────────────────────────────────────────────┘
+│  Simulador (local, opcional)        PWA web/móvil (6 roles)                 Telegram (externo)    │
+└───────┬───────────────────────────────────┬──────────────────┬────────────────────┬─────────────────┘
+        │ HTTPS + API key                   │ HTTPS + JWT      │ SDK Firestore (WSS) │ webhook HTTPS
+┌───────▼──────────────────────── BORDE (sin VPC, administrado) ─────────────────────▼───────────────┐
+│  API Gateway REST ── Cognito authorizer ── /telemetry · /v1/* · /v1/sim/* · /telegram/webhook      │
+│  (PWA servida por Firebase Hosting, GCP)                                                           │
+└───────┬──────────────────────────────┬─────────────────────────────────────────────────────────────┘
         │ /telemetry                   │ /v1/*
-┌───────▼──────────── INGESTA ─────────▼─────────────── VPC aislada `auditoria` ──────────────────────┐
-│  SQS ingest ─► Lambda procesar      │ Lambda auditoria ─► Gateway Endpoint DynamoDB                 │
-│      └─► DLQ    (ECR container)     │   (subred privada, sin internet; solo DynamoDB)               │
-└───────┬─────────────────────────────┴───────────────────────────────────────────────────────────┘
-        │                                                                        
+┌───────▼──────────── INGESTA ─────────▼───────────────┐ ┌──────── VPC aislada `auditoria` ──────────┐
+│  SQS ingest ─► Lambda procesar (ECR) ─► DLQ          │ │ Lambda auditoria ─► Gateway Endpoint DDB  │
+│  Lambda sim-driver (Scheduler 1 min) ─► /telemetry   │ │ (subredes privadas, sin internet)         │
+└───────┬──────────────────────────────────────────────┘ └───────────────────────────────────────────┘
 ┌───────▼────────────────────────────── DATOS ───────────────────────────────────────────────────────┐
-│  DynamoDB (PITR, Streams) │ Firehose ─► S3 lake (Parquet) ─► Glue ─► Athena                        │
-└───────┬──────────────────────────────────────────────────────────────────┬─────────────────────────────┘
+│  DynamoDB (PITR, Streams) │ Firehose ─► S3 lake (Parquet) ─► Glue ─► Athena │ S3 modelos ML        │
+└───────┬──────────────────────────────────────────────────────────────────┬─────────────────────────┘
         │ AnomalyDetected                                     Streams      │
-┌───────▼──────────────── ORQUESTACIÓN ───────────────────┐   ┌────────────▼───────────────── GCP ────┐
-│  EventBridge ─► SFN GestionIncidente                     │   │  Firestore (chat, réplica, realtime) │
-│  Scheduler   ─► SFN AnalisisDiario / Reentrenamiento     │◄─►│  Gemini API · FCM · Firebase Hosting │
-│              ─► Lambda heartbeat / sim-driver            │   │  BigQuery (DR) · Looker · Telegram   │
-└──────────────────────────────────────────────────────────┘   └──────────────────────────────────────┘
-  Transversal: Secrets Manager · SSM · CloudWatch · X-Ray · SNS · LabRole · KMS (claves AWS-managed)
+┌───────▼──────────────── ORQUESTACIÓN ────────────────────┐   ┌────────────▼──────────── GCP ─────────┐
+│  EventBridge ─► SFN GestionIncidente                     │   │  Firestore (chat, réplica, realtime)  │
+│     IA: Gemini ─► Bedrock ─► determinista                │◄─►│  Gemini API · FCM · Firebase Hosting  │
+│     Notificación: SNS · FCM push · Telegram              │   │  Firebase Auth · BigQuery (DR)        │
+│  Scheduler ─► AnalisisDiario (+ export-gcp) / Reentrena. │   │  Looker Studio (Gerencia)             │
+│            ─► heartbeat / sim-driver                     │   └───────────────────────────────────────┘
+└──────────────────────────────────────────────────────────┘
+  Transversal: Secrets Manager · SSM · CloudWatch · X-Ray · CloudTrail · SNS · LabRole · KMS (AWS-managed)
 ```
 
 ---
@@ -182,19 +198,20 @@ flowchart LR
 
 | Servicio | Configuración | Problema que resuelve | Cubre |
 |---|---|---|---|
-| **Firebase Hosting (GCP)** | Sitio estático (`frontend/firebase.json`), HTTPS administrado, CDN global, sin costo | Sirve el frontend con TLS sin bucket público | RF-15, RNF-08, MH-SEC-05 |
+| **Firebase Hosting (GCP)** | Sitio estático (`frontend/firebase.json`), HTTPS administrado, CDN global, sin costo. Sirve una **PWA instalable** (manifest + service worker que nunca intercepta `googleapis.com` ni `execute-api`) | Sirve el frontend con TLS sin bucket público y permite instalarlo en el móvil del técnico | RF-15, RNF-08, MH-SEC-05 |
 | **CloudFront + S3 (opcional)** | Alternativa fuera del Learner Lab: distribución CloudFront con origen S3 vía **OAC**, bucket privado | Hosting estático alternativo (el Learner Lab deniega CloudFront) | RF-15, RNF-02 |
 | **Amazon Cognito User Pool** | Grupos: `operador`, `tecnico`, `mantenimiento`, `supervisor`, `admin`, `gerencia`. Sin Identity Pool (requiere crear roles) | Autenticación y RBAC por rol | RNF-08, RF-15.1, MH-SEC-02 |
-| **Amazon API Gateway (REST)** | Un solo API con dos zonas: `/telemetry` (API key + usage plan + *request validator* JSON Schema + integración directa a SQS usando `LabRole`) y `/v1/*` (Cognito authorizer → Lambdas). Throttling por etapa. | Punto único de entrada, validación previa y protección contra abuso | RF-01.1/01.3, §5.5 APIs, MH-SEC-06, MH-NET-02 |
+| **Amazon API Gateway (REST)** | Un solo API con varias zonas: `/telemetry` (API key + usage plan + *request validator* JSON Schema + integración directa a SQS con `LabRole`), `/v1/*` (Cognito authorizer → Lambdas), `/v1/sim/*` (control del simulador, rol admin) y `/telegram/webhook` (secret token de Telegram). Throttling por etapa | Punto único de entrada, validación previa y protección contra abuso | RF-01.1/01.3, §5.5 APIs, MH-SEC-06, MH-NET-02 |
 
 ### 2.2 Ingesta y procesamiento (hot path)
 
 | Servicio | Configuración | Problema que resuelve | Cubre |
 |---|---|---|---|
-| **Amazon SQS (ingest + DLQ)** | Standard, visibilidad de 60 s, `maxReceiveCount=3` → DLQ, retención de 4 días | Desacopla la ingesta del cómputo, absorbe picos y no pierde mensajes. Pago por request, $0 en reposo | RF-01.3/01.4, RNF-07, ESC-04, MH-HA-05, corrección C4 |
+| **Amazon SQS (ingest + DLQ)** | Standard, visibilidad de 60 s, `maxReceiveCount=3` → DLQ, retención de 4 días | Desacopla la ingesta del cómputo, absorbe picos y no pierde mensajes. Pago por request, $0 en reposo | RF-01.3/01.4, RNF-07, ESC-04, MH-HA-05 |
 | **AWS Lambda `procesar`** | **Imagen de contenedor (ECR)** Python 3.12 + numpy/sklearn, 1024 MB, batch 100, ventana de 5 s, `ReportBatchItemFailures`, `MaximumConcurrency` acotado | Normaliza lecturas, aplica reglas, z-score (baseline propio y de cohorte) e IsolationForest. Calcula health score, guarda estado y agregados y emite eventos | RF-02.1–02.4, RF-09, ESC-03/07, MH-AI-01/02/03 |
-| **Amazon ECR** | Repositorio privado, scan on push, lifecycle de 5 imágenes | Empaqueta dependencias ML que exceden el límite de 250 MB de una Lambda en zip | MH-AI-01, W-13 |
-| **Amazon EventBridge (bus `fleet-events`)** | Reglas por `detail-type` (`AnomalyDetected`, `MachineSilent`, `IncidentResolved`) | Desacopla la detección de la respuesta: un evento, múltiples consumidores | ESC-04, RNF-11 |
+| **AWS Lambda `sim-driver`** | Gemelo de flota serverless. EventBridge Scheduler la invoca cada minuto y emite telemetría simulada contra `/telemetry` mientras el estado en SSM esté encendido. Se controla desde la consola web (`/v1/sim/*`). Concurrencia reservada 1 | Demo y pruebas sin depender de un PC local encendido | RF-01 |
+| **Amazon ECR** | Repositorio privado, scan on push, lifecycle de 5 imágenes | Empaqueta dependencias ML que exceden el límite de 250 MB de una Lambda en zip | MH-AI-01 |
+| **Amazon EventBridge (bus `fleet-events`)** | Reglas por `detail-type` (`AnomalyDetected`, `MachineSilent`, `IncidentStateChanged`, `IncidentResolved`) | Desacopla la detección de la respuesta: un evento, múltiples consumidores | ESC-04, RNF-11 |
 
 ### 2.3 Capa de datos
 
@@ -205,16 +222,16 @@ flowchart LR
 | **Amazon S3 (data lake)** | Versionado ON, lifecycle Standard → Standard-IA (30 d) → Glacier Flexible (90 d) → expiración a 400 d, SSE-S3 | Durabilidad de 11 nueves y retención barata ≥ 1 año | RNF-05, RNF-14, RNF-03 |
 | **S3 (modelos y artefactos)** | Bucket separado, versionado, `models/isolation_forest/vN/model.joblib` | Versionado de modelos ML | TRZ-05, RF-13.2 |
 | **AWS Glue Data Catalog** | Base `arquifusion`, tablas `telemetry_raw`, `incidents_export`. Sin crawlers (tablas definidas en IaC) | Esquema para Firehose (Parquet) y Athena | ESC-08 |
-| **Amazon Athena** | Workgroup con bucket de resultados y límite de bytes escaneados por consulta | Analítica SQL serverless sobre el histórico (combustible, productividad, patrones precursores, entrenamiento) | RF-07, RF-08, RF-13, ESC-05 |
+| **Amazon Athena** | Workgroup con bucket de resultados y límite de bytes escaneados por consulta | Analítica SQL serverless sobre el histórico (combustible, productividad, firmas pre-falla, entrenamiento) | RF-07, RF-08, RF-13, ESC-05 |
 
 ### 2.4 Orquestación
 
 | Servicio | Configuración | Problema que resuelve | Cubre |
 |---|---|---|---|
 | **AWS Step Functions — `GestionIncidente`** | **Standard**, `LabRole`, X-Ray ON. Patrones: `Parallel`, `Choice`, `Map`, `.waitForTaskToken` + `TimeoutSeconds`, `Retry`/`Catch`, integraciones SDK directas a DynamoDB | Automatiza el ciclo completo del incidente con esperas humanas y escalamiento | RF-06, RF-10, RF-11.1, RF-12, MH-SFN-01 |
-| **Step Functions — `AnalisisDiario`** | Standard, `Parallel` con 4 ramas | Plan preventivo, pronóstico de repuestos, combustible y productividad | RF-03, RF-04, RF-07, RF-08, MH-SFN-02 |
+| **Step Functions — `AnalisisDiario`** | Standard, `Parallel` con 4 ramas + estado final `ExportarGCP` | Plan preventivo, pronóstico de repuestos, combustible, productividad y réplica DR | RF-03, RF-04, RF-07, RF-08, MH-SFN-02 |
 | **Step Functions — `Reentrenamiento`** | Standard, semanal + manual, `Choice` de promoción | Pipeline ML automatizado y versionado | RF-13.2, TRZ-05, MH-SFN-03 |
-| **EventBridge Scheduler** | `LabRole` como rol de ejecución. Crons: diario 05:00 Lima, semanal domingo, heartbeat cada 5 min | Disparadores programados sin servidores | RF-03.3, RF-13, OBS-09 |
+| **EventBridge Scheduler** | `LabRole` como rol de ejecución. Crons: diario 05:00 Lima, semanal domingo, heartbeat cada 5 min, `sim-driver` cada 1 min | Disparadores programados sin servidores | RF-03.3, RF-13, OBS-09 |
 
 ### 2.5 Lambdas de dominio, notificación y transversales
 
@@ -222,24 +239,27 @@ flowchart LR
 |---|---|---|
 | **Lambda `scoring-tecnicos`** | Puntaje = `w1·severidad + w2·(1/ETA haversine) + w3·match_especialidad + w4·disponibilidad − w5·carga_actual`. Guarda el puntaje de todos los candidatos | RF-06.2/06.3, RF-05.3, TRZ-03 |
 | **Lambda `correlacion-zona`** | Consulta el GSI `zone#date` de anomalías en una ventana de 30 min. Si hay ≥ 3 máquinas en la zona, crea un incidente padre | RF-12.1/12.2 |
-| **Lambda `ia-gemini`** | Cadena de proveedores LLM (Gemini API vía AI Studio o Vertex express → Bedrock → motor determinista) con credencial desde Secrets Manager. Diagnóstico, resumen por rol, causa común, resumen del chat al cierre y tool-calling del asistente. Registra `provider` y `degraded` en el diagnóstico | RF-02.6, RF-07.4, RF-10.3, RF-12.3, RF-14, RF-16.8, MH-MC-03 |
-| **Lambda `notificar`** | Enruta por la tabla `NotificationRule` (rol × severidad × tipo). Canales: SNS (email), webhook (Slack/Discord), Pub/Sub → FCM y Telegram. Dedup con TTL | RF-10.1/10.2/10.5 |
-| **Lambda `notify-push`** | Envía push FCM HTTP v1 al técnico/operador asignado (token registrado en `/auth/firebase-token`) | RF-10.2, RF-16.5 |
-| **Lambda `notify-telegram`** | Bot de Telegram: alerta con botones inline (`ack:<id>:accept|reject`) y comandos; webhook entrante en `/telegram/webhook` (secret token) | RF-10.2, RF-16.5 |
+| **Lambda `ia-gemini`** | Cadena de proveedores LLM **resiliente**: Gemini API (AI Studio) → Amazon Bedrock → motor determinista. La credencial sale de Secrets Manager. Hace el diagnóstico, el resumen por rol, la causa común, el resumen del chat al cierre y el tool-calling del asistente. Cada respuesta registra `provider` y `degraded`, y **nunca bloquea el flujo** | RF-02.6, RF-07.4, RF-10.3, RF-12.3, RF-14, RF-16.8, MH-MC-03 |
+| **Amazon Bedrock** | LLM de respaldo de `ia-gemini` cuando Gemini no responde (si el Learner Lab lo habilita; si no, la cadena pasa al motor determinista) | RNF-04 |
+| **Lambda `notificar`** | Enruta por la tabla `NotificationRule` (rol × severidad × tipo). Canales: SNS (email), webhook (Slack/Discord), `notify-push` (FCM) y `notify-telegram`. Dedup con TTL | RF-10.1/10.2/10.5 |
+| **Lambda `notify-push`** | Envía push FCM HTTP v1 al técnico/operador asignado (token registrado en `/auth/firebase-token`). Reemplaza a Cloud Functions, que requiere facturación | RF-10.2, RF-16.5 |
+| **Lambda `notify-telegram`** | Bot de Telegram para incidentes críticos: alerta con botones inline (`ack:<id>:accept|reject`). La respuesta entra por `/telegram/webhook` (secret token) → `api-comandos` → `SendTaskSuccess` | RF-10.2, RF-16.5 |
 | **Lambda `replicar`** | DynamoDB Streams → Firestore (máquinas, incidentes, técnicos) | MH-HA-03, MH-MC-01 |
-| **Lambda `auditoria`** | Consume el bus `fleet-events` → tablas `audit-events` (append-only) y el historial `EVT#` en `incidents` (antes/después, actor, motivo). Corre en la **VPC aislada** (TAREA-16) | RNF-15, TRZ-02/06 |
+| **Lambda `auditoria`** | Consume el bus `fleet-events` → tabla `audit-events` (append-only) y el historial `EVT#` en `incidents` (antes/después, actor, motivo). Es la **única Lambda dentro de la VPC aislada** | RNF-15, TRZ-02/06 |
 | **Lambda `heartbeat`** | Marca `SILENT` las máquinas sin lectura en más de 3× su frecuencia → evento `MachineSilent` | OBS-09 |
-| **Lambda `sim-driver`** | Gemelo de flota serverless: EventBridge Scheduler la invoca cada minuto y emite telemetría simulada contra `/telemetry` mientras el estado en SSM esté encendido | RF-01, TAREA-07 |
-| **Lambda `export-gcp`** | Exporta el lake diario, incidentes cerrados e insights a BigQuery (DR multinube, §2.8) | RNF-04/05 |
-| **Lambdas API** (`/v1/*`) | CRUD de lectura (`api-lectura`) y acciones (`api-comandos`: `ack`, `assign`, `resolve`). `ack` llama a `SendTaskSuccess` | §5.5, RF-06.4, TRZ-09 |
+| **Lambda `precursores`** | Calcula la **firma pre-falla**: qué variables se desvían en las horas previas a una falla, por modelo de máquina (Athena sobre el lake). La consume la vista *Salud Predictiva* | RF-02, RF-13 |
+| **Lambda `export-gcp`** | Exporta el lake diario, los incidentes cerrados y los insights a BigQuery (DR multinube, §2.8) | RNF-04/05 |
+| **Lambda `api-lectura`** (`/v1/*`) | Lecturas con RBAC y zona. Incluye **`/pulse`**: salud del sistema (máquinas reportando, actualizaciones por minuto, antigüedad del último dato), que alimenta el badge **LIVE** del header | §5.5, RNF-09 |
+| **Lambda `api-comandos`** | Acciones `ack`, `assign`, `resolve`, control del simulador (`/v1/sim/*`) y webhook de Telegram. `ack` y `resolve` llaman a `SendTaskSuccess` | §5.5, RF-06.4, TRZ-09 |
 | **Amazon SNS** | Topics por rol (`alerts-tecnico`, `alerts-mantenimiento`, `alerts-gerencia`) + topic `platform-alarms` | RF-10.2, MH-OBS-03 |
-| **AWS Secrets Manager** | `gcp/service-account`, `gemini/api-key`, `webhook/slack`, `simulator/api-key`, `bridge/gcp-api-key` | Rúbrica (variables globales), MH-SEC-03 |
-| **SSM Parameter Store** | `/arquifusion/{stage}/thresholds/*`, `/model/active_version`, `/prompts/version` (String/SecureString estándar, gratis) | RF-02.1, TRZ-05 |
+| **AWS Secrets Manager** | `gcp/service-account`, `gemini/api-key`, `telegram/bot-token`, `webhook/slack`, `simulator/api-key`, `bridge/gcp-api-key` | Rúbrica (variables globales), MH-SEC-03 |
+| **SSM Parameter Store** | `/arquifusion/{stage}/thresholds/*`, `/model/active_version`, `/prompts/version`, estado del `sim-driver` (String/SecureString estándar, gratis) | RF-02.1, TRZ-05 |
 | **Amazon CloudWatch** | Logs JSON (Powertools), retención de 7 días, métricas EMF sin `machine_id` como dimensión, 2 dashboards, alarmas → SNS | RNF-09, OBS-01–07, MH-OBS |
 | **AWS X-Ray** | Tracing activo en Lambda, API Gateway y Step Functions | OBS-02, MH-OBS-07 |
+| **AWS CloudTrail** | Event history de 90 días | RNF-15 |
 | **KMS (claves AWS-managed)** | `aws/s3`, `aws/sqs`, `aws/secretsmanager`. DynamoDB con su clave propia | RNF-08, MH-SEC-04 |
-| **IAM `LabRole`** | Único rol de ejecución en todo el stack | W-01, MH-IAC-03 |
-| **Terraform** (providers `aws` + `google`) | Estado en S3 con `use_lockfile` | RNF-10, MH-IAC-02 |
+| **IAM `LabRole`** | Único rol de ejecución en todo el stack | MH-IAC-03 |
+| **Terraform** (providers `aws` + `google`) | Estado en S3 con `use_lockfile`. Las Lambdas nuevas usan concurrencia reservada 1 por el límite de 10 del Lab (ver `concurrencia-lambda.md`) | RNF-10, MH-IAC-02 |
 
 ### 2.6 Modelo de datos en DynamoDB
 
@@ -251,27 +271,30 @@ Tablas físicas `{prefix}-<nombre>` (`infra/base/main.tf`); todas on-demand, PIT
 | `machine-state` | `machine_id` | `AGG#1h#...` / `BASELINE` / `LAST` | — | Agregados 1 min/1 h/1 d, baseline EWMA y última lectura (ESC-07). TTL `expires_at` |
 | `idempotency` | `machine_id#timestamp` | — | — | Escritura condicional, TTL 24 h (RNF-07) |
 | `anomalies` | `machine_id` | `ts#anomaly_id` | `by_zone: zone → detected_at` | Variables, score, `model_version`, tipo (individual/cohorte/tendencia) |
-| `incidents` | `INC#incident_id` | `META` / `EVT#ts#event_id` | `by_machine: machine_id → detected_at`, `by_status: status → detected_at` | Incluye `ai_diagnosis`, `parent_incident_id`, `correlation_id`; los `EVT#` son el historial (no salen en listas) |
+| `incidents` | `INC#incident_id` | `META` / `EVT#ts#event_id` | `by_machine: machine_id → detected_at`, `by_status: status → detected_at` | Incluye `ai_diagnosis` (con `provider`/`degraded`), `parent_incident_id`, `correlation_id`, `downtime_h`, `value_protected_usd`; los `EVT#` son el historial (no salen en listas) |
 | `technicians` | `TEC#technician_id` | `META` | `by_zone: zone → technician_id` | Especialidades, ubicación y carga |
 | `inventory` | `location_id` | `component_id` | `by_component: component_id → warehouse_id` | Stock, mín. y máx. |
-| `catalog` | `component_id` / `model_id` | `COMPAT#...` | — | Componentes y compatibilidades |
-| `warehouses` | `warehouse_id` | `META` | — | Almacenes del seed (#19) |
+| `catalog` | `component_id` / `model_id` | `COMPAT#...` | — | Componentes, compatibilidades y costo/h de paro por modelo |
+| `warehouses` | `warehouse_id` | `META` | — | Almacenes del seed |
 | `notification-rules` | `role` | `severity#event_type` | — | Canales y plantilla |
-| `audit-events` | `incident#<id>` / `machine#<id>` | `ts#event_id` | — | Append-only (`attribute_not_exists(pk)`), sin secretos (F-14) |
-| `maintenance-records` | `ASSET#machine_id` | `REC#<ts>` | — | Preventivo/correctivo; lo escribe B al cerrar |
-| `insights` | `ml_model` / `report#daily` / `kpis#...` | `LATEST` | — | Salidas del workflow analítico (los escribe A, los lee C) |
+| `audit-events` | `incident#<id>` / `machine#<id>` | `ts#event_id` | — | Append-only (`attribute_not_exists(pk)`), sin secretos |
+| `maintenance-records` | `ASSET#machine_id` | `REC#<ts>` | — | Preventivo/correctivo; se escribe al cerrar |
+| `insights` | `ml_model` / `report#daily` / `kpis#...` / `precursors#...` | `LATEST` | — | Salidas del workflow analítico y de `precursores` |
 
-### 2.7 Componentes en GCP (rol real, no decorativo)
+### 2.7 Componentes en GCP / Firebase (rol real, no decorativo)
 
-| Servicio GCP | Rol | Cubre |
+| Servicio | Rol | Cubre |
 |---|---|---|
-| **Gemini API (AI Studio / Vertex express)** | LLM de diagnóstico, resúmenes y asistente con function calling (primer proveedor de la cadena `gemini → bedrock → determinista`) | RF-02.6, RF-14, RF-16.8 |
+| **Gemini API (AI Studio)** | LLM primario de diagnóstico, resúmenes y asistente con function calling (primer proveedor de la cadena `gemini → bedrock → determinista`) | RF-02.6, RF-14, RF-16.8 |
 | **Firestore** | Canales de incidente (chat), estado en tiempo real del mapa, **persistencia offline** en el móvil y réplica de entidades críticas | RF-05, RF-15.3, RF-16, MH-HA-03 |
+| **Firebase Auth** | Custom tokens emitidos por `POST /auth/firebase-token` con claims `role`, `zone` y `technician_id`, que usan las Security Rules | RNF-08, RF-16 |
 | **Firebase Cloud Messaging** | Push al móvil del técnico u operador (HTTP v1 desde `notify-push`) | RF-10.2 |
-| **Firebase Hosting** | Sirve el front React compilado (HTTPS, CDN, sin costo) | RF-15, RNF-08 |
+| **Firebase Hosting** | Sirve la PWA compilada (HTTPS, CDN, sin costo) | RF-15, RNF-08 |
 | **BigQuery (sandbox)** | Réplica DR diaria del lake, incidentes cerrados e insights (`export-gcp`) | RNF-04/05 |
 | **Looker Studio** | Tablero de Gerencia sobre BigQuery (enlace en `VITE_LOOKER_URL`) | RF-07, RF-15 |
-| **Telegram Bot API** | Alertas con botones de decisión y comandos (`notify-telegram`, webhook `/telegram/webhook`) | RF-10.2, RF-16.5 |
+| *Opcional (requiere facturación)* | Pub/Sub, Cloud Functions y Cloud Storage para adjuntos. No se despliegan con `gcp_billing=false`; su función la cubren `notify-push` y `api-comandos` en AWS | — |
+
+**Integración externa:** **Telegram Bot API** (no es GCP). Recibe alertas críticas con botones de decisión desde `notify-telegram` y devuelve la decisión por `/telegram/webhook` (RF-10.2, RF-16.5).
 
 ### 2.8 Recuperación ante desastres (DR multinube)
 
@@ -295,8 +318,8 @@ Si AWS pierde el *data lake* o la base de incidentes, el historial sigue disponi
 La plataforma es **serverless y sin cómputo expuesto**. El perímetro lo forman servicios administrados por AWS (API Gateway, Cognito), que ya son multi-AZ y con TLS. Por eso:
 
 - **No hay subredes públicas, Internet Gateway ni NAT Gateway.** Un NAT cuesta ~USD 32/mes + datos, consume el presupuesto del lab y no es pago por uso (MH-NET-01).
-- Se usa **una VPC aislada (TAREA-16) solo para la Lambda `auditoria`**: escribe el ledger append-only en DynamoDB y no necesita salir a Internet, así que corre en subredes privadas y accede por un **Gateway Endpoint de DynamoDB** (gratis).
-- El resto de Lambdas corre **fuera de la VPC** porque salen a Internet o a otros servicios (GCP, Athena, Secrets Manager, Step Functions, SNS). Su seguridad se basa en Cognito/IAM + TLS + secretos gestionados (modelo *zero-trust serverless*).
+- Se usa **una VPC aislada solo para la Lambda `auditoria`**: escribe el ledger append-only en DynamoDB y no necesita salir a Internet, así que corre en subredes privadas y accede por un **Gateway Endpoint de DynamoDB** (gratis).
+- El resto de Lambdas corre **fuera de la VPC** porque salen a Internet o a otros servicios (GCP, Telegram, Athena, Secrets Manager, Step Functions, SNS). Su seguridad se basa en Cognito/IAM + TLS + secretos gestionados (modelo *zero-trust serverless*).
 
 ### 3.2 Topología de la VPC `{prefix}-vpc-audit`
 
@@ -322,9 +345,9 @@ VPC {prefix}-vpc-audit  10.20.0.0/16   (us-east-1, DNS hostnames ON, sin IGW, si
 | **VPC Flow Logs** | Opcional (`var.vpc_flow_logs`, apagado por defecto): el Learner Lab no permite crear el rol que `aws_flow_log` necesita. Si tu cuenta lo permite, activarlo escribe a CloudWatch Logs (retención 7 días). |
 
 **Lambdas dentro de la VPC:** `auditoria` (única).
-**Lambdas fuera de la VPC:** el resto — `api-lectura`, `procesar`, `ia-gemini`, `notificar`, `notify-push`, `notify-telegram`, `replicar`, `scoring-tecnicos`, `correlacion-zona`, `heartbeat`, `export-gcp`, `sim-driver`, `api-comandos` (Step Functions, API Gateway) y las Lambdas de `AnalisisDiario` / `Reentrenamiento` (Athena).
+**Lambdas fuera de la VPC:** el resto — `api-lectura`, `api-comandos`, `precursores`, `procesar`, `sim-driver`, `ia-gemini`, `notificar`, `notify-push`, `notify-telegram`, `replicar`, `scoring-tecnicos`, `correlacion-zona`, `heartbeat`, `export-gcp` y las Lambdas de `AnalisisDiario` / `Reentrenamiento` (Athena).
 
-> **Modelo *zero-trust serverless* (resto de la plataforma):** Cognito JWT en API Gateway, API keys (máquinas y puente GCP→AWS), OIDC de Pub/Sub en `/bridge/push`, Telegram secret token en `/telegram/webhook`, y `LabRole` + separación por `stage` (tablas/buckets por nombre). Las políticas de mínimo privilegio por función para producción están en `docs/iam-produccion/`.
+> **Modelo *zero-trust serverless* (resto de la plataforma):** Cognito JWT en API Gateway, API keys (máquinas y puente GCP→AWS), secret token de Telegram en `/telegram/webhook`, y `LabRole` + separación por `stage` (tablas/buckets por nombre).
 
 ### 3.3 Security Groups
 
@@ -339,16 +362,16 @@ No hay más SG porque no hay otros recursos con ENI (sin EC2, RDS, ALB ni endpoi
 | Capa | Mecanismo |
 |---|---|
 | **Identidad de usuarios** | Cognito User Pool (MFA opcional TOTP, política de contraseñas). Grupos = roles. El JWT incluye `cognito:groups` y `custom:zone`. |
-| **Autorización API** | Cognito authorizer en API Gateway + validación de rol y zona dentro de cada Lambda (RBAC). Por ejemplo, `gerencia` solo puede hacer GET y `tecnico` solo puede hacer `ack`/`resolve` de sus incidentes asignados. |
+| **Autorización API** | Cognito authorizer en API Gateway + validación de rol y zona dentro de cada Lambda (RBAC). Por ejemplo, `gerencia` solo puede hacer GET, `tecnico` solo puede hacer `ack`/`resolve` de sus incidentes asignados y `/v1/sim/*` es solo para `admin`. |
 | **Identidad de máquinas** | API key por operación (`simulator-{operation_id}`) + usage plan (rate 500 rps, burst 1.000, cuota diaria). |
-| **Puente GCP → AWS** | API key dedicada `bridge-gcp` en un recurso aparte `/bridge/*` con throttling bajo. La key vive en Secret Manager de GCP; su contraparte, en Secrets Manager de AWS. |
-| **Identidad de servicios** | `LabRole` en todos los recursos (limitación del lab). Mitigación: endpoint policies en los Gateway Endpoints, bucket policies restrictivas y separación de tablas/buckets por `stage`. Se documentan en `docs/iam-produccion/` las políticas de mínimo privilegio por función para producción. |
-| **Secretos** | Secrets Manager (credenciales GCP, API keys, webhooks) leído con caché (Powertools Parameters, TTL 5 min). Configuración en SSM. Nada en variables de entorno, repo ni frontend. |
+| **Telegram** | `/telegram/webhook` valida el header `X-Telegram-Bot-Api-Secret-Token` y la lista de chats permitidos antes de aceptar una decisión. |
+| **Identidad de servicios** | `LabRole` en todos los recursos (limitación del lab). Mitigación: endpoint policies en el Gateway Endpoint, bucket policies restrictivas y separación de tablas/buckets por `stage`. |
+| **Secretos** | Secrets Manager (credenciales GCP, Gemini, Telegram, API keys, webhooks) leído con caché (Powertools Parameters, TTL 5 min). Configuración en SSM. Nada en variables de entorno, repo ni frontend. |
 | **Datos en reposo** | SSE-S3 (buckets), cifrado DynamoDB, SQS SSE (`aws/sqs`), Secrets Manager con `aws/secretsmanager`. |
-| **Datos en tránsito** | TLS 1.2+ en Firebase Hosting (HTTPS administrado) y API Gateway. Bucket policies con `aws:SecureTransport = false → Deny`. |
+| **Datos en tránsito** | TLS 1.2+ en Firebase Hosting (HTTPS administrado), API Gateway y llamadas a GCP/Telegram. Bucket policies con `aws:SecureTransport = false → Deny`. |
 | **Bucket policies** | Lake: deny sin TLS y deny `s3:DeleteObject*` excepto lifecycle (política en `lab_s3_bucket`). Si se usa la alternativa CloudFront+S3: solo el principal `cloudfront.amazonaws.com` con `AWS:SourceArn` de la distribución (OAC). |
-| **Firestore** | Security Rules: solo participantes del canal leen y escriben. `admin` y `gerencia` son de solo lectura. Escritura de réplica únicamente por la service account de AWS. |
-| **Auditoría** | CloudTrail Event History (90 días) + tabla `AuditEvents` append-only + historial de ejecuciones de Step Functions. |
+| **Firestore** | Security Rules con los claims del custom token: solo participantes del canal leen y escriben; `operador`, `tecnico`, `mantenimiento` y `supervisor` escriben en el chat; `admin` y `gerencia` son de solo lectura. Escritura de réplica únicamente por la service account de AWS. |
+| **Auditoría** | CloudTrail Event History (90 días) + tabla `audit-events` append-only (VPC aislada) + historial de ejecuciones de Step Functions. |
 
 ---
 
@@ -356,7 +379,7 @@ No hay más SG porque no hay otros recursos con ENI (sin EC2, RDS, ALB ni endpoi
 
 ### Flujo A — Ingesta de telemetría y detección (hot path, objetivo ≤ 60 s)
 
-1. **Simulador** genera un lote de N lecturas (`machine_id`, `timestamp`, ubicación, variables, `operation_id`) y envía `POST /telemetry` con header `x-api-key`.
+1. El **simulador local** o la Lambda **`sim-driver`** genera un lote de N lecturas (`machine_id`, `timestamp`, ubicación, variables, `operation_id`) y envía `POST /telemetry` con header `x-api-key`.
 2. **API Gateway** valida la API key y el usage plan (throttling) y aplica el **JSON Schema** del *request validator*. Si es inválido → `400` sin costo de cómputo. Genera un `correlation_id` (`$context.requestId`) y lo añade como atributo del mensaje.
 3. **Integración directa API Gateway → SQS** (`SendMessage` con `LabRole`) → responde `202 Accepted`.
 4. **SQS** dispara la **Lambda `procesar`** en lotes de hasta 100 mensajes (ventana de 5 s).
@@ -379,35 +402,36 @@ No hay más SG porque no hay otros recursos con ENI (sin EC2, RDS, ALB ni endpoi
 1. La **regla de EventBridge** (`detail-type = AnomalyDetected`, severidad ≥ Media) inicia la ejecución. El nombre de la ejecución es `machine_id-ventana` para evitar duplicados.
 2. **Estado `CrearIncidente`** (SDK DynamoDB `PutItem` con condición "no hay incidente abierto para esta máquina"). Si ya existe → `Choice` → agrega la anomalía al incidente abierto y termina (dedup, RF-10.5).
 3. **`Parallel` de enriquecimiento:**
-   - Rama 1: Lambda `ia-gemini` → diagnóstico (causa probable, acción sugerida, confianza) a partir de las variables top-3, el historial de la máquina y la cohorte.
-   - Rama 2: Lambda `correlacion-zona` → si hay ≥ 3 máquinas afectadas en la zona en 30 min, crea o une el **incidente padre** y Gemini sugiere la causa común (RF-12).
+   - Rama 1: Lambda `ia-gemini` → diagnóstico (causa probable, acción sugerida, confianza) a partir de las variables top-3, el historial de la máquina y la cohorte. Intenta Gemini, luego Bedrock y, si ambos fallan, usa el motor determinista; el resultado indica `provider` y `degraded`.
+   - Rama 2: Lambda `correlacion-zona` → si hay ≥ 3 máquinas afectadas en la zona en 30 min, crea o une el **incidente padre** y la IA sugiere la causa común (RF-12).
    - Rama 3: consulta de `Inventory` y `Catalog` → disponibilidad de los repuestos probables. Si falta stock → evento `PartShortage` (RF-04.6).
 4. **`Choice` por severidad:** si es Crítica → cambia la máquina a `REQUIERE_INTERVENCION` y prioriza la asignación. Si es Baja o Info → solo registra y notifica al dashboard.
 5. **Lambda `scoring-tecnicos`** → elige el mejor técnico y guarda el puntaje de cada candidato en el incidente (TRZ-03).
-6. **`Map` de notificaciones** sobre los roles de `NotificationRules`: Lambda `notificar` genera el contenido por rol (técnico: detalle técnico; gerencia: impacto) y lo envía por SNS email, webhook, Lambda `notify-push` → **FCM** y Lambda `notify-telegram` → **Telegram** (botones inline).
-7. **Crear canal de incidente** en Firestore `incidents/{id}/channel` con los participantes automáticos (operador, técnico, mantenimiento, supervisor de zona) (RF-16.1).
+6. **`Map` de notificaciones** sobre los roles de `NotificationRules`: Lambda `notificar` genera el contenido por rol (técnico: detalle técnico; gerencia: impacto) y lo envía por SNS email, webhook, Lambda `notify-push` → **FCM** y, si es crítico, Lambda `notify-telegram` → **Telegram** (botones inline).
+7. **Crear canal de incidente** en Firestore `incidents/{id}/messages` con los participantes automáticos (operador, técnico, mantenimiento, supervisor de zona) (RF-16.1).
 8. **`EsperarAceptacion`** (`lambda:invoke.waitForTaskToken`): guarda el `task_token` en `Incidents`. `TimeoutSeconds = 900` (crítico) o `3600` (alta).
-   - El técnico acepta → `POST /v1/incidents/{id}/ack`, un botón inline de Telegram (`ack:<id>:accept`) o un mensaje en el chat → `/bridge/events` (API key) → Lambda → **`SendTaskSuccess`**.
-   - Timeout → `Catch States.Timeout` → **escalamiento**: siguiente técnico del ranking + notificación a mantenimiento (RF-06.5, RF-10.4). Máximo 2 escalamientos.
-9. **`EsperarResolucion`** (segundo `waitForTaskToken`, timeout de 24 h): se cierra con `POST /v1/incidents/{id}/resolve` (componentes reemplazados, costo, downtime).
-10. **Cierre:** Lambda `ia-gemini` resume la conversación de Firestore y extrae causa, acciones y repuestos (RF-16.8). `UpdateItem` del incidente (`CERRADO`, MTTR), descuento de `Inventory`, registro en `MaintenanceRecord` y marca de vigilancia de **reincidencia** de 7 días (RF-11.3).
+   - El técnico acepta desde la PWA (`POST /v1/incidents/{id}/ack`) o con el botón inline de Telegram (`ack:<id>:accept` → `/telegram/webhook`). En ambos casos `api-comandos` llama a **`SendTaskSuccess`**.
+   - Timeout → `Catch States.Timeout` → **escalamiento**: siguiente técnico del ranking + notificación a mantenimiento y al supervisor (RF-06.5, RF-10.4). Máximo 2 escalamientos.
+9. **`EsperarResolucion`** (segundo `waitForTaskToken`, timeout de 24 h): se cierra con `POST /v1/incidents/{id}/resolve` (componentes reemplazados, costo).
+10. **Cierre:** Lambda `ia-gemini` resume la conversación de Firestore y extrae causa, acciones y repuestos (RF-16.8). `UpdateItem` del incidente (`CERRADO`, MTTR, **`downtime_h`** y **`value_protected_usd`** = paro esperado por severidad × costo/h del modelo − paro real), descuento de `Inventory`, registro en `MaintenanceRecord` y marca de vigilancia de **reincidencia** de 7 días (RF-11.3).
 11. Cada cambio de estado del incidente publica `IncidentStateChanged` en el bus `fleet-events` → Lambda `auditoria` (tabla `audit-events` + historial `EVT#` en `incidents`); el Stream de `Incidents` alimenta a `replicar` (Firestore). El ARN de ejecución de Step Functions queda enlazado al incidente (TRZ-08).
 
 ### Flujo C — Consulta del usuario (frontend → API → datos)
 
-1. El usuario abre la app: **Firebase Hosting** entrega el SPA (HTTPS, CDN; alternativa CloudFront → S3 con OAC fuera del Learner Lab).
-2. Login en **Cognito** → recibe ID/Access token (JWT con grupos y zona).
+1. El usuario abre la app: **Firebase Hosting** entrega la PWA (HTTPS, CDN). Se puede instalar en el móvil y su service worker solo cachea el app-shell.
+2. Login en **Cognito** → recibe ID/Access token (JWT con grupos y zona). Luego `POST /auth/firebase-token` devuelve un custom token para **Firebase Auth** y registra el token FCM del dispositivo.
 3. El frontend llama a `GET /v1/machines?zone=norte` con `Authorization: Bearer <JWT>`.
 4. El **Cognito authorizer** de API Gateway valida firma, expiración y audiencia.
-5. **Lambda `api-lectura`** valida RBAC y zona → `Query` a DynamoDB. Solo `auditoria` corre dentro de la VPC aislada (TAREA-16); las Lambdas API quedan fuera porque también hablan con otros servicios.
-6. La respuesta JSON vuelve por API Gateway. En paralelo, los listeners de **Firestore** mantienen el mapa y la cola de incidentes en tiempo real.
+5. **Lambda `api-lectura`** valida RBAC y zona → `Query` a DynamoDB (fuera de la VPC; solo `auditoria` corre dentro).
+6. La respuesta JSON vuelve por API Gateway. En paralelo, los listeners de **Firestore** mantienen el mapa y la cola de incidentes en tiempo real, y `GET /v1/pulse` alimenta el badge **LIVE / SIN SEÑAL** del header.
+7. *Salud Predictiva* consulta la Lambda `precursores` para mostrar las **firmas pre-falla** por modelo; el *Centro de Mando* muestra los **USD protegidos (30 d)** agregados de los cierres.
 
 ### Flujo D — Comunicación del incidente (chat)
 
-1. Técnico, operador y supervisor escriben en `incidents/{id}/messages` de **Firestore** (texto, mensajes rápidos, ubicación). El campo opcional `attachment_path` guarda una referencia, no un binario.
-2. Sin red, el SDK de Firestore encola localmente y sincroniza al volver la conexión (RF-16.6).
-3. Un mensaje de tipo `cambio_estado` (o el webhook de Pub/Sub `/bridge/push` con OIDC) llega a `/bridge/events` (API key) → Lambda → actualiza `Incidents` y/o `SendTaskSuccess` (RF-16.5).
-4. Las @menciones generan un push **FCM** dirigido (o un mensaje de Telegram).
+1. Operador, técnico, mantenimiento y supervisor escriben en `incidents/{id}/messages` de **Firestore** (texto y mensajes rápidos: *En camino*, *Llegué*, *Necesito repuesto*, *Equipo asegurado*). El campo opcional `attachment_path` guarda una referencia, no un binario.
+2. Sin red, el SDK de Firestore encola localmente en IndexedDB y sincroniza al volver la conexión (RF-16.6).
+3. Las decisiones del flujo (aceptar, rechazar, resolver) van por la API (`api-comandos`) o por los botones de Telegram, y terminan en `SendTaskSuccess` (RF-16.5).
+4. Las @menciones generan un push **FCM** dirigido (o un mensaje de Telegram si es crítico).
 5. Al cierre, el hilo completo se registra como resumen (`ai_diagnosis` del cierre) y queda en el historial append-only `EVT#` en `incidents` (RF-16.7).
 
 ### Flujo E — Análisis programado (Step Functions `AnalisisDiario`)
@@ -419,8 +443,8 @@ No hay más SG porque no hay otros recursos con ENI (sin EC2, RDS, ALB ni endpoi
    - **Combustible**: L/h y L/ton contra pares e historial, tendencia progresiva (RF-07).
    - **Productividad**: utilización, máquinas ociosas o sobreexplotadas, matriz productividad × costo (RF-08).
 3. Los resultados se escriben en DynamoDB (`Machines.next_maintenance`, `Inventory.recommended_*`, tabla `insights`).
-4. Lambda `ia-gemini` genera el resumen ejecutivo → `notificar` (rol `admin` y `gerencia`).
-5. Estado `ExportarGCP` (Lambda `export-gcp`) sube a **BigQuery** el lake diario, los incidentes cerrados e insights (réplica DR cross-cloud, §2.8) → tablero de **Looker Studio** para Gerencia.
+4. **`KpisYReporte`**: Lambda `ia-gemini` genera el resumen ejecutivo → `notificar` (rol `admin` y `gerencia`).
+5. Estado **`ExportarGCP`** (Lambda `export-gcp`) sube a **BigQuery** el lake diario, los incidentes cerrados y los insights (réplica DR cross-cloud, §2.8) → tablero de **Looker Studio** para Gerencia.
 
 ### Flujo F — Reentrenamiento (Step Functions `Reentrenamiento`)
 
@@ -436,3 +460,10 @@ No hay más SG porque no hay otros recursos con ENI (sin EC2, RDS, ALB ni endpoi
 3. Alarmas (DLQ > 0, errores > 1 %, SFN fallida, `ApproximateAgeOfOldestMessage` > 60 s, throttles) → SNS `platform-alarms`.
 4. **X-Ray** traza API Gateway → Lambda → Step Functions → Lambda IA, incluyendo la llamada saliente a GCP como subsegmento.
 5. La Lambda `heartbeat` (cada 5 min) detecta máquinas silenciosas → evento `MachineSilent` → incidente de severidad Media.
+6. `GET /v1/pulse` resume la salud del pipeline para el badge del header: **LIVE** si llegan datos recientes, **SIN SEÑAL** si se corta la telemetría y **DEMO** en modo demo.
+
+### Flujo H — Simulador serverless y demo
+
+1. Desde la consola (rol `admin`, botón **Simulador**) se elige un escenario (degradación progresiva, falla súbita, pico de presión, falla eléctrica o incidente grupal por zona) → `POST /v1/sim/*` → `api-comandos` guarda el estado en SSM.
+2. Mientras el estado esté encendido, EventBridge Scheduler invoca `sim-driver` cada minuto, que emite la telemetría del escenario por `/telemetry` y entra al Flujo A como cualquier máquina real.
+3. `scripts/demo_preflight.sh` verifica que todo esté desplegado y respondiendo; `scripts/demo_reset.py` limpia incidentes y estado antes de una presentación.
