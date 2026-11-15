@@ -97,6 +97,7 @@ def test_assistant_uses_function_calling(tables):
         "session_id": "s-1",
         "tools_used": ["get_machines_at_risk"],
         "degraded": False,
+        "provider": "gemini",
     }
     sent = transport.bodies[1]["contents"][-1]["parts"][0]["functionResponse"]["response"]["result"]
     assert [m["machine_id"] for m in sent["machines"]] == ["EX-023"]  # supervisor de norte no ve CM-104

@@ -65,7 +65,10 @@ DEPS = {"config": _config, "claim": _claim, "release": _release, "incident": _in
 def handler(event, context):
     logger.set_correlation_id(correlation.from_any(event))
     types = [t.strip() for t in os.environ.get("TELEGRAM_EVENT_TYPES", "").split(",") if t.strip()]
-    notifier = service.TelegramNotifier(DEPS, types or service.DEFAULT_EVENT_TYPES, os.environ.get("APP_URL", ""))
+    min_severity = os.environ.get("TELEGRAM_MIN_SEVERITY", "critical").strip().lower()
+    notifier = service.TelegramNotifier(
+        DEPS, types or service.DEFAULT_EVENT_TYPES, os.environ.get("APP_URL", ""), min_severity
+    )
     result = notifier.run(event)
     logger.info("telegram", extra=result)
     return result

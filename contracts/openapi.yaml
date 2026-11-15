@@ -640,6 +640,42 @@ paths:
                       fleet_utilization_pct: {type: number}
                       fuel_cost_per_ton_usd: {type: number}
 
+  /analytics/precursors:
+    get:
+      tags: [Analítica]
+      summary: 'Firmas pre-falla: patrones de anomalías que preceden a las fallas, agrupados por modelo'
+      description: 'Lo genera la rama `Precursores` de AnalisisDiario (TAREA-12) a partir de incidentes cerrados/resueltos de los últimos 90 días. Ignora los modelos con menos de 3 incidentes.'
+      x-roles: [mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      precursors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            model: {type: string}
+                            n_incidents: {type: integer}
+                            headline: {type: string}
+                            signatures:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  variable: {type: string}
+                                  share: {type: number, description: 'Proporción de fallas precedidas por esa variable (0-1)'}
+                                  median_lead_time_h: {type: number, description: 'Anticipación mediana en horas'}
+                                  median_z: {type: number, description: 'Mediana del z-score del factor dominante'}
+
   /reports/latest:
     get:
       tags: [Analítica]
@@ -688,6 +724,38 @@ paths:
                       mean_lead_time_hours: {type: number}
                       promoted: {type: boolean}
 
+  /system/pulse:
+    get:
+      tags: [Operación]
+      summary: Pulso del sistema (prueba de vida LIVE de la demo)
+      description: 'TAREA-14: el front muestra un badge LIVE con la frescura de la telemetría, los incidentes abiertos y el estado de la IA. `mode: live` en AWS; el modo demo del front responde `mode: demo`.'
+      x-roles: [operador, tecnico, mantenimiento, supervisor, admin, gerencia]
+      x-lambda: api-lectura
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      mode: {type: string, enum: [live, demo]}
+                      region: {type: string, nullable: true, example: us-east-1}
+                      last_reading_at: {type: string, format: date-time, nullable: true}
+                      machines_reporting_5m: {type: integer}
+                      open_incidents: {type: integer}
+                      model_version: {type: string, nullable: true}
+                      last_report_at: {type: string, format: date-time, nullable: true}
+                      ai:
+                        type: object
+                        properties:
+                          last_provider: {type: string, nullable: true}
+                          degraded: {type: boolean}
+                      generated_at: {type: string, format: date-time}
+
   /ml/retrain:
     post:
       tags: [IA]
@@ -706,6 +774,75 @@ paths:
                     type: object
                     properties:
                       execution_arn: {type: string}
+        '403': {$ref: '#/components/responses/Forbidden'}
+
+  /sim/scenario:
+    post:
+      tags: [Simulador]
+      summary: Enciende el gemelo de flota serverless (AWS real)
+      description: |
+        Escribe el estado en SSM (`/arquifusion/<stage>/sim/state`). La Lambda `sim-driver` (EventBridge Scheduler
+        cada minuto, concurrencia 1) inyecta telemetría en `POST /telemetry` mientras `enabled` y no haya expirado.
+      x-roles: [admin, mantenimiento]
+      x-lambda: api-comandos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scenario]
+              properties:
+                scenario: {type: string, enum: [normal, degradacion, falla_subita, combustible, grupal_zona, presion, electrico, neumaticos, ociosa]}
+                machines: {type: array, items: {type: string}, example: [CM-004]}
+                zone: {type: string, nullable: true, example: sur}
+                speedup: {type: number, minimum: 1, maximum: 5000, default: 240}
+                duration_min: {type: integer, minimum: 1, maximum: 30, default: 20}
+                interval_s: {type: integer, minimum: 5, maximum: 60, default: 10}
+      responses:
+        '202':
+          description: Simulador encendido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/SimState'}
+        '400': {$ref: '#/components/responses/ValidationError'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+
+  /sim/stop:
+    post:
+      tags: [Simulador]
+      summary: Apaga el gemelo de flota serverless
+      x-roles: [admin, mantenimiento]
+      x-lambda: api-comandos
+      responses:
+        '200':
+          description: Simulador apagado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/SimState'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+
+  /sim/state:
+    get:
+      tags: [Simulador]
+      summary: Estado del simulador serverless
+      x-roles: [admin, mantenimiento, supervisor]
+      x-lambda: api-comandos
+      responses:
+        '200':
+          description: Estado actual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: {$ref: '#/components/schemas/SimState'}
         '403': {$ref: '#/components/responses/Forbidden'}
 
   /assistant/chat:
@@ -744,9 +881,45 @@ paths:
                       tools_used: {type: array, items: {type: string}, example: [get_machines_at_risk]}
                       degraded: {type: boolean}
                       degraded_reason: {$ref: '#/components/schemas/DegradedReason'}
+                      provider:
+                        type: string
+                        enum: [gemini, bedrock, fallback]
+                        description: Proveedor que produjo la respuesta (fallback = motor determinista)
         '400': {$ref: '#/components/responses/ValidationError'}
         '401': {$ref: '#/components/responses/Unauthenticated'}
         '403': {$ref: '#/components/responses/Forbidden'}
+
+  /telegram/webhook:
+    post:
+      tags: [Telegram]
+      summary: Webhook entrante de Telegram (botones de decisión y comandos)
+      description: |
+        Sin JWT: API Gateway usa `oidc` (sin authorizer) y la Lambda valida el header
+        `X-Telegram-Bot-Api-Secret-Token` con `hmac.compare_digest`. Idempotente por `update_id` (24 h).
+        Callbacks `ack:<incident_id>:accept|reject` ejecutan el mismo comando que `POST /incidents/{id}/ack`.
+        Los chats se vinculan a un usuario/rol/técnico con `links` del secreto `arquifusion/<stage>/telegram`.
+        Siempre responde 200 para que Telegram no reintente indefinidamente.
+      security: []
+      x-lambda: api-comandos
+      parameters:
+        - name: X-Telegram-Bot-Api-Secret-Token
+          in: header
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Procesado (o duplicado)
+          content:
+            application/json:
+              example: {data: {ok: true, action: ack, incident_id: INC-01JC8ZK, decision: accept}}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
 
   /bridge/events:
     post:
@@ -1004,6 +1177,7 @@ components:
             confidence: {type: number}
             model_version: {type: string}
             prompt_version: {type: string}
+            provider: {type: string, nullable: true, description: 'Proveedor LLM del diagnóstico (TAREA-06): gemini | bedrock | fallback (determinista)'}
             degraded: {type: boolean}
             degraded_reason: {$ref: '#/components/schemas/DegradedReason'}
         resolution_summary: {type: string, nullable: true, description: 'Resumen IA SOLO del chat del incidente (summarize_chat, RF-16.8)'}
@@ -1021,6 +1195,14 @@ components:
         resolved_at: {type: string, format: date-time, nullable: true}
         closed_at: {type: string, format: date-time, nullable: true}
         downtime_minutes: {type: integer, nullable: true}
+        downtime_h: {type: number, nullable: true, description: 'Paro real: closed_at - detected_at (TAREA-11)'}
+        value_protected_usd: {type: number, nullable: true, description: 'USD protegidos = max(0, paro esperado - paro real) × costo/h'}
+        value_assumptions:
+          type: object
+          nullable: true
+          properties:
+            baseline_h: {type: number}
+            cost_usd_h: {type: number}
         components_replaced: {type: array, items: {type: string}}
         cost_usd: {type: number, nullable: true}
         chat_channel_id: {type: string, nullable: true}
@@ -1041,6 +1223,21 @@ components:
         Motivo por el que la IA respondió en modo determinista (solo presente si `degraded: true`).
         `secret_missing` (API key no disponible) · `http_4xx` (key inválida, cuota, petición rechazada) ·
         `timeout` · `model_not_found` (HTTP 404, modelo retirado) · `other` (5xx, JSON inválido, bloqueo, etc.).
+
+    SimState:
+      type: object
+      description: Estado del simulador serverless (SSM `/arquifusion/<stage>/sim/state`)
+      properties:
+        enabled: {type: boolean}
+        scenario: {type: string}
+        machines: {type: array, items: {type: string}}
+        zone: {type: string, nullable: true}
+        speedup: {type: number}
+        interval_s: {type: integer}
+        started_at: {type: string, format: date-time}
+        expires_at: {type: string, format: date-time}
+        requested_by: {type: string}
+        correlation_id: {type: string}
 
     CommandMeta:
       type: object

@@ -21,6 +21,9 @@ TABLES = (
     "insights",
 )
 
+# Supuesto documentado (TAREA-11): horas de paro esperadas si la falla se descubre tarde, por severidad.
+UNPLANNED_DOWNTIME_H = {"critical": 24, "high": 16, "medium": 8, "low": 4, "info": 2}
+
 
 def table_env(name: str) -> str:
     """`notification-rules` → `TABLE_NOTIFICATION_RULES`."""

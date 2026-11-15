@@ -306,6 +306,71 @@
               "End": true
             }
           }
+        },
+        {
+          "StartAt": "RamaPrecursores",
+          "States": {
+            "RamaPrecursores": {
+              "Type": "Task",
+              "Comment": "TAREA-12: firmas pre-falla (no usa Athena, lee incidents/anomalies/machines de DynamoDB)",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${fn_precursores}",
+                "Payload": {
+                  "query_execution_id.$": "$.athena.query_execution_id",
+                  "correlation_id.$": "$.ctx.correlation_id",
+                  "run_at.$": "$.ctx.run_at"
+                }
+              },
+              "ResultSelector": {
+                "result.$": "$.Payload"
+              },
+              "OutputPath": "$.result",
+              "TimeoutSeconds": 300,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 8,
+                  "BackoffRate": 2.0,
+                  "MaxDelaySeconds": 20,
+                  "JitterStrategy": "FULL"
+                },
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "States.Timeout"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.error",
+                  "Next": "RamaPrecursoresFallida"
+                }
+              ],
+              "End": true
+            },
+            "RamaPrecursoresFallida": {
+              "Type": "Pass",
+              "Parameters": {
+                "kind": "precursores",
+                "status": "failed",
+                "error.$": "$.error.Error"
+              },
+              "End": true
+            }
+          }
         }
       ],
       "ResultPath": "$.branches",
@@ -358,6 +423,44 @@
           ],
           "ResultPath": "$.error",
           "Next": "Fallo"
+        }
+      ],
+      "Next": "ExportarGCP"
+    },
+    "ExportarGCP": {
+      "Type": "Task",
+      "Comment": "TAREA-13: réplica DR multinube a BigQuery (best-effort: un fallo no bloquea el análisis)",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_export_gcp}",
+        "Payload": {
+          "query_execution_id.$": "$.athena.query_execution_id",
+          "run_at.$": "$.ctx.run_at",
+          "correlation_id.$": "$.ctx.correlation_id"
+        }
+      },
+      "ResultSelector": {
+        "result.$": "$.Payload"
+      },
+      "ResultPath": "$.export_gcp",
+      "TimeoutSeconds": 90,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Fin"
         }
       ],
       "Next": "Fin"

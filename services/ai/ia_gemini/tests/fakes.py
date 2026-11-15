@@ -18,10 +18,12 @@ class ScriptedTransport:
         self.replies = list(replies)
         self.bodies: list[dict] = []
         self.headers: list[dict] = []
+        self.urls: list[str] = []
 
     def __call__(self, url, headers, body, timeout_s):
         self.bodies.append(body)
         self.headers.append(headers)
+        self.urls.append(url)
         reply = self.replies.pop(0)
         if isinstance(reply, Exception):
             raise reply

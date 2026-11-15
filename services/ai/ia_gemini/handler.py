@@ -11,7 +11,7 @@ import service
 from arquifusion_shared.observability import logger, tracer
 from aws_lambda_powertools.utilities import parameters
 from ia_tools import ToolBox
-from llm_client import build_client
+from llm_client import build_clients
 
 SECRET_MAX_AGE_S = 300
 
@@ -27,8 +27,9 @@ def _api_key() -> str:
         return secret.strip()
 
 
-# Proveedor LLM por env (RF-02.6, RF-14): LLM_PROVIDER=gemini|bedrock, GEMINI_MODEL, BEDROCK_MODEL_ID, LLM_TIMEOUT_S.
-_llm = build_client(gemini_api_key_provider=_api_key)
+# Cadena de proveedores LLM por env (RF-02.6, RF-14): LLM_PROVIDER="gemini,bedrock", GEMINI_MODEL,
+# BEDROCK_MODEL_ID, LLM_TIMEOUT_S. El primero que responde gana; si todos fallan, motor determinista.
+_llm = build_clients(gemini_api_key_provider=_api_key)
 _dynamodb = boto3.resource("dynamodb")
 
 

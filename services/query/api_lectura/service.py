@@ -37,6 +37,8 @@ MAX_SCAN_ITEMS = 5000  # tope de seguridad al leer una lista completa
 TIMELINE_WINDOW_DAYS = 90  # MTBF/MTTR/disponibilidad (igual que el demo del front)
 TELEMETRY_MAX_DAYS = 31
 ETA_SPEED_KMH = 25  # frontend/src/lib/geo.ts y scoring (contratos.md §8.3)
+PULSE_WINDOW_MIN = 5  # máquinas "reportando" = última lectura en 5 min (TAREA-14)
+OPEN_INCIDENT_STATUSES = ("detected", "assigned", "in_progress")  # igual que kpis_report
 
 ENUMS = {
     "machine_type": {"excavator", "mining_truck", "loader", "bulldozer", "drill"},
@@ -692,6 +694,49 @@ def ml_model(event: dict, deps: Deps, user: User):
     return _insight_object(deps, "ml_model", what="modelo entrenado")
 
 
+def analytics_precursors(event: dict, deps: Deps, user: User):
+    """Firmas pre-falla por modelo (TAREA-12): insight `precursors` que produce la rama Precursores."""
+    data, meta = _insight_object(deps, "precursors", what="firmas pre-falla")
+    return data, meta
+
+
+def system_pulse(event: dict, deps: Deps, user: User):
+    """Pulso del sistema (TAREA-14): prueba de vida LIVE para el front.
+
+    `mode: live` en AWS real; el demo devuelve `mode: demo`. Todo role puede leerlo.
+    """
+    now = datetime.now(UTC)
+    machines = [m for m in _scan_meta(deps.table("machines")) if m.get("machine_id")]
+    seen = sorted(m["last_seen_at"] for m in machines if m.get("last_seen_at"))
+    cutoff = _iso(now - timedelta(minutes=PULSE_WINDOW_MIN))
+    incidents = deps.table("incidents")
+    open_incidents = sum(
+        1
+        for status in OPEN_INCIDENT_STATUSES
+        for i in _query(incidents, "by_status", "status", status)
+        if i.get("sk") == "META"
+    )
+    latest_ai = max(
+        (i for i in _scan_meta(incidents) if i.get("ai_diagnosis")),
+        key=lambda i: i.get("detected_at") or "",
+        default=None,
+    )
+    ai = (latest_ai or {}).get("ai_diagnosis") or {}
+    model = (_insight(deps, "ml_model") or {}).get("data") or {}
+    report = _insight(deps, "report#daily") or {}
+    return {
+        "mode": "live",
+        "region": deps.env.get("AWS_REGION") or deps.env.get("AWS_DEFAULT_REGION"),
+        "last_reading_at": seen[-1] if seen else None,
+        "machines_reporting_5m": sum(1 for m in machines if (m.get("last_seen_at") or "") >= cutoff),
+        "open_incidents": open_incidents,
+        "model_version": model.get("model_version"),
+        "last_report_at": report.get("generated_at"),
+        "ai": {"last_provider": ai.get("provider") or ai.get("model"), "degraded": bool(ai.get("degraded", False))},
+        "generated_at": _iso(now),
+    }, {}
+
+
 # =========================================================================== rutas
 Handler = Callable[[dict, Deps, User], tuple[Any, dict]]
 _O, _T, _M, _S, _A, _G = "operador", "tecnico", "mantenimiento", "supervisor", "admin", "gerencia"
@@ -714,8 +759,10 @@ ROUTES: dict[tuple[str, str], tuple[Handler, frozenset[str]]] = {
     ("GET", "/analytics/fuel"): (analytics_fuel, frozenset({_S, _A, _G})),
     ("GET", "/analytics/productivity"): (analytics_productivity, frozenset({_S, _A, _G})),
     ("GET", "/analytics/kpis"): (analytics_kpis, frozenset({_S, _A, _G})),
+    ("GET", "/analytics/precursors"): (analytics_precursors, frozenset({_M, _S, _A, _G})),
     ("GET", "/reports/latest"): (reports_latest, frozenset({_A, _G, _S})),
     ("GET", "/ml/model"): (ml_model, frozenset({_A, _M})),
+    ("GET", "/system/pulse"): (system_pulse, ALL_ROLES),
 }
 
 _deps: Deps | None = None

@@ -45,6 +45,11 @@ def kpis(
     since = today - timedelta(days=days)
     detected = [i for i in incidents if (t := _ts(i.get("detected_at"))) and since < t.date() <= today]
     resolved = [i for i in incidents if (t := _ts(i.get("resolved_at"))) and since < t.date() <= today]
+    closed = [
+        i
+        for i in incidents
+        if i.get("status") == "closed" and (t := _ts(i.get("closed_at"))) and since < t.date() <= today
+    ]
 
     repair_hours = [
         (_ts(i["resolved_at"]) - _ts(i["detected_at"])).total_seconds() / 3600
@@ -76,6 +81,10 @@ def kpis(
         if readings
         else 0.0,
         "fuel_cost_per_ton_usd": round(fuel_l * fleet.FUEL_PRICE_USD_PER_L / tons, 3) if tons else 0.0,
+        "value_protected_usd": round(sum(float(i.get("value_protected_usd") or 0) for i in closed), 2),
+        "avg_downtime_h": round(sum(float(i.get("downtime_h") or 0) for i in closed) / len(closed), 2)
+        if closed
+        else 0.0,
     }
 
 
@@ -84,7 +93,8 @@ def fallback_summary(figures: dict) -> str:
     return (
         f"Últimos 7 días: disponibilidad {k['availability_pct']:.1f}%, MTTR {k['mttr_hours']:.1f} h, "
         f"{k['open_incidents']} incidentes abiertos y {k['machines_at_risk']} máquinas en riesgo. "
-        f"Combustible {k['fuel_cost_per_ton_usd']:.2f} USD/t."
+        f"Combustible {k['fuel_cost_per_ton_usd']:.2f} USD/t. "
+        f"USD {k['value_protected_usd']:,.0f} protegidos (paro evitado)."
     )
 
 

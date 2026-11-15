@@ -13,6 +13,8 @@ import json
 from datetime import UTC, datetime
 from decimal import Decimal
 
+from arquifusion_shared import config
+
 # §8.2: variable dominante (top_factors[0]) → especialidad
 SPECIALTY_BY_VARIABLE = {
     "temperature_c": "motor",
@@ -225,6 +227,7 @@ class Incidente:
             "common_cause": (ev.get("common_cause") or {}).get("probable_common_cause"),
             "model_version": ev.get("model_version"),
             "model": diag.get("model"),
+            "provider": diag.get("provider"),
             "prompt_version": diag.get("prompt_version"),
             "degraded": bool(diag.get("degraded", not diag)),
         }
@@ -333,7 +336,8 @@ class Incidente:
 
         Idempotente frente a reintentos de la SFN (G-06): el registro de mantenimiento tiene `sk` determinista
         (`resolved_at#record_id`) con `attribute_not_exists`, y el descuento de inventario se protege con la marca
-        `inventory_discounted` en el incidente (se aplica como máximo una vez)."""
+        `inventory_discounted` en el incidente (se aplica como máximo una vez).
+
         `resolution_summary` es SOLO el resumen del chat (summarize_chat); las notas de resolución quedan en
         `resolution_notes` y el front las muestra en un bloque aparte."""
         current = from_ddb(self.get(ev["incident_id"]))
@@ -382,20 +386,37 @@ class Incidente:
             low_stock = self._discount(components, tech_id, current.get("zone"))
         except ConditionFailed:
             low_stock = list(current.get("low_stock_components") or [])
+        # TAREA-11: valor protegido en USD (supuestos: paro esperado por severidad × costo/h del modelo).
+        model = machine.get("model") or current.get("model")
+        catalog_model = (
+            self.t["catalog"].get_item(Key={"pk": f"MODEL#{model}", "sk": "META"}).get("Item") or {}
+            if model else {}
+        )
+        try:
+            cost_usd_h = float(catalog_model.get("downtime_cost_usd_h", 800))
+        except (TypeError, ValueError):
+            cost_usd_h = 800.0
+        baseline_h = float(config.UNPLANNED_DOWNTIME_H.get(current.get("severity"), 2))
+        downtime_h = round(max(0.0, (_parse(now) - _parse(current["detected_at"])).total_seconds() / 3600), 2)
+        value_protected_usd = round(max(0.0, baseline_h - downtime_h) * cost_usd_h, 0)
         # Sin resumen del chat (falló la IA): resolution_summary queda vacío; las notas NO lo reemplazan.
         self._update(
             ev["incident_id"],
             "SET #st = :closed, closed_at = :now, root_cause = :rc, low_stock_components = :low"
+            + ", downtime_h = :dh, value_protected_usd = :vpu, value_assumptions = :va"
             + (", resolution_summary = :sum REMOVE ack_token, resolve_token" if text
                else " REMOVE ack_token, resolve_token, resolution_summary"),
             {":closed": "closed", ":now": now, ":rc": summary.get("root_cause") or "-", ":r": "resolved",
-             ":low": low_stock, **({":sum": text} if text else {})},
+             ":low": low_stock, ":dh": downtime_h, ":vpu": value_protected_usd,
+             ":va": {"baseline_h": baseline_h, "cost_usd_h": cost_usd_h},
+             **({":sum": text} if text else {})},
             "#st = :r",
             {"#st": "status"},
         )
         self.liberar({"incident_id": ev["incident_id"], "machine_id": machine_id})
         self._adjust_load(tech_id, -1)
-        return {"from": "resolved", "record_id": record_id, "low_stock": low_stock, "shortage": bool(low_stock)}
+        return {"from": "resolved", "record_id": record_id, "low_stock": low_stock, "shortage": bool(low_stock),
+                "downtime_h": downtime_h, "value_protected_usd": value_protected_usd}
 
     def abandonar(self, ev: dict) -> dict:
         """detected/assigned/in_progress → abandoned (terminal, F-12/F-13): nadie atendió en el plazo.
@@ -474,7 +495,17 @@ class Incidente:
             raise
 
 
-ACTIONS = ("contexto", "enriquecer", "asignar", "guardar_token", "resolver", "chat_mensajes", "cerrar", "abandonar", "liberar")
+ACTIONS = (
+    "contexto",
+    "enriquecer",
+    "asignar",
+    "guardar_token",
+    "resolver",
+    "chat_mensajes",
+    "cerrar",
+    "abandonar",
+    "liberar",
+)
 
 
 def _default_tables() -> dict:  # pragma: no cover

@@ -8,7 +8,9 @@
     ]
   },
   "model": "gemini-3.8-flash",
+  "provider": "gemini",
   "degraded": false,
   "prompt_version": "diagnose-v1",
-  "latency_ms": 1840
+  "latency_ms": 1840,
+  "endpoint": "aistudio"
 }

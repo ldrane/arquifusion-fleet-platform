@@ -16,6 +16,8 @@ KPI_FIELDS = {
     "machines_at_risk",
     "fleet_utilization_pct",
     "fuel_cost_per_ton_usd",
+    "value_protected_usd",
+    "avg_downtime_h",
 }
 INCIDENTS = [
     {
@@ -23,7 +25,10 @@ INCIDENTS = [
         "status": "closed",
         "detected_at": "2026-11-12T10:00:00Z",
         "resolved_at": "2026-11-12T14:00:00Z",
+        "closed_at": "2026-11-12T14:00:00Z",
         "downtime_minutes": 240,
+        "downtime_h": 4,
+        "value_protected_usd": 33000,
         "zone": "norte",
     },
     {"incident_id": "INC-2", "status": "assigned", "detected_at": "2026-11-13T08:00:00Z", "zone": "norte"},
@@ -43,6 +48,7 @@ def test_kpis():
     assert k["availability_pct"] == round(100 * (1 - 4 / (2 * 7 * 24)), 2)
     assert k["fleet_utilization_pct"] == round(60 / 96 * 100, 1)
     assert k["fuel_cost_per_ton_usd"] == round(32 * 1.1 / (0.7 * 400), 3)
+    assert k["value_protected_usd"] == 33000 and k["avg_downtime_h"] == 4.0
 
 
 @pytest.fixture

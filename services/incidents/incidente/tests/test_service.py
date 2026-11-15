@@ -317,3 +317,27 @@ def test_cerrar_sin_resumen_no_copia_las_notas_al_resumen(tables):
     item = meta(tables)
     assert item["status"] == "closed" and "resolution_summary" not in item
     assert item["resolution_notes"] == "Ajuste de mangueras"
+
+
+def test_cierre_calcula_valor_protegido_en_usd(tables):
+    """TAREA-11: critical con paro esperado 24 h, 2 h reales y costo 1500 USD/h → 33 000 USD."""
+    from datetime import UTC, datetime, timedelta
+
+    detected = (datetime.now(UTC) - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    tables["incidents"].update_item(
+        Key={"pk": "INC#INC-01JC8ZK", "sk": "META"},
+        UpdateExpression="SET detected_at = :d, severity = :s, #st = :r",
+        ExpressionAttributeNames={"#st": "status"},
+        ExpressionAttributeValues={":d": detected, ":s": "critical", ":r": "resolved"},
+    )
+    tables["catalog"].update_item(
+        Key={"pk": "MODEL#CAT-336", "sk": "META"},
+        UpdateExpression="SET downtime_cost_usd_h = :c",
+        ExpressionAttributeValues={":c": Decimal("1500")},
+    )
+    out = service.run(ev("cerrar", summary={}), tables)
+    item = meta(tables)
+    assert item["downtime_h"] == Decimal("2")
+    assert item["value_protected_usd"] == Decimal("33000")
+    assert item["value_assumptions"] == {"baseline_h": Decimal("24"), "cost_usd_h": Decimal("1500")}
+    assert out["value_protected_usd"] == 33000.0

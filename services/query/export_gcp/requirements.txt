@@ -1,0 +1,4 @@
+# En Lambda: Powertools llega por la layer pública de AWS; google-auth por la layer de C
+# (scripts/build_query_layer.sh -> build/layer-c-gcp.zip). boto3 y urllib3 ya vienen en el runtime python3.12.
+aws-lambda-powertools[tracer]==3.*
+google-auth>=2.30,<3

@@ -18,6 +18,8 @@ EXPECTED_VARS = {
         "fn_combustible",
         "fn_productividad",
         "fn_kpis_report",
+        "fn_precursores",
+        "fn_export_gcp",
     },
     "reentrenamiento.asl.json": {
         "active_version_param",
@@ -55,7 +57,7 @@ def test_asl_is_valid_and_consistent(file):
 
 def test_daily_runs_four_branches_then_report():
     states = json.loads((SFN_DIR / "analisis_diario.asl.json").read_text())["States"]
-    assert len(states["Ramas"]["Branches"]) == 4
+    assert len(states["Ramas"]["Branches"]) == 5  # preventivo, repuestos, combustible, productividad, precursores
     assert states["Ramas"]["Next"] == "KpisYReporte"
 
 

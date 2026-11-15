@@ -156,7 +156,10 @@ def test_f13_tope_de_escalamientos_de_resolucion():
     first = s["EsperarResolucion"]["Catch"][0]
     assert first["ErrorEquals"] == ["States.Timeout"] and "resolveEscalations" in first["Assign"]
     assert first["Next"] == "TopeResolucion"
-    assert all("States.ALL" not in c["ErrorEquals"] or c["Next"] == "LiberarYFallar" for c in s["EsperarResolucion"]["Catch"])
+    assert all(
+        "States.ALL" not in c["ErrorEquals"] or c["Next"] == "LiberarYFallar"
+        for c in s["EsperarResolucion"]["Catch"]
+    )
     tope = s["TopeResolucion"]
     assert tope["Choices"][0]["Next"] == "RecordarResolucion" and tope["Default"] == "ResolucionAgotada"
     assert "'action': 'abandonar'" in s["ResolucionAgotada"]["Arguments"]["Payload"]

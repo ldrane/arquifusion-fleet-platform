@@ -50,8 +50,9 @@ def normalize(event: dict) -> dict:
 
 
 def parse_config(raw: str | None) -> dict | None:
-    """Secreto JSON `{bot_token, chat_ids}`; `chat_ids` acepta lista o string separado por comas.
-    También acepta `chat_id` (singular). Devuelve None si falta algo."""
+    """Secreto JSON `{bot_token, chat_ids, webhook_secret?, links?}`; `chat_ids` acepta lista o string
+    separado por comas. También acepta `chat_id` (singular). Las claves del webhook son opcionales y se
+    conservan para que `api_comandos` valide el secret token y resuelva el actor por chat."""
     if not raw:
         return None
     try:
@@ -67,11 +68,34 @@ def parse_config(raw: str | None) -> dict | None:
     token = str(data.get("bot_token") or "").strip()
     if not token or not chats:
         return None
-    return {"bot_token": token, "chat_ids": chats}
+    config = {"bot_token": token, "chat_ids": chats}
+    secret = str(data.get("webhook_secret") or "").strip()
+    if secret:
+        config["webhook_secret"] = secret
+    if isinstance(data.get("links"), dict):
+        config["links"] = data["links"]
+    return config
 
 
-def compose(msg: dict, incident: dict | None, app_url: str = "") -> tuple[str, dict | None]:
-    """Texto HTML de Telegram + teclado inline con el deep link (solo si hay `app_url` https)."""
+def _score(incident: dict | None, technician_id: str | None) -> float | None:
+    """Score del técnico asignado: `technician_score` o su entrada en `scoring_candidates`."""
+    if not incident:
+        return None
+    score = incident.get("technician_score")
+    if score is not None:
+        return score
+    for candidate in incident.get("scoring_candidates") or []:
+        if isinstance(candidate, dict) and candidate.get("technician_id") == technician_id:
+            return candidate.get("score")
+    return None
+
+
+def compose(msg: dict, incident: dict | None, app_url: str = "", buttons: bool = True) -> tuple[str, dict | None]:
+    """Texto HTML de Telegram + teclado inline.
+
+    `incident.assigned` agrega los botones Aceptar/Rechazar (si `callback_data` cabe en 64 bytes) antes del
+    deep link. El botón "Abrir incidente" solo se agrega con `app_url` https.
+    """
     e = html.escape
     machine = msg.get("machine_id") or "-"
     event_type = msg.get("event_type") or ""
@@ -84,6 +108,12 @@ def compose(msg: dict, incident: dict | None, app_url: str = "") -> tuple[str, d
     tech = msg.get("technician_id") or (incident or {}).get("assigned_technician_id")
     if tech:
         lines.append(f"👷 Técnico: {e(str(tech))}")
+        score = _score(incident, tech)
+        if score is not None:
+            try:
+                lines.append(f"🧾 Técnico sugerido: {e(str(tech))} (score {float(score):.2f})")
+            except (TypeError, ValueError):
+                lines.append(f"🧾 Técnico sugerido: {e(str(tech))}")
     diag = (incident or {}).get("ai_diagnosis") or {}
     factors = diag.get("top_factors") or []
     if factors:
@@ -99,26 +129,36 @@ def compose(msg: dict, incident: dict | None, app_url: str = "") -> tuple[str, d
         lines.append(f"🧰 Acción sugerida: {e(str(diag['suggested_action']))}")
     text = "\n".join(lines)[:4000]  # límite de Telegram: 4096
 
-    markup = None
-    if app_url.startswith("https://") and msg.get("incident_id"):
-        link = f"{app_url.rstrip('/')}/incidents/{msg['incident_id']}"
-        markup = {"inline_keyboard": [[{"text": "Abrir incidente", "url": link}]]}
-    return text, markup
+    rows = []
+    incident_id = msg.get("incident_id")
+    if buttons and event_type == "incident.assigned" and incident_id:
+        callbacks = [f"ack:{incident_id}:accept", f"ack:{incident_id}:reject"]
+        if all(len(cb.encode()) <= 64 for cb in callbacks):
+            rows.append([
+                {"text": "✅ Aceptar", "callback_data": callbacks[0]},
+                {"text": "❌ Rechazar", "callback_data": callbacks[1]},
+            ])
+    if app_url.startswith("https://") and incident_id:
+        link = f"{app_url.rstrip('/')}/incidents/{incident_id}"
+        rows.append([{"text": "Abrir incidente", "url": link}])
+    return text, ({"inline_keyboard": rows} if rows else None)
 
 
 class TelegramNotifier:
     """`deps`: config() → dict|None, claim(key) → bool, release(key), incident(id) → dict|None,
     send(token, chat_id, text, markup)."""
 
-    def __init__(self, deps: dict, event_types=DEFAULT_EVENT_TYPES, app_url: str = ""):
+    def __init__(self, deps: dict, event_types=DEFAULT_EVENT_TYPES, app_url: str = "",
+                 min_severity: str = "critical"):
         self.d = deps
         self.event_types = set(event_types)
         self.app_url = app_url
+        self.severities = {"high", "critical"} if min_severity == "high" else {"critical"}
 
     def run(self, event: dict) -> dict:
         msg = normalize(event)
         result = {"event_type": msg.get("event_type"), "incident_id": msg.get("incident_id"), "sent": 0}
-        if msg.get("severity") != "critical":
+        if msg.get("severity") not in self.severities:
             return {**result, "skipped": "severity"}
         if msg.get("event_type") not in self.event_types:
             return {**result, "skipped": "event_type"}

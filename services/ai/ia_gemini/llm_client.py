@@ -77,9 +77,27 @@ def to_json_schema(schema: dict) -> dict:
 
 
 def build_client(env: dict | None = None, *, gemini_api_key_provider=None) -> LLMClient:
-    """Crea el cliente según `LLM_PROVIDER` (gemini|bedrock). Lanza ValueError si el proveedor no existe."""
+    """Crea el cliente del primer proveedor de `LLM_PROVIDER` (compatibilidad)."""
+    return build_clients(env, gemini_api_key_provider=gemini_api_key_provider)[0]
+
+
+def build_clients(env: dict | None = None, *, gemini_api_key_provider=None) -> list[LLMClient]:
+    """Crea un cliente por proveedor de `LLM_PROVIDER` (lista separada por comas, p. ej. `gemini,bedrock`).
+
+    Conserva el orden (es la cadena de intentos) y deduplica. Lanza ValueError si algún proveedor no existe.
+    """
     env = os.environ if env is None else env
-    provider = (env.get("LLM_PROVIDER") or DEFAULT_PROVIDER).strip().lower()
+    raw = env.get("LLM_PROVIDER") or DEFAULT_PROVIDER
+    providers = [p.strip().lower() for p in raw.split(",") if p.strip()]
+    if not providers:
+        providers = [DEFAULT_PROVIDER]
+    clients: list[LLMClient] = []
+    for provider in dict.fromkeys(providers):
+        clients.append(_build(provider, env, gemini_api_key_provider))
+    return clients
+
+
+def _build(provider: str, env: dict, gemini_api_key_provider) -> LLMClient:
     timeout_s = float(env.get("LLM_TIMEOUT_S") or env.get("GEMINI_TIMEOUT_S") or DEFAULT_TIMEOUT_S)
     if provider == "gemini":
         from gemini_client import DEFAULT_MODEL, GeminiClient

@@ -103,12 +103,14 @@ def test_fallo_total_relanza_para_reintento():
 
 def test_boton_solo_con_app_url_https():
     deps, state = make_deps()
-    service.TelegramNotifier(deps, app_url="https://app.example.com/").run(bridge_event(severity="critical"))
+    service.TelegramNotifier(deps, app_url="https://app.example.com/").run(
+        bridge_event(severity="critical", event_type="incident.detected"))
     btn = state["sent"][0]["markup"]["inline_keyboard"][0][0]
     assert btn["url"] == "https://app.example.com/incidents/INC-01JC8ZK"
 
     deps, state = make_deps()
-    service.TelegramNotifier(deps, app_url="http://localhost:5173").run(bridge_event(severity="critical"))
+    service.TelegramNotifier(deps, app_url="http://localhost:5173").run(
+        bridge_event(severity="critical", event_type="incident.detected"))
     assert state["sent"][0]["markup"] is None
 
 
@@ -124,3 +126,57 @@ def test_parse_config(raw, expected):
 @pytest.mark.parametrize("raw", [None, "", "no-json", '{"bot_token": ""}', '{"bot_token": "t", "chat_ids": ""}'])
 def test_parse_config_invalida(raw):
     assert service.parse_config(raw) is None
+
+
+# ---------------------------------------------------------------- botones de decisión (TAREA-10)
+
+
+def test_assigned_agrega_aceptar_y_rechazar_antes_del_link():
+    deps, state = make_deps()
+    service.TelegramNotifier(deps, app_url="https://app.example.com").run(
+        bridge_event(severity="critical", event_type="incident.assigned"))
+    rows = state["sent"][0]["markup"]["inline_keyboard"]
+    assert len(rows) == 2
+    assert [b["text"] for b in rows[0]] == ["✅ Aceptar", "❌ Rechazar"]
+    assert rows[0][0]["callback_data"] == "ack:INC-01JC8ZK:accept"
+    assert rows[0][1]["callback_data"] == "ack:INC-01JC8ZK:reject"
+    assert all(len(b["callback_data"].encode()) <= 64 for b in rows[0])
+    assert rows[1][0]["url"] == "https://app.example.com/incidents/INC-01JC8ZK"
+
+
+def test_detected_no_lleva_botones_de_ack():
+    deps, state = make_deps()
+    service.TelegramNotifier(deps, app_url="https://app.example.com").run(
+        bridge_event(severity="critical", event_type="incident.detected"))
+    rows = state["sent"][0]["markup"]["inline_keyboard"]
+    assert all("callback_data" not in button for row in rows for button in row)
+
+
+def test_tecnico_sugerido_usa_technician_score():
+    deps, state = make_deps()
+    deps["incident"] = lambda _id: {**INCIDENT, "technician_score": 0.87}
+    service.TelegramNotifier(deps, app_url="https://app.example.com").run(
+        bridge_event(severity="critical", event_type="incident.assigned"))
+    assert "Técnico sugerido: TEC-07 (score 0.87)" in state["sent"][0]["text"]
+
+
+def test_min_severity_high_acepta_high():
+    deps, state = make_deps()
+    res = service.TelegramNotifier(deps, min_severity="high").run(
+        bridge_event(severity="high", event_type="incident.detected"))
+    assert res["sent"] == 2
+    deps, _ = make_deps()
+    res = service.TelegramNotifier(deps).run(bridge_event(severity="high", event_type="incident.detected"))
+    assert res["skipped"] == "severity"
+
+
+def test_parse_config_conserva_webhook_secret_y_links():
+    raw = json.dumps({
+        "bot_token": "t",
+        "chat_ids": ["-100"],
+        "webhook_secret": "s3cret",
+        "links": {"-100": {"user_id": "u-tec-07", "role": "tecnico"}},
+    })
+    cfg = service.parse_config(raw)
+    assert cfg["webhook_secret"] == "s3cret"
+    assert cfg["links"]["-100"]["user_id"] == "u-tec-07"

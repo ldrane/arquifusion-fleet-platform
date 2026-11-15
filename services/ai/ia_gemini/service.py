@@ -19,6 +19,7 @@ import prompts
 from arquifusion_shared import correlation, rbac, response
 from arquifusion_shared.errors import ApiError, ValidationError
 from arquifusion_shared.observability import logger
+from gemini_client import GeminiError, degraded_reason
 from ia_tasks import TASKS, payload_json
 from ia_tools import ToolBox
 from llm_client import LLMClient, LLMError
@@ -41,8 +42,19 @@ def is_api_event(event: dict) -> bool:
 
 
 # ---------------------------------------------------------------- invocación directa
-def handle_task(event: dict, llm: LLMClient | None) -> dict:
-    """Ejecuta una tarea del contrato §8. Solo lanza ValueError si la tarea no existe (error de programación)."""
+def _as_clients(llms: list[LLMClient] | LLMClient | None) -> list[LLMClient]:
+    """Normaliza el argumento a lista (un solo cliente, lista o None)."""
+    if llms is None:
+        return []
+    return list(llms) if isinstance(llms, (list, tuple)) else [llms]
+
+
+def handle_task(event: dict, llms: list[LLMClient] | LLMClient | None) -> dict:
+    """Ejecuta una tarea del contrato §8. Solo lanza ValueError si la tarea no existe (error de programación).
+
+    Recorre la cadena de proveedores en orden; el primero que responde gana. Si todos fallan se usa el fallback
+    determinista con `degraded=True` y el `degraded_reason` del primer error.
+    """
     task = event.get("task")
     spec = TASKS.get(task)
     if spec is None:
@@ -50,39 +62,48 @@ def handle_task(event: dict, llm: LLMClient | None) -> dict:
     payload = event.get("payload") or {}
     prompt = prompts.load(task)
     started = time.monotonic()
-    try:
-        if llm is None:
-            raise LLMError("cliente LLM no configurado")
-        if not spec.has_input(payload):
-            raise LLMError("sin datos de entrada para el LLM")
-        raw = llm.generate_json(
-            prompt=prompt.render(payload_json(spec.prepare(payload))),
-            system=prompts.load("system").text,
-            schema=spec.schema(payload),
-        )
-        result, model, degraded = spec.normalize(raw, payload), llm.model, False
-        reason = None
-    except Exception as exc:  # cualquier falla de la IA (red, cuota, JSON, validación) → fallback
-        reason = degraded_reason(exc)
+    first_error: Exception | None = None
+    winner: LLMClient | None = None
+    for llm in _as_clients(llms):
+        try:
+            if not spec.has_input(payload):
+                raise LLMError("sin datos de entrada para el LLM")
+            raw = llm.generate_json(
+                prompt=prompt.render(payload_json(spec.prepare(payload))),
+                system=prompts.load("system").text,
+                schema=spec.schema(payload),
+            )
+            result, model, provider = spec.normalize(raw, payload), llm.model, llm.provider
+            winner, degraded, reason = llm, False, None
+            break
+        except Exception as exc:  # cualquier falla de la IA (red, cuota, JSON, validación) → siguiente proveedor
+            first_error = first_error or exc
+            logger.warning(
+                "Proveedor LLM no disponible, se intenta el siguiente",
+                extra={
+                    "task": task,
+                    "provider": getattr(llm, "provider", None),
+                    "degraded_reason": degraded_reason(exc),
+                    "error": _safe_error(exc),
+                },
+            )
+    else:
+        reason = degraded_reason(first_error) if first_error else "other"
+        result, model, provider, degraded = spec.fallback(payload), FALLBACK_MODEL, "fallback", True
         logger.warning(
-            "LLM no disponible, se usa fallback",
-            extra={
-                "task": task,
-                "provider": getattr(llm, "provider", None),
-                "degraded_reason": reason,
-                "error": _safe_error(exc),
-            },
+            "Ningún proveedor LLM disponible, se usa fallback", extra={"task": task, "degraded_reason": reason}
         )
-        result, model, degraded = spec.fallback(payload), FALLBACK_MODEL, True
     out = {
         "result": result,
         "model": model,
+        "provider": provider,
         "degraded": degraded,
         "prompt_version": prompt.version if not degraded else f"{prompt.version}+fallback",
         "latency_ms": int((time.monotonic() - started) * 1000),
     }
     if degraded:
         out["degraded_reason"] = reason
+    out["endpoint"] = getattr(winner, "endpoint", None)
     return out
 
 
@@ -116,36 +137,60 @@ def _zone_scope(event: dict) -> str | None:
     return rbac.zone(event)  # F-11: roles de zona sin custom:zone => Forbidden; "*" explícito = global
 
 
-def handle_api(event: dict, llm: LLMClient | None, tools_factory: Callable[[str | None], ToolBox]) -> dict:
-    """`POST /v1/assistant/chat`: responde 200 aunque el LLM falle (`degraded: true`), según el OpenAPI."""
+def handle_api(
+    event: dict, llms: list[LLMClient] | LLMClient | None, tools_factory: Callable[[str | None], ToolBox]
+) -> dict:
+    """`POST /v1/assistant/chat`: responde 200 aunque el LLM falle (`degraded: true`), según el OpenAPI.
+
+    Cadena de proveedores sobre la conversación completa: el primero usa hasta 12 s y el siguiente el resto menos
+    2 s de margen; con menos de 4 s se pasa directo al motor determinista.
+    """
     cid = correlation.from_api_event(event)
     logger.set_correlation_id(cid)
     try:
         rbac.require(event, *ASSISTANT_ROLES)
         body = _parse_body(event)
         tools = tools_factory(_zone_scope(event))
-        try:
-            if llm is None:
-                raise LLMError("cliente LLM no configurado")
-            answer, used = ia_assistant.answer_with_llm(body["message"], llm, tools, prompts.load("assistant").text)
-            degraded, reason = False, None
-        except Exception as exc:  # la IA nunca rompe el endpoint
-            reason = degraded_reason(exc)
+        started = time.monotonic()
+        first_error: Exception | None = None
+        answer = used = None
+        provider, degraded, reason = "fallback", True, None
+        clients = _as_clients(llms)
+        for index, llm in enumerate(clients):
+            remaining = ia_assistant.TOTAL_BUDGET_S - (time.monotonic() - started)
+            budget = min(12.0, remaining) if index == 0 else remaining - 2.0
+            if budget < 4.0:
+                break
+            try:
+                answer, used = ia_assistant.answer_with_llm(
+                    body["message"], llm, tools, prompts.load("assistant").text, budget_s=budget
+                )
+                provider, degraded, reason = llm.provider, False, None
+                break
+            except Exception as exc:  # un proveedor caído no rompe el endpoint
+                first_error = first_error or exc
+                logger.warning(
+                    "Proveedor LLM del asistente no disponible, se intenta el siguiente",
+                    extra={
+                        "provider": getattr(llm, "provider", None),
+                        "degraded_reason": degraded_reason(exc),
+                        "error": _safe_error(exc),
+                    },
+                )
+        if answer is None:
+            reason = degraded_reason(first_error) if first_error else "other"
             logger.warning(
                 "Asistente en modo determinista",
-                extra={
-                    "provider": getattr(llm, "provider", None),
-                    "degraded_reason": reason,
-                    "error": _safe_error(exc),
-                },
+                extra={"degraded_reason": reason, "error": _safe_error(first_error) if first_error else None},
             )
             answer, used = ia_assistant.answer_deterministic(body["message"], tools)
-            degraded = True
+            provider, degraded = "fallback", True
         data = {
             "answer": answer,
             "session_id": body["session_id"] or str(uuid.uuid4()),
             "tools_used": list(dict.fromkeys(used)),
             "degraded": degraded,
+            "provider": provider,
         }
         if degraded:
             data["degraded_reason"] = reason

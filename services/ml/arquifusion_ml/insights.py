@@ -19,6 +19,7 @@ KINDS: dict[str, str] = {
     "productivity#30d": "GET /v1/analytics/productivity?period=30d",
     "kpis#7d": "GET /v1/analytics/kpis?period=7d",
     "kpis#30d": "GET /v1/analytics/kpis?period=30d",
+    "precursors": "GET /v1/analytics/precursors",
     "report#daily": "GET /v1/reports/latest?type=daily",
     "report#weekly": "GET /v1/reports/latest?type=weekly",
     "ml_model": "GET /v1/ml/model",

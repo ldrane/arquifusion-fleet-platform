@@ -61,6 +61,19 @@ class FakeSfn:
         return {"executionArn": "arn:exec:1"}
 
 
+class FakeSsm:
+    def __init__(self, value='{"enabled": false}'):
+        self.value = value
+        self.puts = []
+
+    def get_parameter(self, Name):
+        return {"Parameter": {"Name": Name, "Value": self.value}}
+
+    def put_parameter(self, Name, Value, Type, Overwrite):
+        self.puts.append({"Name": Name, "Value": Value, "Type": Type, "Overwrite": Overwrite})
+        self.value = Value
+
+
 def incident(status="assigned", **extra):
     base = {
         "pk": "INC#INC-1",
@@ -96,16 +109,44 @@ TECHS = {
     },
 }
 
+MACHINES = {
+    ("OP-01#EX-023", "META"): {
+        "pk": "OP-01#EX-023",
+        "sk": "META",
+        "machine_id": "EX-023",
+        "model": "CAT-336",
+        "zone": "norte",
+        "status": "operational",
+        "health_score": 91,
+        "severity": "info",
+        "open_incident_id": None,
+    },
+}
 
-def make_deps(inc=None, sfn=None, technicians=None):
+TG_CFG = {
+    "bot_token": "123:abc",
+    "chat_ids": ["-100"],
+    "webhook_secret": "s3cret",
+    "links": {"-100": {"user_id": "u-tec-07", "role": "tecnico", "technician_id": "TEC-07", "zone": "norte"}},
+}
+
+
+def make_deps(inc=None, sfn=None, technicians=None, telegram=None):
     items = {("INC#INC-1", "META"): inc} if inc else {}
-    return {
+    deps = {
         "incidents": FakeTable(items),
+        "machines": FakeTable(dict(MACHINES)),
         "technicians": technicians or FakeTable(dict(TECHS)),
         "idempotency": FakeTable(),
         "sfn": sfn or FakeSfn(),
+        "ssm": FakeSsm(),
         "retrain_arn": "arn:sfn:retrain",
+        "sim_state_param": "/arquifusion/dev/sim/state",
+        "telegram_config": lambda: telegram if telegram is not None else TG_CFG,
+        "tg_send": lambda method, payload: deps.setdefault("telegram_sent", []).append((method, payload)),
+        "operation_id": "OP-01",
     }
+    return deps
 
 
 TEC07 = {"cognito:username": "u-tec-07", "custom:technician_id": "TEC-07", "custom:zone": "norte"}
@@ -426,3 +467,135 @@ def test_f22_respuesta_normaliza_machine_ids():
     deps = make_deps(incident(machine_id="EX-023"))
     data = body_of(service.run(make_event(ACK, body={"decision": "accept"}), deps))["data"]
     assert data["machine_ids"] == ["EX-023"]
+
+
+# --------------------------------------------------------------------------- simulador serverless (TAREA-08)
+SIM = "/sim/scenario"
+
+
+def test_sim_tecnico_403():
+    resp = service.run(make_event(SIM, body={"scenario": "falla_subita"}), make_deps())
+    assert resp["statusCode"] == 403
+
+
+def test_sim_escenario_invalido_400():
+    resp = service.run(make_event(SIM, groups="mantenimiento", body={"scenario": "meteorito"}), make_deps())
+    assert resp["statusCode"] == 400
+    assert "scenario" in body_of(resp)["error"]["details"][0]["field"]
+
+
+def test_sim_start_202_escribe_estado_habilitado():
+    deps = make_deps()
+    resp = service.run(
+        make_event(SIM, groups="mantenimiento", body={"scenario": "falla_subita", "duration_min": 5}), deps
+    )
+    assert resp["statusCode"] == 202
+    data = body_of(resp)["data"]
+    assert data["enabled"] is True and data["scenario"] == "falla_subita" and data["requested_by"] == "u-sup"
+    put = deps["ssm"].puts[0]
+    assert put["Name"] == "/arquifusion/dev/sim/state" and put["Overwrite"] is True
+    assert json.loads(put["Value"])["enabled"] is True
+
+
+def test_sim_start_valida_rangos():
+    for body in (
+        {"scenario": "falla_subita", "duration_min": 0},
+        {"scenario": "falla_subita", "duration_min": 31},
+        {"scenario": "falla_subita", "interval_s": 4},
+        {"scenario": "falla_subita", "speedup": 0},
+        {"scenario": "falla_subita", "machines": "CM-004"},
+    ):
+        resp = service.run(make_event(SIM, groups="admin", body=body), make_deps())
+        assert resp["statusCode"] == 400
+
+
+def test_sim_stop_y_state():
+    deps = make_deps()
+    deps["ssm"].value = json.dumps({"enabled": True, "scenario": "falla_subita"})
+    stop = service.run(make_event("/sim/stop", groups="mantenimiento"), deps)
+    assert stop["statusCode"] == 200 and body_of(stop)["data"]["enabled"] is False
+    state = service.run(make_event("/sim/state", method="GET", groups="supervisor"), deps)
+    assert state["statusCode"] == 200 and body_of(state)["data"]["enabled"] is False
+
+
+# ---------------------------------------------------------------- Telegram (TAREA-09/10)
+
+
+def tg_event(update, secret="s3cret"):
+    return {
+        "httpMethod": "POST",
+        "resource": "/telegram/webhook",
+        "headers": {"X-Telegram-Bot-Api-Secret-Token": secret},
+        "body": json.dumps(update),
+        "requestContext": {},
+    }
+
+
+def tg_callback(data="ack:INC-1:accept", chat="-100", update_id=7):
+    return {
+        "update_id": update_id,
+        "callback_query": {
+            "id": "cb-1",
+            "data": data,
+            "message": {"message_id": 55, "chat": {"id": int(chat)}},
+            "from": {"id": 999},
+        },
+    }
+
+
+def tg_message(text, chat="-100", update_id=8):
+    return {"update_id": update_id, "message": {"message_id": 56, "chat": {"id": int(chat)}, "text": text}}
+
+
+def test_telegram_secret_invalido_401():
+    resp = service.run(tg_event(tg_callback(), secret="otro"), make_deps(incident()))
+    assert resp["statusCode"] == 401
+
+
+def test_telegram_chat_no_vinculado_200_sin_ack():
+    deps = make_deps(incident())
+    resp = service.run(tg_event(tg_callback(chat="-200")), deps)
+    assert resp["statusCode"] == 200
+    assert not deps["sfn"].calls
+    assert "no está vinculado" in deps["telegram_sent"][0][1]["text"]
+
+
+def test_telegram_callback_ack_usa_claims_del_link_y_quita_botones():
+    deps = make_deps(incident())
+    resp = service.run(tg_event(tg_callback()), deps)
+    assert resp["statusCode"] == 200
+    assert body_of(resp)["data"]["action"] == "ack"
+    token, output = deps["sfn"].calls[0]
+    assert token == "TOKEN-ACK"
+    assert output["decision"] == "accept"
+    assert output["actor"] == {"type": "user", "user_id": "u-tec-07", "role": "tecnico", "technician_id": "TEC-07"}
+    methods = [m for m, _ in deps["telegram_sent"]]
+    assert methods == ["answerCallbackQuery", "editMessageReplyMarkup", "sendMessage"]
+    assert deps["telegram_sent"][1][1]["reply_markup"] == {"inline_keyboard": []}
+    assert "Aceptado por TEC-07" in deps["telegram_sent"][2][1]["text"]
+
+
+def test_telegram_update_id_repetido_no_ack_dos_veces():
+    deps = make_deps(incident())
+    ev = tg_event(tg_callback(update_id=42))
+    assert service.run(ev, deps)["statusCode"] == 200
+    dup = service.run(ev, deps)
+    assert body_of(dup)["data"]["duplicate"] is True
+    assert len(deps["sfn"].calls) == 1
+
+
+def test_telegram_estado_lee_la_maquina():
+    deps = make_deps(incident())
+    resp = service.run(tg_event(tg_message("/estado EX-023")), deps)
+    assert resp["statusCode"] == 200
+    text = deps["telegram_sent"][-1][1]["text"]
+    assert "EX-023" in text and "operational" in text and "91" in text
+
+
+def test_telegram_resolver_usa_resolve_token():
+    deps = make_deps(incident(status="in_progress"))
+    resp = service.run(tg_event(tg_message("/resolver INC-1 Cambié el rodamiento")), deps)
+    assert resp["statusCode"] == 200
+    token, output = deps["sfn"].calls[0]
+    assert token == "TOKEN-RES"
+    assert output["resolution_notes"] == "Cambié el rodamiento"

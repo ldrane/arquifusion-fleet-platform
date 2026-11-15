@@ -70,9 +70,9 @@ Toda respuesta de la API con JWT (éxito **y** error, incluidas las *gateway res
 
 Cada recurso con JWT tiene método `OPTIONS` (integración MOCK, sin Lambda, sin auth) que devuelve 200 con los mismos headers. Lo arma `arquifusion_shared.response._resp`; nadie agrega headers CORS a mano.
 
-## 2. Endpoints (26 operaciones, 3 familias)
+## 2. Endpoints (32 operaciones, 3 familias)
 
-Autenticación: **K** = API key · **J** = JWT Cognito. Roles: **O**perador, **T**écnico, **M**antenimiento, **S**upervisor, **A**dmin, **G**erencia.
+Autenticación: **K** = API key · **J** = JWT Cognito · **S** = secret token de Telegram (header `X-Telegram-Bot-Api-Secret-Token`). Roles: **O**perador, **T**écnico, **M**antenimiento, **S**upervisor, **A**dmin, **G**erencia.
 Lambdas: `api-lectura` (dueña C, `services/query/api_lectura`) · `api-comandos` (dueño B, `services/incidents/api_comandos`; antes `api-ack`) · `ia-gemini` (dueño A).
 
 | Método y ruta | Auth | Roles | Lambda | Cubre |
@@ -98,10 +98,16 @@ Lambdas: `api-lectura` (dueña C, `services/query/api_lectura`) · `api-comandos
 | `GET /analytics/fuel` | J | S A G | api-lectura | RF-07 |
 | `GET /analytics/productivity` | J | S A G | api-lectura | RF-08 |
 | `GET /analytics/kpis` | J | S A G | api-lectura | RF-11.4 |
+| `GET /analytics/precursors` | J | M S A G | api-lectura | TAREA-12 |
 | `GET /reports/latest` | J | A G S | api-lectura | RF-10.3, RF-13.3 |
 | `GET /ml/model` | J | A M | api-lectura | MH-AI-04 |
+| `GET /system/pulse` | J | todos | api-lectura | TAREA-14 |
 | `POST /ml/retrain` | J | A | api-comandos | RF-13.2 |
 | `POST /assistant/chat` | J | T M S A G | ia-gemini | RF-14 |
+| `POST /sim/scenario` | J | A M | api-comandos | TAREA-08 |
+| `POST /sim/stop` | J | A M | api-comandos | TAREA-08 |
+| `GET /sim/state` | J | A M S | api-comandos | TAREA-08 |
+| `POST /telegram/webhook` | S | Telegram | api-comandos | TAREA-09 |
 | `POST /bridge/events` | K | GCP | api-comandos | RF-16, MH-MC-02 |
 
 `POST /auth/firebase-token` vive en `api-lectura` (decisión 2026-11-14): firma el custom token con la service account de Firebase leída de Secrets Manager (`FIREBASE_SECRET_NAME`; la firma es local, no necesita salir a Internet, pero sí alcanzar Secrets Manager: fuera de VPC o con VPC endpoint).
@@ -123,6 +129,14 @@ Lo que **no** es endpoint, a propósito: chat del incidente, mapa en tiempo real
 - Nadie deriva el técnico desde `cognito:username` → `technicians.user_id`: se usa el claim. (`technicians.user_id` se mantiene para ir del técnico al usuario, por ejemplo para notificar.)
 - **Custom token de Firebase** (`POST /auth/firebase-token`): `uid` = `cognito:username`; claims `role` (rol resuelto), `zone` (`null` si es global), `technician_id` (solo técnicos; `null` en otro caso).
 - Fixtures: `fixtures/api/get_me.event.json` (técnico TEC-07, GET) y `fixtures/api/technician_status.event.json` (técnico TEC-07, PUT).
+
+### 2.2 Telegram bidireccional (TAREA-09/10)
+
+- Secreto `arquifusion/<stage>/telegram`: `{bot_token, chat_ids, webhook_secret, links}`. `links` mapea `chat_id` → `{user_id, role, technician_id, zone}`; el webhook construye las mismas claims que un JWT para reutilizar los comandos.
+- `POST /telegram/webhook` valida `X-Telegram-Bot-Api-Secret-Token` en tiempo constante, es idempotente por `update_id` (TTL 24 h) y **siempre** responde 200 (salvo secret inválido → 401) para evitar reintentos infinitos.
+- Callbacks `ack:<incident_id>:accept|reject` ejecutan `POST /incidents/{id}/ack`; comandos `/estado <MACHINE_ID>`, `/resolver <INC-ID> <notas>` y `/ayuda`.
+- Salida: `incident.assigned` incluye botones Aceptar/Rechazar (`callback_data` ≤ 64 bytes) y el técnico sugerido con su score (`technician_score`). `TELEGRAM_MIN_SEVERITY` permite `high` además de `critical`.
+- Configuración del webhook: `python3 scripts/telegram_setup.py --stage <stage>` (lee la URL de SSM, nunca imprime el token).
 
 ## 3. Eventos (EventBridge, bus `arquifusion-{stage}-fleet-events`)
 
@@ -202,7 +216,7 @@ Se mantiene el puente: la Lambda *notificar* (B) publica por REST al topic **`no
 
 ### 8.1 `ia-gemini` (dueño A; la invocan la SFN `GestionIncidente`, `AnalisisDiario` y API Gateway)
 
-Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-2.5-flash" | "fallback", "degraded": bool, "
+Input: `{ "task", "correlation_id", "payload" }` · Output: `{ "result", "model": "gemini-2.5-flash" | "fallback", "provider": "gemini" | "bedrock" | "fallback", "endpoint": "aistudio" | "vertex" | null, "degraded": bool, "degraded_reason"
 "?, "prompt_version", "latency_ms" }`. Si Gemini falla o tarda más de 8 s, responde con `model: "fallback"`, `degraded: true`, `degraded_reason`, `prompt_version: "<id>+fallback"` y un resultado determinista. **Nunca lanza error a la SFN por culpa de la IA.** `degraded_reason` (solo si `degraded: true`; también en la respuesta de `POST /assistant/chat`) ∈ `secret_missing` (API key no disponible) · `http_4xx` (key inválida, cuota, petición rechazada) · `timeout` · `model_not_found` (HTTP 404, modelo retirado) · `other`; nunca incluye llaves ni texto de excepciones. Modelo: variable `GEMINI_MODEL` (default `gemini-2.5-flash` en `gemini_client.py`). Credencial: API key de AI Studio en Secrets Manager (`arquifusion/{stage}/gemini/api-key`, #22).
 
 | `task` | `payload` | `result` |

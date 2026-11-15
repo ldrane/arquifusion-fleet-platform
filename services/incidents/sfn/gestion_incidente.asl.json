@@ -33,7 +33,7 @@
         "resolution": null,
         "summary": null,
         "ackTimeout": "{% $states.input.detail.data.severity = 'critical' ? ${ack_timeout_critical_s} : ${ack_timeout_s} %}",
-        "resolveEscalations": 0
+        "resolveEscalations": 0,
         "chatMessages": []
       },
       "Next": "ReclamarMaquina"

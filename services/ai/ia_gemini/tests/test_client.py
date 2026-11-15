@@ -64,6 +64,9 @@ def test_modelo_unico_desde_env(monkeypatch):
     assert GeminiClient(api_key_provider=lambda: "k").model == DEFAULT_MODEL
     monkeypatch.setenv("GEMINI_MODEL", "gemini-x")
     assert GeminiClient(api_key_provider=lambda: "k").model == "gemini-x"
+
+
+@pytest.mark.parametrize(
     ("model", "expected"),
     [
         ("gemini-2.5-flash-lite", {"thinkingBudget": 0}),
@@ -112,3 +115,53 @@ def test_to_json_schema_translates_gemini_dialect():
         "properties": {"a": {"type": ["string", "null"]}, "b": {"type": "array", "items": {"type": "number"}}},
         "required": ["a"],
     }
+
+
+# ---------------------------------------------------------------- TAREA-05: AI Studio / Vertex express
+@pytest.fixture(autouse=True)
+def _reset_resolved_base(monkeypatch):
+    import gemini_client
+
+    monkeypatch.delenv("GEMINI_API_BASE", raising=False)
+    monkeypatch.delenv("GEMINI_VERTEX_MODEL", raising=False)
+    gemini_client._RESOLVED_BASE = None
+    yield
+    gemini_client._RESOLVED_BASE = None
+
+
+def test_auto_falls_back_to_vertex_and_remembers_it():
+    from gemini_client import VERTEX_URL
+
+    denied = GeminiError("HTTP 403 de Gemini", "http_4xx", status=403)
+    gemini, transport = client(denied, json_reply({"ok": True}), json_reply({"ok": True}))
+    assert gemini.generate_json(prompt="p", system="s", schema={}) == {"ok": True}
+    assert gemini.endpoint == "vertex"
+    assert gemini.model == "gemini-2.5-flash-lite"
+    assert len(transport.bodies) == 2 and transport.urls[1].startswith(VERTEX_URL.split("/{model}")[0])
+    # La segunda llamada va directo a Vertex (no reintenta AI Studio).
+    assert gemini.generate_json(prompt="p", system="s", schema={}) == {"ok": True}
+    assert len(transport.bodies) == 3
+    assert transport.urls[2].startswith(VERTEX_URL.split("/{model}")[0])
+
+
+def test_quota_does_not_fall_back_to_vertex():
+    from gemini_client import AISTUDIO_URL
+
+    quota = GeminiError("HTTP 429 de Gemini", "http_4xx", status=429)
+    gemini, transport = client(quota)
+    with pytest.raises(GeminiError) as exc:
+        gemini.generate_json(prompt="p", system="s", schema={})
+    assert exc.value.reason == "http_4xx" and exc.value.status == 429
+    assert len(transport.bodies) == 1 and transport.urls[0].startswith(AISTUDIO_URL.split("/{model}")[0])
+
+
+def test_explicit_vertex_base_only_uses_vertex(monkeypatch):
+    from gemini_client import VERTEX_URL
+
+    monkeypatch.setenv("GEMINI_API_BASE", "vertex")
+    monkeypatch.setenv("GEMINI_VERTEX_MODEL", "gemini-2.5-flash")
+    gemini, transport = client(json_reply({"ok": True}))
+    gemini.generate_json(prompt="p", system="s", schema={})
+    assert gemini.endpoint == "vertex" and gemini.model == "gemini-2.5-flash"
+    assert len(transport.urls) == 1 and transport.urls[0].startswith(VERTEX_URL.split("/{model}")[0])
+    assert transport.headers[0]["x-goog-api-key"] == "test-key"

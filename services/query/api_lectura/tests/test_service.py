@@ -447,6 +447,39 @@ def test_insights(deps):
     assert err(deps, ev("GET", "/ml/model", groups="supervisor")) == (403, "FORBIDDEN")
 
 
+def test_system_pulse(deps):
+    from datetime import UTC, datetime
+
+    data, meta = service.run(ev("GET", "/system/pulse", groups="operador"), deps)
+    assert meta == {} and data["mode"] == "live" and data["region"] is None
+    assert data["last_reading_at"] is None and data["machines_reporting_5m"] == 0  # seeds: aún sin telemetría
+    assert data["open_incidents"] == 2  # INC-01 (assigned, norte) + INC-03 (assigned, sur); INC-02 está cerrado
+    assert data["ai"] == {"last_provider": None, "degraded": False} and data["generated_at"]
+    # una lectura reciente y los insights del workflow: el pulso expone ambos
+    machines = deps.table("machines")
+    item = next(i for i in machines.scan()["Items"] if i.get("machine_id") == "EX-023")
+    now_iso = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    machines.update_item(
+        Key={"pk": item["pk"], "sk": "META"},
+        UpdateExpression="SET last_seen_at = :t",
+        ExpressionAttributeValues={":t": now_iso},
+    )
+    _put(deps.table("insights"), {"pk": "ml_model", "sk": "LATEST", "generated_at": "2026-11-14T06:00:00Z",
+                                  "data": {"model_version": "v3"}})
+    _put(deps.table("insights"), {"pk": "report#daily", "sk": "LATEST", "generated_at": "2026-11-14T06:30:00Z",
+                                  "data": {"headline": "Flota estable"}})
+    _put(
+        deps.table("incidents"),
+        {**INCIDENT, "pk": "INC#INC-04", "incident_id": "INC-04", "status": "resolved",
+         "detected_at": "2026-11-14T11:00:00Z",
+         "ai_diagnosis": {"probable_cause": "Rodamiento", "provider": "gemini", "degraded": True}},
+    )
+    data, _ = service.run(ev("GET", "/system/pulse", groups="gerencia", zone="*"), deps)
+    assert data["last_reading_at"] == now_iso and data["machines_reporting_5m"] == 1
+    assert data["model_version"] == "v3" and data["last_report_at"] == "2026-11-14T06:30:00Z"
+    assert data["ai"] == {"last_provider": "gemini", "degraded": True}
+
+
 def test_todas_las_rutas_get_de_api_lectura_estan_en_routes():
     import re
 
