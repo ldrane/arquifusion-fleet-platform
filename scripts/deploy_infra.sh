@@ -11,6 +11,7 @@
 # Extra por stack: TF_ARGS_<stack>="-var ack_timeout_s=120"  ·  AUTO_APPROVE=1 para no confirmar cada apply.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+[[ "${SKIP_CHECKS:-0}" == 1 ]] || "$ROOT/scripts/check_all.sh" --fast
 : "${STAGE:?Falta STAGE}"
 REGION="${AWS_REGION:-us-east-1}"
 ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
@@ -66,14 +67,17 @@ for s in "${STACKS[@]}"; do
       ${!extra_var:-} -auto-approve >/dev/null
     REPO="$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/arquifusion-$STAGE-ml"
     TAG="${IMAGE_TAG:-latest}"
-    log "Imágenes ECR -> $REPO (procesar-$TAG, retrain-$TAG)"
+    log "Imágenes ECR -> $REPO (procesar-$TAG, retrain-$TAG, sim-driver-$TAG)"
     aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${REPO%%/*}" >/dev/null
     docker build -q --platform linux/amd64 --provenance=false -f "$ROOT/services/ingest/procesar/Dockerfile" \
       -t "$REPO:procesar-$TAG" "$ROOT" >/dev/null
     docker build -q --platform linux/amd64 --provenance=false -f "$ROOT/services/analytics/retrain/Dockerfile" \
       -t "$REPO:retrain-$TAG" "$ROOT" >/dev/null
+    docker build -q --platform linux/amd64 --provenance=false -f "$ROOT/services/ingest/sim_driver/Dockerfile" \
+      -t "$REPO:sim-driver-$TAG" "$ROOT" >/dev/null
     docker push -q "$REPO:procesar-$TAG" >/dev/null
     docker push -q "$REPO:retrain-$TAG" >/dev/null
+    docker push -q "$REPO:sim-driver-$TAG" >/dev/null
   fi
   # shellcheck disable=SC2086
   terraform -chdir="$ROOT/infra/$s" apply -input=false -var "stage=$STAGE" ${!extra_var:-} "${APPROVE[@]}"
@@ -92,16 +96,23 @@ if [[ " ${STACKS[*]} " == *" ingest "* && -n "${GEMINI_API_KEY:-}" ]]; then
   aws secretsmanager put-secret-value --region "$REGION" --secret-id "arquifusion/$STAGE/gemini/api-key" \
     --secret-string "$GEMINI_API_KEY" >/dev/null
 fi
-# 6) Bot de Telegram para alertas críticas (RF-10.2): TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID (uno o varios,
-#    separados por coma) desde el entorno o .env.deploy. Idempotente; sin valores, notify-telegram no envía nada.
-for k in TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID; do
+# 6) Bot de Telegram (RF-10.2, TAREA-09/10): TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (uno o varios separados por
+#    coma), TELEGRAM_WEBHOOK_SECRET (32+ chars) y TELEGRAM_LINKS (JSON en una línea: {"<chat_id>": {...}}).
+#    Desde el entorno o .env.deploy. Idempotente; sin token/chats, notify-telegram no envía nada.
+for k in TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID TELEGRAM_WEBHOOK_SECRET TELEGRAM_LINKS; do
   [[ -z "${!k:-}" && -f "$ROOT/.env.deploy" ]] && printf -v "$k" '%s' "$(sed -n "s/^$k=//p" "$ROOT/.env.deploy" | tr -d '"'"'"'\r')"
 done
 if [[ " ${STACKS[*]} " == *" incidents "* && -n "${TELEGRAM_BOT_TOKEN:-}" && -n "${TELEGRAM_CHAT_ID:-}" ]]; then
   log "Cargando bot de Telegram en arquifusion/$STAGE/telegram"
+  TELEGRAM_SECRET_JSON="$(TOKEN="$TELEGRAM_BOT_TOKEN" CHATS="$TELEGRAM_CHAT_ID" \
+    SECRET="${TELEGRAM_WEBHOOK_SECRET:-}" LINKS="${TELEGRAM_LINKS:-}" python3 -c \
+    'import json,os
+cfg={"bot_token": os.environ["TOKEN"], "chat_ids": [c.strip() for c in os.environ["CHATS"].split(",") if c.strip()]}
+if os.environ.get("SECRET"): cfg["webhook_secret"] = os.environ["SECRET"]
+if os.environ.get("LINKS"): cfg["links"] = json.loads(os.environ["LINKS"])
+print(json.dumps(cfg, ensure_ascii=False))')"
   aws secretsmanager put-secret-value --region "$REGION" --secret-id "arquifusion/$STAGE/telegram" \
-    --secret-string "$(TOKEN="$TELEGRAM_BOT_TOKEN" CHATS="$TELEGRAM_CHAT_ID" python3 -c \
-      'import json,os; print(json.dumps({"bot_token": os.environ["TOKEN"], "chat_ids": [c.strip() for c in os.environ["CHATS"].split(",") if c.strip()]}))')" \
-    >/dev/null
+    --secret-string "$TELEGRAM_SECRET_JSON" >/dev/null
+  unset TELEGRAM_SECRET_JSON
 fi
 log "OK. Siguientes: seed.py, cognito_users.py, deploy_frontend.sh, infra/gcp, smoke_golden_path.sh"

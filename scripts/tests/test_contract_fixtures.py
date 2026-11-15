@@ -77,7 +77,7 @@ def test_diagnose_response_solo_sugiere_candidatos_y_trae_prompt_version():
     allowed = {c["component_id"] for c in req["payload"]["candidate_parts"]}
     assert set(resp["result"]["parts_suggested"]) <= allowed
     assert resp["prompt_version"] == "diagnose-v1"
-    assert set(resp) == {"result", "model", "degraded", "prompt_version", "latency_ms"}
+    assert set(resp) == {"result", "model", "provider", "endpoint", "degraded", "prompt_version", "latency_ms"}
 
 
 # --------------------------------------------------------------------------- scoring

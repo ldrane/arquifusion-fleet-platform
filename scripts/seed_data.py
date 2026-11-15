@@ -626,6 +626,16 @@ def _point_in_zone(rng: random.Random, zone: str) -> dict:
     return {"lat": round(lat, 6), "lon": round(lon, 6), "zone": zone}
 
 
+# Supuesto de negocio (TAREA-11): costo del paro no planificado por hora según el tipo de equipo.
+DOWNTIME_COST_USD_H = {
+    "mining_truck": 1500,
+    "excavator": 900,
+    "drill": 1100,
+    "loader": 800,
+    "bulldozer": 700,
+}
+
+
 def build_machine_models() -> list[dict]:
     comps_by_model: dict[str, list[str]] = {m: [] for m in ALL_MODELS}
     for comp_id, _name, _spec, models, _cost, _lead in CATALOG:
@@ -635,6 +645,7 @@ def build_machine_models() -> list[dict]:
     for m in MACHINE_MODELS:
         item = dict(m)
         item["component_ids"] = comps_by_model[m["model_id"]]
+        item["downtime_cost_usd_h"] = DOWNTIME_COST_USD_H[m["type"]]
         out.append(item)
     return out
 

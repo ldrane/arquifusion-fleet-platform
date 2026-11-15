@@ -7,6 +7,7 @@ Uso (desde la raíz del repo):
   python scripts/seed.py load   --stage dev --force   # sobrescribe (¡resetea status/health de la flota!)
   python scripts/seed.py verify --stage dev           # cuenta ítems y revisa los IDs de los contratos
   python scripts/seed.py reset-baselines --stage dev  # borra los BASELINE de machine-state (tras cambiar modelos/zonas)
+  python scripts/seed.py history-incidents --stage dev  # incidentes+anomalías desde labels/failures.parquet (TAREA-12)
   python scripts/seed.py load   --stage c --bootstrap-tables   # SOLO en tu lab personal: crea tablas temporales
 
 Idempotencia: cada ítem se escribe con PutItem condicional (attribute_not_exists), así que
@@ -305,12 +306,112 @@ def cmd_reset_baselines(args: argparse.Namespace) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- history-incidents (TAREA-12)
+# Variable dominante plausible (top_factors[0]) por tipo de falla del simulador.
+_HISTORY_FACTOR = {
+    "degradacion": ("temperature_c", 3.8),
+    "combustible": ("fuel_rate_lph", 2.5),
+    "falla_subita": ("vibration_mm_s", 4.2),
+}
+_HISTORY_SEVERITY = {"degradacion": "high", "combustible": "medium", "falla_subita": "critical"}
+HISTORY_WINDOW_DAYS = 90  # misma ventana que la rama Precursores (services/analytics/precursores)
+
+
+def _machine_models(resource, stage: str) -> dict[str, str]:
+    """`machine_id` → `model` desde la tabla `machines` (los incidentes no siempre lo traen)."""
+    page = resource.Table(f"arquifusion-{stage}-machines").scan(
+        ProjectionExpression="machine_id, #m", ExpressionAttributeNames={"#m": "model"}
+    )
+    return {i["machine_id"]: i["model"] for i in page.get("Items", []) if i.get("machine_id") and i.get("model")}
+
+
+def cmd_history_incidents(args: argparse.Namespace) -> int:
+    """Siembra incidentes cerrados + anomalías pre-falla desde `labels/failures.parquet` (opcional, TAREA-12).
+
+    Cada falla del historial del simulador se convierte en un incidente `closed` (`detected_at = failure_at`,
+    `resolved_at = repair_end`) y en una anomalía a ~1/3 de su ventana de precursor con la variable dominante
+    del tipo de falla. Así la rama `Precursores` y el panel "Firmas pre-falla" tienen datos reales.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    try:
+        import pandas as pd
+    except ImportError:
+        sys.exit("Falta pandas/pyarrow: pip install -r simulator/requirements.txt")
+    labels = Path(args.labels)
+    if not labels.exists():
+        print(f"No existe {labels}. Genéralo con: python -m simulator history --days 90 --out {labels.parents[1]}")
+        return 1
+    df = pd.read_parquet(labels)
+    cutoff = datetime.now(UTC) - timedelta(days=args.days)
+    df = df[pd.to_datetime(df["failure_at"], utc=True) >= cutoff]
+    if df.empty:
+        print(f"Sin fallas en los últimos {args.days} días en {labels}")
+        return 0
+
+    _client, resource = _dynamodb(args)
+    models = _machine_models(resource, args.stage)
+    incidents = resource.Table(f"arquifusion-{args.stage}-incidents")
+    anomalies = resource.Table(f"arquifusion-{args.stage}-anomalies")
+    written = 0
+    with incidents.batch_writer() as incident_batch, anomalies.batch_writer() as anomaly_batch:
+        for row in df.to_dict("records"):
+            machine_id = row["machine_id"]
+            failure_at = pd.to_datetime(row["failure_at"], utc=True).to_pydatetime()
+            repair_end = pd.to_datetime(row["repair_end"], utc=True).to_pydatetime()
+            precursor = pd.to_datetime(row["precursor_start"], utc=True).to_pydatetime()
+            incident_id = f"INC-HIST-{machine_id}-{failure_at:%Y%m%d%H%M}"
+            kind = row["kind"]
+            variable, z = _HISTORY_FACTOR.get(kind, ("temperature_c", 3.0))
+            # señal a ~1/3 de la ventana de precursor (>=1 h antes de la falla)
+            signal_at = max(precursor, failure_at - (failure_at - precursor) / 3)
+            if (failure_at - signal_at).total_seconds() < 3600:
+                signal_at = failure_at - timedelta(hours=1)
+            incident = {
+                "pk": f"INC#{incident_id}",
+                "sk": "META",
+                "incident_id": incident_id,
+                "machine_id": machine_id,
+                "zone": row["zone"],
+                "model": models.get(machine_id),
+                "status": "closed",
+                "severity": _HISTORY_SEVERITY.get(kind, "high"),
+                "detected_at": failure_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "resolved_at": repair_end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "downtime_minutes": round((repair_end - failure_at).total_seconds() / 60),
+                "source": "history-incidents",
+            }
+            anomaly_id = f"AN-HIST-{machine_id}-{signal_at:%Y%m%d%H%M}"
+            anomaly = {
+                "pk": machine_id,
+                "sk": f"{signal_at:%Y-%m-%dT%H:%M:%SZ}#{anomaly_id}",
+                "anomaly_id": anomaly_id,
+                "machine_id": machine_id,
+                "zone": row["zone"],
+                "model": models.get(machine_id),
+                "detected_at": signal_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "severity": "high",
+                "anomaly_score": round(min(0.99, 0.5 + z / 10), 2),
+                "health_score": 45,
+                "top_factors": [{"variable": variable, "z_score": z, "direction": "high"}],
+                "kind": "individual",
+                "model_version": "seed-history",
+                "correlation_id": "seed-history-incidents",
+            }
+            incident_item = {k: v for k, v in incident.items() if v is not None}
+            incident_batch.put_item(Item=json.loads(json.dumps(incident_item), parse_float=Decimal))
+            anomaly_batch.put_item(Item=json.loads(json.dumps(anomaly), parse_float=Decimal))
+            written += 1
+    print(f"history-incidents: {written} incidentes + {written} anomalías en arquifusion-{args.stage}")
+    return 0
+
+
 # --------------------------------------------------------------------------- CLI
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Seeds de ArquiFusion (Persona C)")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("export", help="Genera contracts/fixtures/seed/*.json")
-    for name in ("load", "verify", "reset-baselines"):
+    for name in ("load", "verify", "reset-baselines", "history-incidents"):
         p = sub.add_parser(name)
         p.add_argument("--stage", required=True, help="dev (integración) o tu inicial (lab personal)")
         p.add_argument("--region", default=DEFAULT_REGION)
@@ -318,8 +419,18 @@ def main(argv: list[str] | None = None) -> int:
         if name == "load":
             p.add_argument("--force", action="store_true", help="Sobrescribe ítems existentes")
             p.add_argument("--bootstrap-tables", action="store_true", help="Crea tablas temporales (nunca en dev)")
+        if name == "history-incidents":
+            p.add_argument("--labels", default="data/lake/labels/failures.parquet",
+                           help="Parquet de fallas del simulador (python -m simulator history)")
+            p.add_argument("--days", type=int, default=HISTORY_WINDOW_DAYS, help="Ventana de fallas a sembrar")
     args = parser.parse_args(argv)
-    commands = {"export": cmd_export, "load": cmd_load, "verify": cmd_verify, "reset-baselines": cmd_reset_baselines}
+    commands = {
+        "export": cmd_export,
+        "load": cmd_load,
+        "verify": cmd_verify,
+        "reset-baselines": cmd_reset_baselines,
+        "history-incidents": cmd_history_incidents,
+    }
     return commands[args.cmd](args)
 
 
