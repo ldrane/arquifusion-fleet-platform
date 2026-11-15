@@ -149,6 +149,22 @@ locals {
         PUSH_AUDIENCE      = var.push_audience
       }
     }
+    # Alertas CRÍTICAS a Telegram: suscripción propia en EventBridge (regla `telegram`), fuera de notification-rules.
+    notify_telegram = {
+      name    = "${local.prefix}-notify-telegram"
+      dir     = "notify_telegram"
+      files   = ["handler.py", "service.py"]
+      timeout = 15
+      memory  = 128
+      rf      = "RF-10.1 RF-10.2"
+      env = {
+        TABLE_IDEMPOTENCY    = local.tables.TABLE_IDEMPOTENCY
+        TABLE_INCIDENTS      = local.tables.TABLE_INCIDENTS
+        TELEGRAM_SECRET_NAME = aws_secretsmanager_secret.telegram.name
+        TELEGRAM_EVENT_TYPES = join(",", var.telegram_event_types)
+        APP_URL              = var.app_url
+      }
+    }
     auditoria = {
       name    = "${local.prefix}-auditoria"
       dir     = "auditoria"
@@ -162,6 +178,16 @@ locals {
       }
     }
   }
+}
+
+# ---------------------------------------------------------------- Telegram (alertas críticas)
+# Valor JSON {bot_token, chat_ids} fuera de Terraform (no queda en el tfstate): lo carga scripts/deploy_infra.sh
+# desde TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID de .env.deploy. Sin valor, la Lambda omite el envío sin error.
+resource "aws_secretsmanager_secret" "telegram" {
+  name                    = "arquifusion/${var.stage}/telegram"
+  description             = "Bot de Telegram para alertas críticas: {bot_token, chat_ids}"
+  recovery_window_in_days = 0
+  tags                    = { owner = "B", rf = "RF-10.2" }
 }
 
 # ---------------------------------------------------------------- Lambdas
@@ -338,6 +364,15 @@ locals {
         "detail-type" = ["IncidentStateChanged"]
       }
     }
+    # IncidentStateChanged CRÍTICO → notify-telegram (canal de guardia, RF-10)
+    telegram = {
+      description = "IncidentStateChanged critical → Telegram (RF-10)"
+      pattern = {
+        source        = ["arquifusion.incident"]
+        "detail-type" = ["IncidentStateChanged"]
+        detail        = { data = { severity = ["critical"], event_type = var.telegram_event_types } }
+      }
+    }
     # Todos los eventos de dominio → auditoria (audit-events + historial EVT#, RNF-15)
     audit = {
       description = "Eventos de dominio → auditoria (RNF-15, TRZ-02)"
@@ -375,7 +410,7 @@ resource "aws_cloudwatch_event_target" "sfn" {
 }
 
 resource "aws_cloudwatch_event_target" "lambda" {
-  for_each       = { notify = "notificar", audit = "auditoria" }
+  for_each       = { notify = "notificar", audit = "auditoria", telegram = "notify_telegram" }
   rule           = aws_cloudwatch_event_rule.rule[each.key].name
   event_bus_name = data.aws_cloudwatch_event_bus.fleet.name
   target_id      = each.value
@@ -391,7 +426,7 @@ resource "aws_cloudwatch_event_target" "lambda" {
 }
 
 resource "aws_lambda_permission" "events" {
-  for_each      = { notify = "notificar", audit = "auditoria" }
+  for_each      = { notify = "notificar", audit = "auditoria", telegram = "notify_telegram" }
   statement_id  = "AllowEventBridge-${each.key}"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.fn[each.value].function_name

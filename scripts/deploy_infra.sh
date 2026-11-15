@@ -92,4 +92,16 @@ if [[ " ${STACKS[*]} " == *" ingest "* && -n "${GEMINI_API_KEY:-}" ]]; then
   aws secretsmanager put-secret-value --region "$REGION" --secret-id "arquifusion/$STAGE/gemini/api-key" \
     --secret-string "$GEMINI_API_KEY" >/dev/null
 fi
+# 6) Bot de Telegram para alertas críticas (RF-10.2): TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID (uno o varios,
+#    separados por coma) desde el entorno o .env.deploy. Idempotente; sin valores, notify-telegram no envía nada.
+for k in TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID; do
+  [[ -z "${!k:-}" && -f "$ROOT/.env.deploy" ]] && printf -v "$k" '%s' "$(sed -n "s/^$k=//p" "$ROOT/.env.deploy" | tr -d '"'"'"'\r')"
+done
+if [[ " ${STACKS[*]} " == *" incidents "* && -n "${TELEGRAM_BOT_TOKEN:-}" && -n "${TELEGRAM_CHAT_ID:-}" ]]; then
+  log "Cargando bot de Telegram en arquifusion/$STAGE/telegram"
+  aws secretsmanager put-secret-value --region "$REGION" --secret-id "arquifusion/$STAGE/telegram" \
+    --secret-string "$(TOKEN="$TELEGRAM_BOT_TOKEN" CHATS="$TELEGRAM_CHAT_ID" python3 -c \
+      'import json,os; print(json.dumps({"bot_token": os.environ["TOKEN"], "chat_ids": [c.strip() for c in os.environ["CHATS"].split(",") if c.strip()]}))')" \
+    >/dev/null
+fi
 log "OK. Siguientes: seed.py, cognito_users.py, deploy_frontend.sh, infra/gcp, smoke_golden_path.sh"
