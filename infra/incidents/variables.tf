@@ -87,12 +87,25 @@ variable "reserved_concurrency" {
   description = "Concurrencia reservada por Lambda (clave = local.functions). Las SFN reintentan Lambda.TooManyRequestsException."
   type        = map(number)
   default = {
-    api_comandos = 1
-    incidente    = 1
-    scoring      = 1
-    correlacion  = 1
-    notificar    = 1
-    notify_push  = 1
-    auditoria    = 1
+    api_comandos    = 1
+    incidente       = 1
+    scoring         = 1
+    correlacion     = 1
+    notificar       = 1
+    notify_push     = 1
+    notify_telegram = 1
+    auditoria       = 1
   }
+}
+
+variable "telegram_event_types" {
+  description = "Transiciones de incidentes CRÍTICOS que se envían a Telegram (filtro de la regla EventBridge)"
+  type        = list(string)
+  default     = ["incident.detected", "incident.assigned", "incident.escalated", "incident.resolved"]
+}
+
+variable "app_url" {
+  description = "URL https del front (Firebase Hosting) para el botón 'Abrir incidente' en Telegram. Vacío = sin botón"
+  type        = string
+  default     = ""
 }

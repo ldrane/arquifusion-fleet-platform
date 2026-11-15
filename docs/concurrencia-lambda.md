@@ -1,7 +1,7 @@
 # Presupuesto de concurrencia de Lambda (AWS Academy)
 
 AWS Academy Learner Lab limita la cuenta a **10 Lambdas ejecutándose en paralelo**. Superarlo puede bloquear la cuenta.
-Hay 19 Lambdas, así que no existe un tope duro global solo con concurrencia reservada (cada una necesita ≥ 1).
+Hay 20 Lambdas, así que no existe un tope duro global solo con concurrencia reservada (cada una necesita ≥ 1).
 La estrategia es acotar cada fuente que escala sola, reintentar el throttling y alarmar antes del límite.
 
 ## Topes (concurrencia reservada, `var.reserved_concurrency` en cada stack)
@@ -15,6 +15,7 @@ La estrategia es acotar cada fuente que escala sola, reintentar el throttling y 
 | ia-gemini | 2 | SFN + `/assistant/chat` | SFN reintenta; el asistente responde 429 puntual |
 | incidente, scoring, correlacion, notificar | 1 c/u | SFN GestionIncidente | SFN reintenta (8 intentos, backoff hasta 20 s) |
 | notify-push | 1 | Pub/Sub push → API Gateway | Pub/Sub reintenta |
+| notify-telegram | 1 | EventBridge (solo incidentes critical) | Lambda reintenta el evento asíncrono |
 | auditoria | 1 | EventBridge (asíncrono) | Lambda reintenta el evento asíncrono |
 | heartbeat | 1 | Scheduler cada 1 min (~1 s de ejecución) | — |
 | analytics-* (5) | 1 c/u | SFN AnalisisDiario, 05:00 Lima | SFN reintenta |
