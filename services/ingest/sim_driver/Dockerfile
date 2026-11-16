@@ -5,6 +5,10 @@ FROM public.ecr.aws/lambda/python:3.12
 COPY services/ingest/sim_driver/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
+# Librerías comunes (Persona B): handler.py importa arquifusion_shared.
+COPY services/shared /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Generador de telemetría compartido con el simulador local y seeds del contrato.
 COPY simulator ${LAMBDA_TASK_ROOT}/simulator
 COPY contracts/fixtures/seed ${LAMBDA_TASK_ROOT}/seed
