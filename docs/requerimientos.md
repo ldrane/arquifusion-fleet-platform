@@ -1,6 +1,6 @@
 # Requerimientos — Plataforma de Gestión de Flota ArquiFusion Corp
 
-> Documento derivado de `contexto.md` y `rubrica.md`.
+> Documento derivado del enunciado del reto y su rúbrica.
 > Prioridad: **Alta** (necesario para la rúbrica), **Media** (suma puntos, deseable), **Baja** (si sobra tiempo).
 
 ---

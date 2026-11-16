@@ -1,6 +1,6 @@
 # Cómo contribuir
 
-Plan completo y responsables: [`docs/division-trabajo-backend.md`](docs/division-trabajo-backend.md).
+Arquitectura: [`diagrama/Arquitectura_Solucion_ArquiFusion.drawio`](diagrama/Arquitectura_Solucion_ArquiFusion.drawio). Contratos: [`contracts/`](contracts/).
 
 ## Reglas de oro
 1. **Contract-first.** Si cambia un endpoint, evento o campo: PR a `contracts/` → aprobación de quien lo consume → código.

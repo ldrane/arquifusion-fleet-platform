@@ -2,7 +2,7 @@
 
 > Grupo 27 · RootAccess. Fuente de verdad técnica: `openapi.yaml` (REST). Este documento resume el resto: eventos, Firestore, Pub/Sub, invocaciones internas y recursos compartidos.
 > Regla de trabajo: **si cambia un contrato, se cambia aquí primero** y recién después el código.
-> Última revisión: 2026-11-14 (rama `fix/contratos`), aplica las decisiones de `docs/auditoria-integracion-datos.md` (#3, #6-#9, #11-#15, #18-#21, #23-#24, #26).
+> Última revisión: 2026-11-14 (rama `fix/contratos`).
 
 ## 1. Convenciones (valen para todo)
 

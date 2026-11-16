@@ -5,7 +5,7 @@ Plataforma serverless y multinube (AWS + GCP) para la telemetría de maquinaria 
 > Grupo 27 · RootAccess · Hackathon ArquiFusion
 
 ## Empieza aquí
-1. [`docs/division-trabajo-backend.md`](docs/division-trabajo-backend.md): quién hace qué, hitos y buenas prácticas.
+1. [`diagrama/Arquitectura_Solucion_ArquiFusion.drawio`](diagrama/Arquitectura_Solucion_ArquiFusion.drawio): diagrama de arquitectura (AWS + GCP), y [`docs/arquitectura-solucion-aws.md`](docs/arquitectura-solucion-aws.md) con los flujos.
 2. [`contracts/`](contracts/): `openapi.yaml` (REST) y `contratos.md` (eventos, Pub/Sub, Firestore). **Fuente de verdad.**
 3. [`CONTRIBUTING.md`](CONTRIBUTING.md): ramas, commits, Definition of Done y setup local.
 
@@ -13,7 +13,8 @@ Plataforma serverless y multinube (AWS + GCP) para la telemetría de maquinaria 
 
 ```
 contracts/                 Contratos (fuente de verdad) + fixtures/ de ejemplo por interfaz
-docs/                      Contexto, rúbrica, requerimientos, arquitectura, pitch, costos, división del trabajo
+diagrama/                  Diagrama de arquitectura (draw.io)
+docs/                      Arquitectura (flujos), requerimientos, costos, concurrencia, smoke tests, pitch
 infra/                     Terraform, un state por stack
   modules/lab_s3_bucket/   Bucket S3 compatible con el Learner Lab (evita `aws_s3_bucket`)
   base/                    (B) DynamoDB, EventBridge, API Gateway, Cognito, SNS, secretos

@@ -91,7 +91,7 @@ export const MODEL_BY_ID = new Map(SEED.models.map((m) => [m.model_id, m]));
 export const COMPONENT_BY_ID = new Map(SEED.catalog.map((c) => [c.component_id, c]));
 export const ZONES = ["norte", "sur", "este", "oeste"];
 
-/** Usuarios demo = los del runbook H0 (docs/h0-persona-c.md, acuerdo 5 con B). */
+/** Usuarios demo = los mismos que crea scripts/cognito_users.py. */
 export const DEMO_USERS = [
   { user_id: "u-op-01", name: "Rosa Quispe", email: "op01@demo.arquifusion.local", role: "operador", zone: "norte" },
   // El técnico demo ES TEC-07 de los seeds: mismo nombre (Technicians.user_id = u-tec-07)

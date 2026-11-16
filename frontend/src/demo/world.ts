@@ -43,7 +43,7 @@ function valueProtected(model: string | undefined, detectedMs: number, closedMs:
 }
 
 // ------------------------------------------------------------------ tiempos de la simulación (ms)
-// Acelerados para ver el flujo completo en menos tiempo (todo.md "actualizaciones más rápidas"); antes → después:
+// Acelerados para ver el flujo completo en menos tiempo; antes → después:
 // tick 2500→1500, ai 2500→2000, assign 5000→3500, ackTimeout 150→120 s, autoAck 18→12 s, autoResolve 70→45 s,
 // close 4000→3000, spawn 40-80 s→25-50 s. ackTimeoutProtected (TEC-07) no cambia: el pitch necesita margen.
 const T = {

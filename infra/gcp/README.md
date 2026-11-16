@@ -3,7 +3,7 @@
 - **Dueño:** Persona C base (Firestore, reglas, service account) + B (Pub/Sub `notificaciones`, Cloud Function `notify_bridge`).
 - **Contiene:** provider `google`: Firestore `(default)` en `nam5` con PITR (7 días) y protección de borrado, Security Rules (`firestore.rules`), índice de `users.fcm_tokens` desactivado, APIs, service account `aws-integration` para las Lambdas de AWS.
 - **State:** `s3://<bucket-tfstate>/arquifusion/gcp/terraform.tfstate` (uno solo: Firestore `(default)` es único por proyecto).
-- **Desplegar:** `terraform -chdir=infra/gcp init -backend-config=../backend.hcl && terraform -chdir=infra/gcp apply -var stage=<stage> -var gcp_project_id=<id>` (runbook `docs/h0-persona-c.md` §5).
+- **Desplegar:** `terraform -chdir=infra/gcp init -backend-config=../backend.hcl && terraform -chdir=infra/gcp apply -var stage=<stage> -var gcp_project_id=<id>` (ver «Puesta en marcha» abajo).
   Requiere `infra/base` aplicado antes (lee el SSM `/arquifusion/<stage>/api/url` para la suscripción push).
 - **`-var` obligatorios:** `gcp_project_id` y `stage` (sin default; `terraform apply` los pedirá o fallará en CI). Los demás
   (`gcp_billing`, `push_subscription`, ...) tienen default.
@@ -47,3 +47,48 @@ que sin pasar por Pub/Sub).
   La usan `api-lectura` (firma local del custom token + Firestore `users`), `replicar` (Firestore) y `notificar` (B, Pub/Sub).
 - `ia-gemini` (A) **no** usa esta service account: usa la API key de AI Studio (`arquifusion/{stage}/gemini/api-key`, #22).
   Pedido a B/dueño de `iam.tf`: quitar `roles/aiplatform.user` de `aws_sa_roles` (mínimo privilegio, MH-SEC-07).
+
+## Puesta en marcha
+
+### 1. Proyecto GCP (consola, una vez)
+
+1. Con tu **cuenta personal** de Google: console.cloud.google.com → Nuevo proyecto (anota el ID exacto, ej. `arquifusion-g27`).
+2. **Facturación: opcional.** El equipo usa el plan Spark (sin facturación, `gcp_billing = false` en `infra/gcp`). Si algún día se vincula, crea una **alerta de presupuesto** y aplica con `-var gcp_billing=true`.
+3. console.firebase.google.com → **Agregar proyecto** → elige el proyecto existente → **sin Google Analytics**.
+   **No** crees Firestore desde la consola (lo crea Terraform; la ubicación es inmutable).
+4. Firebase → **Authentication → Comenzar** (sin proveedores). Firebase → ⚙ Configuración → **Agregar app web** (la config pública va al `.env` del frontend).
+
+```bash
+gcloud auth login
+gcloud auth application-default login
+gcloud config set project arquifusion-g27
+gcloud auth application-default set-quota-project arquifusion-g27
+gcloud services enable serviceusage.googleapis.com cloudresourcemanager.googleapis.com
+```
+
+### 2. Terraform GCP (backend S3 compartido, `-var stage`)
+
+⚠ El proyecto GCP es **uno solo** (Firestore `(default)` es único), así que este stack debe tener **un solo state**.
+Se aplica contra el bucket de la cuenta de integración con `stage=dev`. Si lo aplicas antes desde tu lab, luego se mueve con `terraform init -migrate-state`.
+
+```bash
+export GOOGLE_BILLING_PROJECT=arquifusion-g27   # las APIs de Firebase exigen quota project
+export USER_PROJECT_OVERRIDE=true
+terraform -chdir=infra/gcp init -backend-config=../backend.hcl
+terraform -chdir=infra/gcp validate
+terraform -chdir=infra/gcp apply -var stage=dev -var gcp_project_id=arquifusion-g27
+terraform -chdir=infra/gcp output
+```
+
+### 3. Llave de la service account → AWS Secrets Manager
+
+Una llave **por cuenta AWS**, creada y subida en el mismo paso (nunca a git ni chat):
+
+```bash
+SA=$(terraform -chdir=infra/gcp output -raw aws_service_account_email)
+KEY=$(mktemp -d)/sa-key.json
+gcloud iam service-accounts keys create "$KEY" --iam-account="$SA"
+# infra/base ya crea el secreto vacío; solo se carga el valor:
+aws secretsmanager put-secret-value --secret-id arquifusion/<stage>/gcp/service-account --secret-string "file://$KEY"
+rm -f "$KEY"
+```

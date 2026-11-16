@@ -525,7 +525,7 @@ CATALOG = [
 ]
 
 # --------------------------------------------------------------------------- técnicos
-# user_id = cognito:username del usuario demo (convención propuesta a B, ver docs/h0-persona-c.md)
+# user_id = cognito:username del usuario demo (convención compartida con scripts/cognito_users.py)
 TECHNICIANS = [
     ("TEC-01", "Ana Huamán", "norte", ["motor", "electrica"], "day"),
     ("TEC-02", "Luis Quispe", "sur", ["hidraulica", "motor"], "day"),

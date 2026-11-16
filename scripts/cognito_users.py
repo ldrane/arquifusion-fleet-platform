@@ -30,7 +30,7 @@ ROLES = ("operador", "tecnico", "mantenimiento", "supervisor", "admin", "gerenci
 ROLE_PRECEDENCE = ("admin", "gerencia", "supervisor", "mantenimiento", "tecnico", "operador")
 GLOBAL_ZONE = "*"
 
-# Usuarios no técnicos del runbook (docs/h0-persona-c.md, frontend/src/demo/data.ts DEMO_USERS)
+# Usuarios no técnicos (mismos que frontend/src/demo/data.ts DEMO_USERS)
 STAFF = [
     {
         "user_id": "u-op-01",

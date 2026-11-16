@@ -14,7 +14,7 @@ Guion cronometrado de la demo de ArquiFusion (Grupo 27 · RootAccess). Dos perso
 3. Simulador **apagado** hasta el bloque 3 (`POST /v1/sim/stop`, `GET /v1/sim/state`); se enciende en vivo.
 4. Estado limpio entre ensayos: `python3 scripts/demo_reset.py --stage <stage>` (dry-run) y luego `--yes`.
 5. Teléfono de un **miembro del jurado** ya suscrito al bot de Telegram (`scripts/telegram_setup.py`). Confirmar que llega un mensaje de prueba.
-6. `docs/arquitectura.png` abierto en una pestaña; pestaña de Step Functions (`arquifusion-<stage>-gestion-incidente`) lista; CloudWatch logs filtrados.
+6. `diagrama/Arquitectura_Solucion_ArquiFusion.drawio` abierto en draw.io; pestaña de Step Functions (`arquifusion-<stage>-gestion-incidente`) lista; CloudWatch logs filtrados.
 7. **Video de respaldo** `docs/demo.mp4` (60 s del golden path) descargado local, por si cae el lab o el wifi.
 8. Cronómetro visible para P (o cuenta regresiva de 5:00 en el reloj).
 
@@ -33,8 +33,8 @@ Guion cronometrado de la demo de ArquiFusion (Grupo 27 · RootAccess). Dos perso
 
 | | |
 |---|---|
-| **Habla** | P (señalando el diagrama); O deja `docs/arquitectura.png` en pantalla |
-| **Pantalla** | `docs/arquitectura.png` (mismo que `arquitectura-arquifusion.drawio`) |
+| **Habla** | P (señalando el diagrama); O deja el diagrama en pantalla |
+| **Pantalla** | `diagrama/Arquitectura_Solucion_ArquiFusion.drawio` |
 | **Frase exacta** | «**AWS decide**: recibe la telemetría, detecta la anomalía con ML y orquesta la respuesta con Step Functions. **GCP llega al campo y recuerda**: Firestore sincroniza aunque no haya señal, FCM despierta al técnico, Gemini diagnostica y BigQuery guarda una copia diaria del historial en **otra nube**. No son dos nubes decorativas: cada una hace un trabajo que la otra no hace.» |
 | **Plan B** | Si preguntan «¿por qué no una tercera nube?»: «Una tercera nube solo suma credenciales y otro punto de falla en la demo; el valor está en que cada nube tenga un rol real. Lo profundizamos aquí» (decisión **D2** del blueprint). |
 

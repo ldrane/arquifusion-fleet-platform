@@ -1,6 +1,6 @@
 # ArquiFusion Corp — Arquitectura de Solución en AWS
 
-> Base: `requerimientos.md` (RF/RNF) y `rubrica.md`. Evidencia por criterio: `rubrica-evidencia.md`.
+> Base: `requerimientos.md` (RF/RNF).
 > Entorno: AWS Academy Learner Lab · región **us-east-1** · rol único **`LabRole`** · segunda nube: **GCP / Firebase (plan Spark)**.
 > Restricciones aplicadas: sin creación de roles IAM, sin NAT Gateway, sin servicios con costo por hora, sin EC2/RDS/contenedores encendidos, máximo 10 Lambdas concurrentes.
 
@@ -8,9 +8,8 @@
 
 ## 1. Diagrama de arquitectura
 
-![Arquitectura ArquiFusion](arquitectura.png)
 
-Fuente editable: [`arquitectura-arquifusion.drawio`](../arquitectura-arquifusion.drawio). En el diagrama, los íconos atenuados son **opcionales** y no se despliegan en el Learner Lab ni en el plan Spark (CloudFront + S3, Cloud Functions, Cloud Storage para adjuntos).
+Diagrama (draw.io): [`diagrama/Arquitectura_Solucion_ArquiFusion.drawio`](../diagrama/Arquitectura_Solucion_ArquiFusion.drawio). En el diagrama, los íconos atenuados son **opcionales** y no se despliegan en el Learner Lab ni en el plan Spark (CloudFront + S3, Cloud Functions, Cloud Storage para adjuntos).
 
 ### 1.1 Vista general (Mermaid)
 
