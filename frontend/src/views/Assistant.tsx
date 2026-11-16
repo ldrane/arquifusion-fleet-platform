@@ -1,10 +1,11 @@
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { errorMessage } from "@/api/errors";
-import type { DegradedReason, Incident } from "@/api/types";
+import type { DegradedReason } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { can } from "@/auth/permissions";
 import { Arqui, type ArquiState, setArquiThinking } from "@/components/brand/Arqui";
 import { Badge, Button, cx, Icon } from "@/components/ui";
+import { openIncidents } from "@/lib/incidents";
 import { ZONE_LABEL } from "@/lib/format";
 import { api } from "@/services";
 import { useZoned } from "@/state/FleetContext";
@@ -54,7 +55,6 @@ interface Insight {
   prompt: string;
 }
 
-const OPEN = (i: Incident) => i.status !== "closed" && !i.parent_incident_id;
 const TONE_TEXT: Record<Tone, string> = { critical: "text-[#ff8a8d]", warn: "text-tertiary", info: "text-primary", good: "text-secondary" };
 
 /** Insights proactivos de Arqui, derivados de los datos reales de la flota (mismo alcance de zona que el resto). */
@@ -64,7 +64,7 @@ function useInsights(): { insights: Insight[]; critical: number; open: number; a
   const inventory = useQuery(can(me?.role, "inventory") ? "inventory:low" : null, () => api.listInventory({ alert: "low_stock" }), { staleMs: 30_000 });
 
   return useMemo(() => {
-    const open = incidents.filter(OPEN);
+    const open = openIncidents(incidents);
     const critical = open.filter((i) => i.severity === "critical" || i.severity === "high");
     const risky = machines.filter((m) => m.health_score < 70).sort((a, b) => a.health_score - b.health_score);
     const free = technicians.filter((t) => t.available);

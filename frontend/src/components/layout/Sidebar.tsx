@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { navFor } from "@/auth/permissions";
 import { isDemo } from "@/config";
+import { openIncidents } from "@/lib/incidents";
 import { useFleet } from "@/state/FleetContext";
 import { Arqui, useArquiThinking } from "../brand/Arqui";
 import { Wordmark } from "../brand/Logo";
@@ -16,10 +17,10 @@ const fade = (collapsed: boolean) =>
 export function Sidebar({ open, onClose, collapsed, onToggle }: { open: boolean; onClose: () => void; collapsed: boolean; onToggle: () => void }) {
   const { role } = useAuth();
   const { link, incidents } = useFleet();
-  const openIncidents = incidents.filter((i) => i.status !== "closed" && !i.parent_incident_id);
-  const openCount = openIncidents.length;
+  const openList = openIncidents(incidents);
+  const openCount = openList.length;
   const arquiThinking = useArquiThinking();
-  const arquiState = arquiThinking ? "thinking" : openIncidents.some((i) => i.severity === "critical" || i.severity === "high") ? "alert" : "idle";
+  const arquiState = arquiThinking ? "thinking" : openList.some((i) => i.severity === "critical" || i.severity === "high") ? "alert" : "idle";
   const ago = link.lastUpdate ? Math.max(0, Math.round((Date.now() - link.lastUpdate) / 1000)) : null;
   const statusTone = link.status === "live" ? "bg-secondary" : link.status === "error" ? "bg-error" : "bg-tertiary";
   const statusText = link.status === "live" ? `${ago ?? 0}s` : link.status === "error" ? "Error" : "Conectando";

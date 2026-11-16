@@ -18,7 +18,7 @@ from simulator.sender import TelemetrySender
 STAGE = os.environ.get("STAGE", "dev")
 STATE_PARAM = os.environ.get("SIM_STATE_PARAM") or f"/arquifusion/{STAGE}/sim/state"
 URL_PARAM = f"/arquifusion/{STAGE}/api/url"
-API_KEY_SECRET = f"/arquifusion/{STAGE}/simulator/api-key"
+API_KEY_SECRET = f"arquifusion/{STAGE}/simulator/api-key"
 
 _ssm = boto3.client("ssm")
 _secrets = boto3.client("secretsmanager")

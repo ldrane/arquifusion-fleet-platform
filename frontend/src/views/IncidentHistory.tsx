@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { IncidentStatus, Severity } from "@/api/types";
 import { Button, Empty, Icon, IncidentStatusBadge, KpiCard, Panel, SeverityBadge } from "@/components/ui";
 import { fmt1, fmtDateTime, fmtUsd, INCIDENT_STATUS_LABEL, SEVERITY_LABEL, SEVERITY_RANK } from "@/lib/format";
+import { groupRoots, isOpenIncident, openIncidents } from "@/lib/incidents";
 import { useZoned } from "@/state/FleetContext";
 import { useViewState } from "@/state/viewState";
 
@@ -20,20 +21,24 @@ export function IncidentHistory() {
   const [search, setSearch] = useViewState("hist.search", "");
   const [page, setPage] = useViewState("hist.page", 0);
 
+  // Una fila por grupo de correlación (no por hijo): los abiertos y los cerrados se agrupan por separado
+  // para que un hijo abierto no desaparezca tras un padre ya cerrado.
+  const openGroups = useMemo(() => openIncidents(incidents), [incidents]);
+  const closedGroups = useMemo(() => groupRoots(incidents.filter((i) => i.status === "closed")), [incidents]);
+
   const rows = useMemo(() => {
     const q = search.trim().toUpperCase();
-    return incidents
-      .filter((i) => !i.parent_incident_id)
+    return [...openGroups, ...closedGroups]
       .filter(
         (i) =>
-          (!status || (status === "open" ? i.status !== "closed" : i.status === status)) &&
+          (!status || (status === "open" ? isOpenIncident(i) : i.status === status)) &&
           (!severity || i.severity === severity) &&
           (!q || i.incident_id.includes(q) || i.machine_ids.some((m) => m.includes(q)) || (i.assigned_technician_id ?? "").includes(q)),
       )
       .sort((a, b) => Number(a.status === "closed") - Number(b.status === "closed") || b.detected_at.localeCompare(a.detected_at) || SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
-  }, [incidents, status, severity, search]);
+  }, [openGroups, closedGroups, status, severity, search]);
 
-  const closed = incidents.filter((i) => i.status === "closed" && !i.parent_incident_id);
+  const closed = closedGroups;
   const mttr = closed.length ? closed.reduce((a, i) => a + (i.downtime_minutes ?? 0), 0) / closed.length / 60 : 0;
   const cost = closed.reduce((a, i) => a + (i.cost_usd ?? 0), 0);
   const recurrent = closed.filter((i) => i.is_recurrence).length;
@@ -55,7 +60,7 @@ export function IncidentHistory() {
   return (
     <>
       <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <KpiCard label="Abiertos" tone={incidents.some((i) => i.status !== "closed") ? "bad" : "good"} value={incidents.filter((i) => i.status !== "closed" && !i.parent_incident_id).length} unit="en curso" />
+        <KpiCard label="Abiertos" tone={incidents.some((i) => i.status !== "closed") ? "bad" : "good"} value={openGroups.length} unit="en curso" />
         <KpiCard label="Cerrados" tone="info" value={closed.length} unit="histórico" description={`${recurrent} recurrentes (misma máquina)`} />
         <KpiCard label="MTTR medio" tone="neutral" value={fmt1(mttr)} unit="h" description="De la detección a la resolución" />
         <KpiCard label="Costo correctivo" tone="warn" value={fmtUsd(cost)} description="Repuestos + mano de obra" />
