@@ -10,7 +10,7 @@ La estrategia es acotar cada fuente que escala sola, reintentar el throttling y 
 |---|---|---|---|
 | procesar | 2 | SQS (`maximum_concurrency` = 2, igual a la reservada) | SQS no invoca de más: sin throttles ni DLQ |
 | replicar | 2 | 3 streams DynamoDB (1 shard c/u) | el stream reintenta; Firestore se atrasa segundos |
-| api-lectura | 2 | API Gateway (front) | 429 puntual; el front reintenta en el siguiente refresco |
+| api-lectura | 10 | API Gateway (front) | 500 de API Gateway si se throttlea; el front serializa y reintenta con backoff |
 | api-comandos | 1 | API Gateway (acciones) | 429 puntual |
 | ia-gemini | 2 | SFN + `/assistant/chat` | SFN reintenta; el asistente responde 429 puntual |
 | incidente, scoring, correlacion, notificar | 1 c/u | SFN GestionIncidente | SFN reintenta (8 intentos, backoff hasta 20 s) |
@@ -25,6 +25,15 @@ La estrategia es acotar cada fuente que escala sola, reintentar el throttling y 
 Las tres state machines tienen un retrier dedicado para `Lambda.TooManyRequestsException`
 (`IntervalSeconds 2, MaxAttempts 8, BackoffRate 2, MaxDelaySeconds 20, JitterStrategy FULL`), así un tope nunca
 rompe un flujo: solo lo demora.
+
+### Por qué api-lectura pasó de 2 a 10
+
+`PollingRealtime` disparaba 3 GET concurrentes cada 10 s (`Promise.all`). Con `reserved_concurrent_executions = 2`
+la tercera invocación se throttleaba; en una integración `AWS_PROXY`, API Gateway devuelve **500 `Internal server error`**
+(y no 429) ante un throttle de Lambda, por eso el front no lo trataba como reintentable. Diagnóstico medido:
+`ConcurrentExecutions` saturado en 2, `Throttles` de 5–9/min, `Errors = 0`, `5XXError` de API Gateway 29–41/5 min.
+Ahora el polling es secuencial (pico 1 por tick), reintenta 429/5xx dos veces con backoff corto y el tope es 10 para
+absorber varios usuarios simultáneos sin acercarse a las 10 ejecuciones del lab.
 
 ## Carga típica
 

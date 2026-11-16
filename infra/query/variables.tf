@@ -41,7 +41,7 @@ variable "reserved_concurrency" {
   description = "Concurrencia reservada por Lambda (clave = local.functions). replicar=2 cubre 3 streams de 1 shard con reintentos."
   type        = map(number)
   default = {
-    api_lectura = 2
+    api_lectura = 10  # tope (no consumo): polling secuencial ~1-2 por usuario; con 2 se saturaba y API Gateway devolvía 500
     replicar    = 2
   }
 }
