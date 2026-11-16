@@ -43,9 +43,9 @@ Cada servicio tiene `README.md` (dueño, qué consume y produce, RF que cubre), 
 ## Dueños
 | Persona | Dominio |
 |---|---|
-| **A** | Datos e IA: simulador, ingesta, `procesar`, `ia-gemini`, analítica, ML |
-| **B** | Orquestación: infra base, `shared`, `GestionIncidente`, comandos, notificaciones, puente GCP |
-| **C** | Consulta y tiempo real: seeds, `api-lectura`, `replicar`, Firestore, frontend |
+| **Diego Godoy** | Datos e IA: simulador, ingesta, `procesar`, `ia-gemini`, analítica, ML |
+| **Leonardo Medina** | Orquestación: infra base, `shared`, `GestionIncidente`, comandos, notificaciones, puente GCP |
+| **Luana Meniz** | Consulta y tiempo real: seeds, `api-lectura`, `replicar`, Firestore, frontend |
 
 ## Golden path (demo)
 Simulador (o `sim-driver` serverless) → `POST /telemetry` → SQS → `procesar` → `AnomalyDetected` → Step Functions `GestionIncidente` → `ia-gemini` + `scoring` → `notificar` (SNS + `notify-push` → FCM + `notify-telegram`) → `ack` → chat Firestore → `resolve` → resumen IA → `closed` → `auditoria` (append-only) + `replicar` (Firestore) + `export-gcp` (BigQuery/Looker).
