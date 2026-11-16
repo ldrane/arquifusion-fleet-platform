@@ -1,20 +1,18 @@
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import type { Incident } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { can } from "@/auth/permissions";
 import { IncidentCard } from "@/components/incidents/IncidentCard";
 import { FleetMap, type MapFilter } from "@/components/map/FleetMap";
 import { Badge, Button, cx, Empty, HealthBar, Icon, KpiCard, Panel, Segmented, StatusDot } from "@/components/ui";
 import { SEED } from "@/demo/data";
+import { openIncidents } from "@/lib/incidents";
 import { SEVERITY_RANK, STATUS_LABEL, TYPE_LABEL, ZONE_LABEL, timeAgo } from "@/lib/format";
 import { myTechnicianId } from "@/lib/ids";
 import { api } from "@/services";
 import { useZoned } from "@/state/FleetContext";
 import { useQuery } from "@/state/queryCache";
 import { useViewState } from "@/state/viewState";
-
-const OPEN = (i: Incident) => i.status !== "closed" && !i.parent_incident_id;
 
 export function CommandCenter() {
   const { me } = useAuth();
@@ -26,7 +24,7 @@ export function CommandCenter() {
   const inventory = useQuery(can(me?.role, "inventory") ? "inventory:low" : null, () => api.listInventory({ alert: "low_stock" }), { staleMs: 30_000 });
 
   const open = useMemo(() => {
-    const xs = incidents.filter(OPEN);
+    const xs = openIncidents(incidents);
     return xs.sort((a, b) =>
       sort === "severity"
         ? SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity] || a.detected_at.localeCompare(b.detected_at)

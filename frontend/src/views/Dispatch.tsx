@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 import { isDemo } from "@/config";
 import { initials, SPECIALTY_LABEL, timeAgo } from "@/lib/format";
 import { myTechnicianId } from "@/lib/ids";
+import { openIncidents } from "@/lib/incidents";
 import { api } from "@/services";
 import { useFleet, useZoned } from "@/state/FleetContext";
 import { useViewState } from "@/state/viewState";
@@ -24,8 +25,8 @@ function TechnicianDesk() {
   const [busy, setBusy] = useState(false);
   const techId = myTechnicianId(me);
   const self = technicians.find((t) => t.technician_id === techId);
-  const mine = incidents.filter((i) => i.assigned_technician_id === techId && !i.parent_incident_id);
-  const open = mine.filter((i) => i.status !== "closed");
+  const mine = incidents.filter((i) => i.assigned_technician_id === techId);
+  const open = openIncidents(mine);
   const done = mine.filter((i) => i.status === "closed").sort((a, b) => (b.resolved_at ?? "").localeCompare(a.resolved_at ?? ""));
 
   const update = async (body: { available?: boolean; location?: { lat: number; lon: number } }, ok: string) => {
@@ -113,7 +114,7 @@ function DispatchBoard() {
   const { machines, incidents, technicians, zone } = useZoned();
   const [spec, setSpec] = useViewState<Specialty | "">("despacho.specialty", "");
   const [onlyFree, setOnlyFree] = useViewState("despacho.onlyFree", false);
-  const open = incidents.filter((i) => i.status !== "closed" && !i.parent_incident_id);
+  const open = openIncidents(incidents);
   const pending = open.filter((i) => i.status === "detected" || i.status === "assigned");
   const working = open.filter((i) => i.status === "in_progress");
   const techs = useMemo(
