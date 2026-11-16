@@ -6,6 +6,8 @@
 #   Variables: STAGE (requerido), AWS_REGION (def. us-east-1), PYTHON (def. python3).
 #   Toma DEMO_PASSWORD de $DEMO_PASSWORD o de .env.deploy (igual que el resto de scripts).
 set -uo pipefail
+# Git Bash (Windows) convierte argumentos que empiezan con / en rutas de Windows y rompe los nombres SSM.
+export MSYS_NO_PATHCONV=1
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 : "${STAGE:?Falta STAGE (ej. STAGE=dev scripts/demo_preflight.sh)}"
@@ -96,14 +98,14 @@ fi
 
 # 5) Telegram (webhook) -------------------------------------------------------
 step "5/7 webhook de Telegram"
-TG_SECRET="$(aws secretsmanager get-secret-value --region "$REGION" --secret-id "$PREFIX/telegram" \
+TG_SECRET="$(aws secretsmanager get-secret-value --region "$REGION" --secret-id "arquifusion/$STAGE/telegram" \
   --query SecretString --output text 2>/dev/null || true)"
 TG_TOKEN="$(printf '%s' "$TG_SECRET" | json_field bot_token)"
 if [[ -z "$TG_TOKEN" ]]; then
-  warn "sin token de Telegram en $PREFIX/telegram (notify-telegram no enviará; el resto de la demo no depende de esto)"
+  warn "sin token de Telegram en arquifusion/$STAGE/telegram (notify-telegram no enviará; el resto de la demo no depende de esto)"
 else
   INFO="$(curl -s "https://api.telegram.org/bot${TG_TOKEN}/getWebhookInfo")"
-  WG_URL="$(printf '%s' "$INFO" | json_field url)"
+  WG_URL="$(printf '%s' "$INFO" | "$PYTHON" -c 'import json,sys;print(json.load(sys.stdin)["result"].get("url",""))' 2>/dev/null)"
   WG_PENDING="$(printf '%s' "$INFO" | "$PYTHON" -c 'import json,sys;print(json.load(sys.stdin)["result"].get("pending_update_count",0))' 2>/dev/null)"
   WG_ERR="$(printf '%s' "$INFO" | "$PYTHON" -c 'import json,sys;print(json.load(sys.stdin)["result"].get("last_error_message",""))' 2>/dev/null)"
   if [[ -n "$WG_URL" ]]; then

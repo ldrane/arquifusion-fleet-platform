@@ -9,7 +9,8 @@ cd "$ROOT"
 FAST=0
 [[ "${1:-}" == "--fast" ]] && FAST=1
 PY="${PYTHON:-python3}"
-PYTHONPATH_CHECKS="services/shared:services/ml:services/analytics/common:services/query/common"
+PYSEP="$("$PY" -c 'import os; print(os.pathsep)')"  # ':' en Linux/macOS, ';' en Windows
+PYTHONPATH_CHECKS="services/shared${PYSEP}services/ml${PYSEP}services/analytics/common${PYSEP}services/query/common"
 
 log() { printf '\n[check_all] %s\n' "$*" >&2; }
 

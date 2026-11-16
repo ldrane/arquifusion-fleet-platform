@@ -46,6 +46,8 @@ def test_import_handler_from_task_root(tmp_path):
         "PATH": os.environ.get("PATH", ""),
         "AWS_DEFAULT_REGION": "us-east-1",
         "POWERTOOLS_TRACE_DISABLED": "true",
+        # Windows no inicializa sockets/asyncio sin SYSTEMROOT; en Linux no existe y se omite.
+        **({"SYSTEMROOT": os.environ["SYSTEMROOT"]} if "SYSTEMROOT" in os.environ else {}),
     }
     proc = subprocess.run(
         [sys.executable, "-I", "-c", PROBE],

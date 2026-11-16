@@ -81,6 +81,15 @@ for s in "${STACKS[@]}"; do
   fi
   # shellcheck disable=SC2086
   terraform -chdir="$ROOT/infra/$s" apply -input=false -var "stage=$STAGE" ${!extra_var:-} "${APPROVE[@]}"
+  # Terraform no ve cambios si el image_uri sigue siendo :<nombre>-latest, así que las Lambdas seguirían con el
+  # digest anterior. Se las apunta explícitamente a la imagen recién subida.
+  if [[ "$s" == ingest && "${SKIP_IMAGES:-0}" != 1 ]]; then
+    for fn in procesar retrain sim-driver; do
+      log "Actualizando la Lambda arquifusion-$STAGE-$fn a $REPO:$fn-$TAG"
+      aws lambda update-function-code --region "$REGION" --function-name "arquifusion-$STAGE-$fn"         --image-uri "$REPO:$fn-$TAG" >/dev/null
+      aws lambda wait function-updated --region "$REGION" --function-name "arquifusion-$STAGE-$fn"
+    done
+  fi
 done
 
 # 4) Tras ingest, base necesita un nuevo deployment del stage v1 para publicar POST /telemetry (infra/base/README.md)
